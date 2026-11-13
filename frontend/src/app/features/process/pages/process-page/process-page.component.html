@@ -387,8 +387,12 @@
               <div class="ai-loading-panel" role="status" aria-live="polite" aria-busy="true">
                 <span class="ai-loading-spinner" aria-hidden="true"></span>
                 <div>
-                  <strong>{{ language() === 'de' ? 'KI analysiert Ihren Prozess …' : 'AI is analyzing your process …' }}</strong>
-                  <p>{{ language() === 'de' ? 'Geschäftsablauf, Automatisierungspotenziale, Systeme und Workflow werden ausgewertet. Bitte lassen Sie dieses Fenster geöffnet.' : 'The business process, automation opportunities, systems and workflow are being assessed. Please keep this window open.' }}</p>
+                  <strong>{{ analysisStrategy === 'rules'
+                    ? (language() === 'de' ? 'Python analysiert Ihren Prozess …' : 'Python is analyzing your process …')
+                    : (language() === 'de' ? 'KI analysiert Ihren Prozess …' : 'AI is analyzing your process …') }}</strong>
+                  <p>{{ analysisStrategy === 'rules'
+                    ? (language() === 'de' ? 'Python prüft Prozessschritte, Datenhinweise und Freigaberegeln.' : 'Python is checking process steps, data signals and approval rules.')
+                    : (language() === 'de' ? 'Geschäftsablauf, Automatisierungspotenziale, Systeme und Workflow werden ausgewertet. Bitte lassen Sie dieses Fenster geöffnet.' : 'The business process, automation opportunities, systems and workflow are being assessed. Please keep this window open.') }}</p>
                 </div>
               </div>
             }
