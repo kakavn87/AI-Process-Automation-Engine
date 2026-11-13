@@ -88,6 +88,51 @@ export interface ProcessDocumentSource {
   visualAssets: number;
 }
 
+export interface ProcessOptimizationChange {
+  currentStep: string;
+  optimizedStep: string;
+  reason: string;
+  expectedBenefit: string;
+}
+
+export interface ProcessOptimizationOpportunity {
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+  implementationEffort: 'low' | 'medium' | 'high';
+  expectedBenefit: string;
+}
+
+export interface ProcessOptimizationMetric {
+  name: string;
+  currentValue: number | null;
+  proposedValue: number | null;
+  unit: string;
+  direction: 'lower_is_better' | 'higher_is_better';
+  absoluteChange: number | null;
+  improvementPercent: number | null;
+  rationale: string;
+  evidenceBasis: 'user_input' | 'document' | 'model_estimate' | 'not_available';
+  confidence: 'high' | 'medium' | 'low';
+  isEstimate: boolean;
+}
+
+export interface ProcessOptimization {
+  status: string;
+  llmUsed: boolean;
+  model?: string | null;
+  provider?: string | null;
+  summary: string;
+  changes: ProcessOptimizationChange[];
+  opportunities: ProcessOptimizationOpportunity[];
+  automationPotentialScore: number;
+  metrics: ProcessOptimizationMetric[];
+  remainingQuestions: string[];
+  risks: string[];
+  assumptions: string[];
+  implementationNotes: string[];
+}
+
 export interface ProcessAnalysis {
   automationScore: number;
   automationScoreNote?: string;
@@ -113,6 +158,10 @@ export interface ProcessAnalysis {
   assumptions: string[];
   questions: string[];
   proposedWorkflow: ProposedWorkflow;
+  currentWorkflow?: ProposedWorkflow;
+  optimizedProcess?: string[];
+  processOptimization?: ProcessOptimization;
+  optimizationFailure?: { message: string; errorType: string };
   processSessionId?: string;
   workflowStatus?: string;
   openQuestions?: OpenQuestion[];
