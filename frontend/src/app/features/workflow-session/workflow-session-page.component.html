@@ -311,7 +311,7 @@
       @if (metrics.events.length > 0) {
         <div class="usage-events">
           @for (event of metrics.events.slice(0, 5); track event.id) {
-            <div><strong>{{ event.model }}</strong><span>{{ eventStatusLabel(event.status) }}</span><small>{{ formatNumber(event.totalTokens) }} tokens</small></div>
+            <div><strong>{{ event.model }}</strong><span>{{ eventStatusLabel(event.status) }}</span><small>{{ formatNumber(event.totalTokens) }} {{ isGerman ? 'Token' : 'tokens' }}</small></div>
           }
         </div>
       }
