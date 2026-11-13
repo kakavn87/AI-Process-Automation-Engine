@@ -250,12 +250,10 @@
                     </div>
                     <p>{{ metric.rationale }}</p>
                     <small class="metric-evidence">
-                      {{ metric.isEstimate
-                        ? (isGerman ? 'Modellschätzung – nicht gemessen' : 'Model estimate – not measured')
-                        : metric.currentValueSource === 'not_available'
-                          ? (isGerman ? 'Keine ausreichenden Ausgangsdaten' : 'Insufficient baseline data')
-                          : (isGerman ? 'Ausgangsdaten aus Nutzerangaben oder Dokumenten' : 'Baseline from user input or documents') }}
-                      · {{ isGerman ? 'Zielwert' : 'Target' }}: {{ metric.isEstimate ? (isGerman ? 'Modellschätzung' : 'Model estimate') : (isGerman ? 'Belegt' : 'Evidence-based') }}
+                      {{ metric.currentValueSource === 'not_available'
+                        ? (isGerman ? 'Kein belegter Ausgangswert' : 'No evidenced baseline')
+                        : (isGerman ? (metric.currentValueSource === 'document' ? 'Ausgangswert aus Dokument' : 'Ausgangswert aus Nutzerangabe') : (metric.currentValueSource === 'document' ? 'Baseline from document' : 'Baseline from user input')) }}
+                      · {{ isGerman ? 'Zielwert' : 'Target' }}: {{ metric.proposedValueSource === 'model_estimate' ? (isGerman ? 'Modellschätzung' : 'Model estimate') : metric.proposedValueSource === 'not_available' ? (isGerman ? 'Nicht verfügbar' : 'Not available') : (isGerman ? 'Belegt' : 'Evidence-based') }}
                       · {{ isGerman ? 'Vertrauen' : 'Confidence' }}: {{ isGerman ? (metric.confidence === 'high' ? 'Hoch' : metric.confidence === 'medium' ? 'Mittel' : 'Niedrig') : metric.confidence }}
                     </small>
                   </article>
