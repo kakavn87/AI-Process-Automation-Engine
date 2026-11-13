@@ -7,12 +7,13 @@ class QuestionService:
     """Convert analysis questions into stable, UI-ready question definitions."""
 
     @staticmethod
-    def build(questions: list[str] | None) -> list[dict[str, Any]]:
+    def build(questions: list[str] | None, language: str = "de") -> list[dict[str, Any]]:
         result = []
         seen: set[str] = set()
+        is_german = language == "de"
 
         for raw_question in questions or []:
-            prompt = re.sub(r"\s+", " ", str(raw_question)).strip()
+            prompt = re.sub(r"\\s+", " ", str(raw_question)).strip()
             if not prompt:
                 continue
 
@@ -33,8 +34,9 @@ class QuestionService:
                 "required": True,
                 "options": ["yes", "no"] if is_boolean else [],
                 "placeholder": (
-                    "Please enter a short answer." if not is_boolean
-                    else "Choose yes or no."
+                    ("Bitte kurz antworten …" if is_german else "Please enter a short answer.")
+                    if not is_boolean
+                    else ("Bitte Ja oder Nein auswählen." if is_german else "Choose yes or no.")
                 ),
             })
         return result
