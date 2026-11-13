@@ -1,6 +1,6 @@
 # AI Process Automation Engine
 
-A portfolio MVP that turns natural-language business process descriptions into structured workflow proposals, checks approval gates, and records human approval decisions.
+A portfolio MVP that turns natural-language business process descriptions into structured workflow proposals, enforces a human approval gate, and records simulated execution events.
 
 ## What this demonstrates
 
@@ -8,15 +8,18 @@ A portfolio MVP that turns natural-language business process descriptions into s
 - **Angular 19** standalone frontend using Angular Signals for process and execution state.
 - **OpenAI Responses API** with Pydantic Structured Outputs for LLM-based process understanding and workflow proposal generation.
 - **Rules-based fallback** so the demo remains available when an OpenAI API key is not configured or the API is temporarily unavailable.
-- **Human-in-the-loop approval lifecycle**: create an execution request, inspect ordered workflow steps, approve or reject, and retain a decision note.
-- **Server-side safety validation** that enforces an approval step before outbound email, Teams, or notification steps.
+- **Human-in-the-loop approval lifecycle**: create an execution request, inspect workflow steps, approve or reject, and retain a decision note.
+- **Server-side safety validation** that requires a human approval step before outbound email, Teams, or notification steps.
+- **Simulation-only execution**: approved steps create an event log; no real email, Teams message, or external business action is sent.
 - **Connector boundaries** for Outlook, document parsing, spreadsheets, and Teams. These are planned integrations, not live connections.
 
-> This is a portfolio MVP, not a production-ready automation platform. Approving a workflow records the decision but does not execute external actions. Authentication/authorization, durable production database migrations, and live connector implementations must be added before real business processes are used.
+> This is a portfolio MVP, not a production-ready automation platform. Authentication/authorization, durable production database migrations, and live connector implementations must be added before real business processes are used.
 
 ## LLM configuration
 
 The backend uses the OpenAI **Responses API** and schema-constrained Pydantic output. The default model is `gpt-6-luna`, selected as a cost-sensitive model for focused, high-volume tasks. The model can be changed with `OPENAI_MODEL`.
+
+The deterministic analyzer continues to provide the baseline automation score and canonical signals. When the key is configured, the LLM generates the process summary, current process, automation opportunities, integrations, risks, assumptions, questions, and proposed workflow.
 
 Set `OPENAI_API_KEY` in the backend environment. Do not commit the key to Git or place it in the Angular frontend.
 
@@ -29,7 +32,7 @@ OPENAI_API_KEY=your-api-key
 OPENAI_MODEL=gpt-6-luna
 ```
 
-When `OPENAI_API_KEY` is empty, the API returns `analysisMode: "rules_fallback"`. A successful model call returns `analysisMode: "openai_llm"`. If the model request fails, the backend logs the exception and falls back to deterministic analysis.
+When `OPENAI_API_KEY` is empty, the API returns `llmUsed: false` and uses deterministic rules. A successful model call returns `llmUsed: true`. If the model request fails, the backend logs the exception and falls back to deterministic analysis.
 
 ### Render setup
 
@@ -46,15 +49,15 @@ Save the environment changes to trigger a redeploy. The frontend never receives 
 - `POST /api/executions/` — create an execution record and pause at human approval.
 - `GET /api/executions/` — list execution records.
 - `GET /api/executions/{id}` — retrieve one execution record.
-- `POST /api/executions/{id}/approve` — record approval and a note.
-- `POST /api/executions/{id}/reject` — reject with a required reason.
+- `POST /api/executions/{id}/approve` — record approval and an optional note; run the workflow in simulation mode.
+- `POST /api/executions/{id}/reject` — reject the request and record an optional note.
 
-Approval states:
+Execution states:
 - `awaiting_approval`
-- `approved_ready`
+- `completed` (simulation only)
 - `rejected`
 
-An `approved_ready` record is not an executed workflow. No email or Teams message is sent by this version.
+No real email or Teams message is sent after approval.
 
 ## Run locally
 
