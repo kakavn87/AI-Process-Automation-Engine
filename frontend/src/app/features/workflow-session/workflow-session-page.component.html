@@ -25,14 +25,14 @@
   @if (session(); as current) {
     <section class="session-heading">
       <div>
-        <div class="session-eyebrow">WORKFLOW SESSION</div>
+         <div class="session-eyebrow">{{ isGerman ? 'WORKFLOW-ABLAUF' : 'WORKFLOW SESSION' }}</div>
         <h1>{{ current.analysis.proposedWorkflow.name }}</h1>
         <p>{{ current.analysis.summary }}</p>
       </div>
       <span class="session-status" [attr.data-status]="current.status">
         {{ current.status === 'completed'
           ? (isGerman ? 'Simulation abgeschlossen' : 'Simulation completed')
-          : current.status.replaceAll('_', ' ') }}
+          : sessionStatusLabel(current.status) }}
       </span>
     </section>
 
@@ -94,7 +94,7 @@
         [class.is-complete]="stepState(5, current.status) === 'complete'"
         [class.is-pending]="stepState(5, current.status) === 'pending'">
         <span class="session-progress-number">05</span>
-        <div><strong>{{ isGerman ? 'AI-Monitoring' : 'AI monitoring' }}</strong><small>{{ stepDescription(5, current.status) }}</small></div>
+        <div><strong>{{ isGerman ? 'KI-Nutzungsübersicht' : 'AI monitoring' }}</strong><small>{{ stepDescription(5, current.status) }}</small></div>
         <span class="session-progress-mark">{{ stepState(5, current.status) === 'complete' ? '✓' : '5' }}</span>
       </article>
     </section>
@@ -279,7 +279,7 @@
         @for (event of current.events; track $index) {
           <article class="session-event">
             <span class="event-dot"></span>
-            <div><strong>{{ event.event.replaceAll('_', ' ') }}</strong><p>{{ event.message }}</p><small>{{ event.status }}</small></div>
+            <div><strong>{{ eventStatusLabel(event.event) }}</strong><p>{{ event.message }}</p><small>{{ eventStatusLabel(event.status) }}</small></div>
           </article>
         }
       </div>
@@ -290,8 +290,8 @@
     <section class="session-card usage-card">
     <div class="session-card-header">
       <div>
-        <div class="session-eyebrow">STEP 5 · AI MONITORING</div>
-        <h2>{{ isGerman ? 'AI-Nutzung & Kosten' : 'AI usage & cost' }}</h2>
+        <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 5 · KI-NUTZUNG & KOSTEN' : 'STEP 5 · AI MONITORING' }}</div>
+        <h2>{{ isGerman ? 'KI-Nutzung & Kosten' : 'AI usage & cost' }}</h2>
         <p>{{ isGerman ? 'Erfasste Provider-Aufrufe und Token-Verbrauch.' : 'Recorded provider calls and token usage.' }}</p>
       </div>
       <button class="session-secondary" type="button" (click)="loadUsage()">{{ isGerman ? 'Aktualisieren' : 'Refresh' }}</button>
@@ -311,12 +311,12 @@
       @if (metrics.events.length > 0) {
         <div class="usage-events">
           @for (event of metrics.events.slice(0, 5); track event.id) {
-            <div><strong>{{ event.model }}</strong><span>{{ event.status }}</span><small>{{ formatNumber(event.totalTokens) }} tokens</small></div>
+            <div><strong>{{ event.model }}</strong><span>{{ eventStatusLabel(event.status) }}</span><small>{{ formatNumber(event.totalTokens) }} tokens</small></div>
           }
         </div>
       }
     } @else {
-      <p class="session-muted">{{ isGerman ? 'Noch keine AI-Nutzungsdaten vorhanden.' : 'No AI usage data is available yet.' }}</p>
+      <p class="session-muted">{{ isGerman ? 'Noch keine KI-Nutzungsdaten vorhanden.' : 'No AI usage data is available yet.' }}</p>
     }
   </section>
   }
@@ -327,7 +327,7 @@
     <section class="session-card live-execution-card">
       <div class="session-card-header">
         <div>
-          <div class="session-eyebrow">OPTIONAL · WEBHOOK HANDOFF</div>
+          <div class="session-eyebrow">{{ isGerman ? 'OPTIONAL · WEBHOOK-ÜBERGABE' : 'OPTIONAL · WEBHOOK HANDOFF' }}</div>
           <h2>{{ isGerman ? 'Workflow optional extern übergeben' : 'Optional external workflow handoff' }}</h2>
           <p>{{ isGerman
             ? 'Diese optionale Aktion wird erst nach abgeschlossener Freigabe verfügbar. Die AI-Plattform und API-Einstellungen finden Sie im Menü unter Einstellungen.'
