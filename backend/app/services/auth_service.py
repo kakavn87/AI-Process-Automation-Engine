@@ -107,9 +107,9 @@ class AuthService:
         memberships = query.order_by(Tenant.name.asc()).all()
 
         if not memberships:
+            if request.tenant_id:
+                raise ValueError("The selected workspace is not available to this account.")
             raise ValueError("This account has no active workspace membership.")
-        if request.tenant_id and not memberships:
-            raise ValueError("The selected workspace is not available to this account.")
         if len(memberships) > 1 and not request.tenant_id:
             return {
                 "requires_workspace_selection": True,
