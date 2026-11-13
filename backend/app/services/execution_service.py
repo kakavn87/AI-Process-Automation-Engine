@@ -62,7 +62,7 @@ class ExecutionService:
         return [self._serialize(item) for item in items]
 
     def approve(self, execution_id: str, note: str | None = None) -> dict:
-        execution = self.db.get(ApprovalExecution, execution_id)
+        execution = self._query_execution(execution_id)
         if execution is None:
             raise KeyError("Execution was not found.")
         if execution.status != "awaiting_approval":
@@ -91,7 +91,7 @@ class ExecutionService:
         return self._serialize(execution)
 
     def reject(self, execution_id: str, note: str | None = None) -> dict:
-        execution = self.db.get(ApprovalExecution, execution_id)
+        execution = self._query_execution(execution_id)
         if execution is None:
             raise KeyError("Execution was not found.")
         if execution.status != "awaiting_approval":
@@ -179,7 +179,7 @@ class ExecutionService:
     def run_live(self, execution_id: str, confirmed: bool, confirmation_token: str) -> dict:
         if confirmed is not True:
             raise ValueError("Explicit confirmation is required before sending data to the configured webhook.")
-        execution = self.db.get(ApprovalExecution, execution_id)
+        execution = self._query_execution(execution_id)
         if execution is None:
             raise KeyError("Execution was not found.")
         if execution.status != "completed":
@@ -314,16 +314,12 @@ class ExecutionService:
         if not sqlalchemy_inspect(self.db.get_bind()).has_table(WorkflowSession.__tablename__):
             return
 
-        session = (
-            self.db.query(WorkflowSession)
-            .filter(WorkflowSession.related_execution_id == execution_id)
-            .filter(
-                WorkflowSession.tenant_id == self.tenant_id
-                if self.tenant_id is not None
-                else True
-            )
-            .one_or_none()
+        query = self.db.query(WorkflowSession).filter(
+            WorkflowSession.related_execution_id == execution_id
         )
+        if self.tenant_id is not None:
+            query = query.filter(WorkflowSession.tenant_id == self.tenant_id)
+        session = query.one_or_none()
         if session is None:
             return
         session.status = status
