@@ -13,3 +13,4 @@ class ExecutionDecisionRequest(BaseModel):
 
 class LiveExecutionRequest(BaseModel):
     confirm_live_execution: bool = False
+    confirmation_token: str = Field(default="", max_length=256)
