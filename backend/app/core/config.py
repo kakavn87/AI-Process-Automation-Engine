@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "AI Process Automation Engine"
     DATABASE_URL: str = "sqlite:///./process_automation.db"
     OPENAI_API_KEY: str = ""
-    OPENAI_MODEL: str = "gpt-5-mini"
+    OPENAI_MODEL: str = "gpt-6-luna"
     CORS_ORIGINS: str = "http://localhost:4200"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
