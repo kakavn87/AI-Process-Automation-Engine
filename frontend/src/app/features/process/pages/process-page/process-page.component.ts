@@ -33,6 +33,7 @@ export class ProcessPageComponent {
 
   readonly language = signal<AppLanguage>('de');
   readonly selectedDomain = signal('general');
+  readonly examplesExpanded = signal(false);
   readonly dataResult = signal<TabularDataResult | null>(null);
   readonly dataProcessing = signal(false);
   readonly dataError = signal<string | null>(null);
@@ -299,13 +300,19 @@ export class ProcessPageComponent {
     }
   }
 
+  toggleIndustryExamples() {
+    this.examplesExpanded.update(expanded => !expanded);
+  }
+
   selectIndustry(industry: Industry) {
+    this.examplesExpanded.set(false);
     this.selectedDomain.set(industry.id);
     this.description = this.language() === 'de' ? industry.sampleDe : industry.sampleEn;
     this.dataError.set(null);
   }
 
   useFreeDescription() {
+    this.examplesExpanded.set(false);
     this.selectedDomain.set('general');
     this.description = '';
   }
