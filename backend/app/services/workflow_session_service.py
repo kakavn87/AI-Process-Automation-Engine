@@ -38,7 +38,7 @@ class WorkflowSessionService:
         business_domain: str = "general",
         session_id: str | None = None,
     ) -> dict:
-        questions = self.question_service.build(analysis.get("questions") or [])
+        questions = self.question_service.build(analysis.get("questions") or [], language=language)
         initial_status = "needs_input" if questions else "processing"
         session = WorkflowSession(
             id=session_id or str(uuid4()),
