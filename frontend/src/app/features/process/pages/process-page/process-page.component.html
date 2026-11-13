@@ -63,7 +63,7 @@
         [disabled]="!workflowStepAvailable(5)"
         (click)="navigateToWorkflowStep(5)">
         <span class="workflow-nav-number">05</span>
-        <span class="workflow-nav-copy"><strong>{{ language() === 'de' ? 'AI-Monitoring' : 'AI monitoring' }}</strong><small>{{ workflowStepHint(5) }}</small></span>
+        <span class="workflow-nav-copy"><strong>{{ language() === 'de' ? 'KI-Nutzungsübersicht' : 'AI monitoring' }}</strong><small>{{ workflowStepHint(5) }}</small></span>
         <span class="workflow-nav-state">{{ workflowStepMarker(5) }}</span>
       </button>
 
@@ -174,7 +174,7 @@
               <span class="routing-icon">RAG</span>
               <div>
                 <strong>{{ language() === 'de' ? 'Dokumenten-Wissensbasis' : 'Document knowledge base' }}</strong>
-                <p>{{ knowledge.status }} · {{ knowledge.indexedChunks }} {{ language() === 'de' ? 'Chunks indexiert' : 'chunks indexed' }} · {{ knowledge.retrievedChunks }} {{ language() === 'de' ? 'Treffer abgerufen' : 'chunks retrieved' }}</p>
+                <p>{{ integrationStatusLabel(knowledge.status) }} · {{ knowledge.indexedChunks }} {{ language() === 'de' ? 'Chunks indexiert' : 'chunks indexed' }} · {{ knowledge.retrievedChunks }} {{ language() === 'de' ? 'Treffer abgerufen' : 'chunks retrieved' }}</p>
               </div>
             </div>
           }
