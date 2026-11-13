@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../../core/services/api.service';
-import { ApprovalExecution } from '../../../../core/models/api.models';
+import { ApprovalExecution, TabularDataResult } from '../../../../core/models/api.models';
 import { ProcessStore } from '../../process.store';
 import { ProcessService } from '../../process.service';
 
@@ -19,9 +19,39 @@ export class ProcessPageComponent {
   readonly execution = signal<ApprovalExecution | null>(null);
   readonly executionLoading = signal(false);
   readonly executionError = signal<string | null>(null);
+  readonly dataResult = signal<TabularDataResult | null>(null);
+  readonly dataProcessing = signal(false);
+  readonly dataError = signal<string | null>(null);
 
+  selectedDataFile: File | null = null;
   description = '';
   analysisStrategy: 'auto' | 'rules' | 'llm' = 'auto';
+
+  onDataFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.selectedDataFile = input.files?.item(0) ?? null;
+    this.dataResult.set(null);
+    this.dataError.set(null);
+  }
+
+  uploadDataFile() {
+    const file = this.selectedDataFile;
+    if (!file || this.dataProcessing()) return;
+
+    this.dataProcessing.set(true);
+    this.dataError.set(null);
+    this.dataResult.set(null);
+    this.api.uploadDataFile(file).subscribe({
+      next: result => {
+        this.dataResult.set(result);
+        this.dataProcessing.set(false);
+      },
+      error: error => {
+        this.dataError.set(error?.error?.detail ?? 'Could not process this file. Please check its format and try again.');
+        this.dataProcessing.set(false);
+      }
+    });
+  }
 
   analyze() {
     this.execution.set(null);
