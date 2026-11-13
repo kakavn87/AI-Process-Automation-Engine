@@ -43,6 +43,8 @@ class ProcessSpecificationOutput(BaseModel):
 
 class AIProcessAnalysisOutput(BaseModel):
     process_specification: ProcessSpecificationOutput
+    automation_potential_score: int
+    automation_potential_reason: str
     summary: str
     current_process: list[str]
     automation_opportunities: list[AutomationOpportunityOutput]
@@ -100,6 +102,14 @@ in any example gallery. Also identify the process goal, actors, inputs, systems,
 paths, outputs, and success metrics. Use empty arrays when the description does not provide enough evidence.
 Keep inferred facts separate from assumptions and questions.
 
+Estimate the automation potential from 0 to 100 based on the actual described work.
+A value of 0 is reserved for text that does not describe a process or contains no automatable work.
+For any process with repeatable collection, extraction, transformation, validation, calculation,
+generation, classification, routing, notification, or record updates, return a score above 0.
+Explain the estimate briefly. This is an indicative assessment, not a guaranteed percentage of labor saved.
+Keep the response concise: at most 8 current-process items, 5 automation opportunities, 10 workflow steps,
+5 risks, 5 assumptions, 5 questions, and 6 items in each process-specification list.
+
 Create an ordered workflow that starts with a trigger and ends with a meaningful process outcome.
 Use only the allowed step types. Prefer trigger, collect, extract, transform, validate, generate, approval,
 and notify. Every outbound action (notify, email, teams, or http) MUST have an approval step before it and
@@ -121,7 +131,7 @@ workflow configuration. Connector should be an empty string when no connector is
                 },
             ],
             text_format=AIProcessAnalysisOutput,
-            max_output_tokens=3500,
+            max_output_tokens=7500,
         )
 
         parsed = response.output_parsed
