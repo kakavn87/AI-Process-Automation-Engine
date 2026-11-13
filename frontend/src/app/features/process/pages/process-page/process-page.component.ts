@@ -109,11 +109,11 @@ export class ProcessPageComponent implements OnInit {
     if (step === 4) {
       if (status === 'ready_for_approval' || status === 'awaiting_approval') return 'active';
       if (status === 'completed' || status === 'rejected') return 'complete';
-      return status === 'failed' ? 'error' : 'pending';
+      return 'pending';
     }
     if (step === 5) {
       if (status === 'completed' || status === 'rejected') return 'complete';
-      return status === 'failed' ? 'error' : 'pending';
+      return 'pending';
     }
     return 'pending';
   }
