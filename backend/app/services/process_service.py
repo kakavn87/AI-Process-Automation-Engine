@@ -178,13 +178,8 @@ class ProcessService:
                 answers=answers,
                 language=language,
             )
-            self._apply_optimization_result(optimized, ai_result)
-            telemetry = getattr(self.ai_service, "last_call_telemetry", None)
-            if telemetry:
-                optimized["_optimizationUsageTelemetry"] = telemetry
-            return optimized
         except Exception as error:
-            logger.exception("Second-stage AI process optimization failed; retaining the original workflow.")
+            logger.exception("Second-stage AI request failed; retaining the original workflow.")
             note = self._llm_fallback_reason(error, language)
             optimized["optimization"] = {
                 "status": "fallback",
@@ -199,6 +194,36 @@ class ProcessService:
             if telemetry:
                 optimized["_optimizationUsageTelemetry"] = telemetry
             return optimized
+
+        try:
+            self._apply_optimization_result(optimized, ai_result)
+        except Exception as error:
+            logger.exception("The second-stage AI result could not be applied as a valid workflow.")
+            note = (
+                "Die KI hat eine Antwort geliefert, die nicht in einen gültigen Workflow überführt werden konnte. "
+                "Der ursprüngliche Entwurf bleibt erhalten; die Antworten wurden mit Python geprüft."
+                if language == "de"
+                else "The AI returned a result that could not be converted into a valid workflow. "
+                "The original draft was retained; Python validated the answers."
+            )
+            optimized["optimization"] = {
+                "status": "fallback",
+                "engine": "python",
+                "summary": note,
+                "designPrinciples": [],
+                "recommendedChanges": [],
+                "expectedBenefits": [],
+                "model": getattr(self.ai_service, "model", None),
+            }
+            telemetry = getattr(self.ai_service, "last_call_telemetry", None)
+            if telemetry:
+                optimized["_optimizationUsageTelemetry"] = telemetry
+            return optimized
+
+        telemetry = getattr(self.ai_service, "last_call_telemetry", None)
+        if telemetry:
+            optimized["_optimizationUsageTelemetry"] = telemetry
+        return optimized
 
     def _apply_optimization_result(self, analysis: dict, result: dict) -> None:
         """Apply and validate the LLM target design; calculate evidence-backed deltas in Python."""
@@ -320,43 +345,92 @@ class ProcessService:
     def _llm_fallback_reason(error: Exception, language: str) -> str:
         error_name = type(error).__name__.lower()
         error_text = str(error).lower()
+        status_code = getattr(error, "status_code", None)
+        error_code = getattr(error, "code", None)
 
         if (
             "validationerror" in error_name
             or "lengthfinishreason" in error_name
+            or "jsondecodeerror" in error_name
             or "unexpected eof" in error_text
             or "while parsing" in error_text
         ):
             return (
-                "Die KI-Antwort war unvollständig und konnte nicht eingelesen werden. "
-                "Das Ausgabelimit wurde erhöht. Bitte die Analyse erneut starten."
+                "Die KI-Antwort war unvollständig oder entsprach nicht dem erwarteten Datenformat. "
+                "Der ursprüngliche Workflow-Entwurf bleibt erhalten; bitte die Analyse erneut starten."
                 if language == "de"
-                else "The AI response was incomplete and could not be parsed. "
-                "The output limit has been increased. Please run the analysis again."
+                else "The AI response was incomplete or did not match the expected data format. "
+                "The original workflow draft was retained; please run the analysis again."
             )
 
         if any(term in error_text for term in ("insufficient_quota", "credit_balance_exhausted", "no credits remaining")):
             return (
                 "OpenAI hat die Anfrage wegen fehlendem API-Guthaben abgelehnt. "
-                "Bitte das Guthaben und das verwendete OpenAI-Projekt prüfen; Python-Fallback wurde verwendet."
+                "Bitte das Guthaben und das verwendete OpenAI-Projekt prüfen."
                 if language == "de"
                 else "OpenAI rejected the request because API credit is exhausted. "
-                "Check the credit balance and selected OpenAI project; Python fallback was used."
+                "Check the credit balance and selected OpenAI project."
             )
 
-        if any(term in error_text for term in ("invalid_api_key", "authenticationerror", "model_not_found", "does not exist")):
+        if status_code == 401 or any(term in error_text for term in ("invalid_api_key", "authenticationerror")):
             return (
-                "OpenAI-Zugang oder Modellkonfiguration ist ungültig. Bitte API-Schlüssel, Projektzugriff und Modellnamen in Render prüfen."
+                "OpenAI hat den Zugriff verweigert (HTTP 401). Bitte API-Schlüssel und Projektzugriff in Render prüfen."
                 if language == "de"
-                else "OpenAI access or model configuration is invalid. Check the API key, project access and model name in Render."
+                else "OpenAI denied access (HTTP 401). Check the API key and project permissions in Render."
             )
 
+        if status_code == 403:
+            return (
+                "OpenAI hat die Anfrage wegen fehlender Berechtigungen abgelehnt (HTTP 403). Bitte Modellzugriff und Projektberechtigungen prüfen."
+                if language == "de"
+                else "OpenAI rejected the request because of insufficient permissions (HTTP 403). Check model access and project permissions."
+            )
+
+        if status_code == 404 or "model_not_found" in error_text or "does not exist" in error_text:
+            return (
+                "Das konfigurierte Modell oder der API-Endpunkt wurde nicht gefunden (HTTP 404). Bitte Modellname und Gateway-Konfiguration prüfen."
+                if language == "de"
+                else "The configured model or API endpoint was not found (HTTP 404). Check the model name and gateway configuration."
+            )
+
+        if status_code == 429 or any(term in error_text for term in ("rate_limit", "rate limit")):
+            return (
+                "Die KI-Anfrage wurde wegen eines Rate-Limits oder fehlender API-Kapazität abgelehnt (HTTP 429). Bitte Limits und Guthaben prüfen."
+                if language == "de"
+                else "The AI request was rejected because of a rate limit or insufficient API capacity (HTTP 429). Check limits and credit."
+            )
+
+        if "timeout" in error_name or "timed out" in error_text:
+            return (
+                "Die KI-Anfrage hat das Zeitlimit überschritten. Bitte Verbindung und Gateway-Auslastung prüfen."
+                if language == "de"
+                else "The AI request timed out. Check the connection and gateway load."
+            )
+
+        if "connection" in error_name or "connection" in error_text:
+            return (
+                "Der KI-Dienst war nicht erreichbar. Bitte Netzwerkverbindung und Gateway-URL prüfen."
+                if language == "de"
+                else "The AI service could not be reached. Check the network connection and gateway URL."
+            )
+
+        if status_code == 400:
+            suffix = f" ({error_code})" if error_code else ""
+            return (
+                f"Der KI-Anbieter hat die Optimierungsanfrage als ungültig abgelehnt (HTTP 400{suffix}). "
+                "Bitte Modell- und JSON-Ausgabeunterstützung prüfen."
+                if language == "de"
+                else f"The AI provider rejected the optimization request as invalid (HTTP 400{suffix}). "
+                "Check model and JSON output support."
+            )
+
+        detail = type(error).__name__
+        if status_code:
+            detail += f", HTTP {status_code}"
         return (
-            "Die OpenAI-Anfrage ist fehlgeschlagen. Der deterministische Python-Fallback wurde verwendet. "
-            "Details stehen in den Backend-Protokollen."
+            f"Die KI-Optimierung ist fehlgeschlagen ({detail}). Der ursprüngliche Workflow-Entwurf bleibt erhalten. Details stehen in den Backend-Protokollen."
             if language == "de"
-            else "The OpenAI request failed. The deterministic Python fallback was used. "
-            "See backend logs for details."
+            else f"AI optimization failed ({detail}). The original workflow draft was retained. See backend logs for details."
         )
 
     def _apply_ai_result(
