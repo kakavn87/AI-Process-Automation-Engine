@@ -93,7 +93,7 @@ export class ProcessPageComponent implements OnInit {
   workflowStepState(step: number): 'complete' | 'active' | 'pending' | 'error' {
     const status = this.workflowSession()?.status;
 
-    if (step === 1) return this.store.analysis() ? 'complete' : 'active';
+    if (step === 1) return !this.store.loading() && this.store.analysis() ? 'complete' : 'active';
     if (!status) return 'pending';
 
     if (step === 2) {
@@ -508,6 +508,7 @@ export class ProcessPageComponent implements OnInit {
   }
 
   analyze() {
+    this.workflowSession.set(null);
     this.store.setDescription(this.description);
     this.service.analyze(this.description, this.analysisStrategy, this.language(), this.selectedDomain(), this.processFiles);
   }
