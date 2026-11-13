@@ -273,6 +273,7 @@ workflow configuration. Connector should be an empty string when no connector is
             for question_id, answer in (answers or {}).items()
         ]
         context_keys = (
+            "description",
             "summary",
             "currentProcess",
             "processSpecification",
@@ -317,9 +318,12 @@ Your job:
 3. Explain concrete changes from the current process and their expected benefits.
 4. Create an implementable proposed workflow with a meaningful outcome.
 5. Assess measurable effects honestly. Only use current metric values when the user or source evidence
-   explicitly supplied them. You may propose a target value as a MODEL ESTIMATE only when there is a
-   defensible basis; explain the assumption and lower confidence when necessary. Otherwise use null.
-   Never fabricate volumes, labor rates, cycle times, error rates, savings or percentages.
+   explicitly supplied them. Set current_value_source to user_input or document only for a sourced baseline;
+   otherwise set it to not_available and current_value to null. Set proposed_value_source to user_input,
+   document, model_estimate or not_available as appropriate. You may propose a target value as a MODEL
+   ESTIMATE only when there is a defensible basis; explain the assumption and lower confidence when
+   necessary. Otherwise use null. Never fabricate volumes, labor rates, cycle times, error rates, savings
+   or percentages. Python calculates all deltas from grounded baselines and the proposed target.
 6. State remaining questions, risks, assumptions and implementation prerequisites.
 
 The product proposes workflows only. No connector is presumed to be live.
