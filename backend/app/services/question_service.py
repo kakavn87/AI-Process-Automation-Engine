@@ -13,7 +13,7 @@ class QuestionService:
         is_german = language == "de"
 
         for raw_question in questions or []:
-            prompt = re.sub(r"\\s+", " ", str(raw_question)).strip()
+            prompt = re.sub(r"\s+", " ", str(raw_question)).strip()
             if not prompt:
                 continue
 
