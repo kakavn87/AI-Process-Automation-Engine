@@ -192,7 +192,7 @@
               <div class="panel-topline"><span>{{ i18n.automationPotential }}</span><span class="tiny-icon">✦</span></div>
               <div class="score-number">{{ analysis.automationScore }}<small>%</small></div>
               <div class="score-meter"><span [style.width.%]="analysis.automationScore"></span></div>
-              <p>{{ i18n.estimate }}</p>
+              <p>{{ analysis.llmUsed ? (analysis.automationScoreNote || i18n.estimateAi) : i18n.estimatePython }}</p>
             </article>
             <article class="result-panel summary-panel">
               <div class="panel-topline"><span>{{ i18n.summary }}</span><span class="tiny-icon">▤</span></div>
