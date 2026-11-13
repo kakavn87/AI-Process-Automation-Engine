@@ -1,9 +1,9 @@
 import { Injectable, signal } from '@angular/core';
-import { ExecutionRecord } from '../../core/models/api.models';
+import { ApprovalExecution } from '../../core/models/api.models';
 
 @Injectable({ providedIn: 'root' })
 export class ExecutionStore {
-  private readonly _execution = signal<ExecutionRecord | null>(null);
+  private readonly _execution = signal<ApprovalExecution | null>(null);
   private readonly _loading = signal(false);
   private readonly _error = signal<string | null>(null);
 
@@ -11,8 +11,8 @@ export class ExecutionStore {
   readonly loading = this._loading.asReadonly();
   readonly error = this._error.asReadonly();
 
-  setExecution(execution: ExecutionRecord | null) {
-    this._execution.set(execution);
+  setExecution(value: ApprovalExecution | null) {
+    this._execution.set(value);
   }
 
   setLoading(value: boolean) {
