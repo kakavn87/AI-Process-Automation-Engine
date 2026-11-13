@@ -1,25 +1,183 @@
-<main>
-  <h1>AI Process Automation Engine</h1>
+<main class="page-shell">
+  <header class="hero">
+    <p class="eyebrow">PROCESS INTELLIGENCE</p>
+    <h1>AI Process Automation Engine</h1>
+    <p class="hero-copy">Turn manual business processes into structured, controlled automation workflows.</p>
+  </header>
 
-  <textarea
-    [(ngModel)]="description"
-    rows="8"
-    placeholder="Describe a business process..."
-  ></textarea>
-
-  <button (click)="analyze()" [disabled]="store.loading()">
-    {{ store.loading() ? 'Analyzing...' : 'Analyze Process' }}
-  </button>
+  <section class="input-panel">
+    <label for="process-description">Describe a business process</label>
+    <p class="field-hint">Explain how the work starts, which systems and files are involved, and what the final outcome should be.</p>
+    <textarea
+      id="process-description"
+      [(ngModel)]="description"
+      rows="8"
+      maxlength="8000"
+      placeholder="Example: Every Monday, our finance team receives Excel and PDF reports by email..."
+    ></textarea>
+    <div class="form-footer">
+      <span class="field-hint">{{ description.length }} / 8,000 characters</span>
+      <button (click)="analyze()" [disabled]="store.loading() || description.trim().length < 3">
+        {{ store.loading() ? 'Analyzing process...' : 'Analyze process' }}
+      </button>
+    </div>
+  </section>
 
   @if (store.error(); as error) {
-    <p>{{ error }}</p>
+    <div class="error-panel" role="alert">{{ error }}</div>
   }
 
   @if (store.analysis(); as analysis) {
-    <section>
-      <h2>Analysis</h2>
-      <p>Automation score: {{ store.automationScore() }}%</p>
-      <p>Signals: {{ analysis.signals.join(', ') }}</p>
+    <section class="results-section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">ANALYSIS RESULT</p>
+          <h2>Process assessment</h2>
+        </div>
+        <span class="mode-label">Rules-based baseline</span>
+      </div>
+
+      <div class="overview-grid">
+        <article class="score-card">
+          <span class="card-label">Automation potential</span>
+          <div class="score-value">{{ analysis.automationScore }}<span>%</span></div>
+          <div class="score-track"><div class="score-fill" [style.width.%]="analysis.automationScore"></div></div>
+          <p>Estimated from detected process characteristics.</p>
+        </article>
+        <article class="summary-card">
+          <span class="card-label">Process summary</span>
+          <p>{{ analysis.summary }}</p>
+          <div class="signals-list">
+            @for (signal of analysis.signals; track signal) {
+              <span class="signal-chip">{{ signal }}</span>
+            }
+            @if (analysis.signals.length === 0) {
+              <span class="muted">No predefined signals detected.</span>
+            }
+          </div>
+        </article>
+      </div>
+
+      <div class="content-grid">
+        <article class="result-card">
+          <h3>Current process</h3>
+          <ol class="numbered-list">
+            @for (step of analysis.currentProcess; track $index) {
+              <li>{{ step }}</li>
+            }
+          </ol>
+        </article>
+
+        <article class="result-card">
+          <h3>Automation opportunities</h3>
+          <div class="opportunity-list">
+            @for (item of analysis.automationOpportunities; track item.title) {
+              <div class="opportunity-item">
+                <div class="item-heading">
+                  <strong>{{ item.title }}</strong>
+                  <span class="impact-tag" [class.impact-high]="item.impact === 'high'">{{ item.impact }} impact</span>
+                </div>
+                <p>{{ item.description }}</p>
+              </div>
+            }
+          </div>
+        </article>
+      </div>
+
+      <article class="result-card workflow-card">
+        <div class="card-heading-row">
+          <div>
+            <p class="eyebrow">PROPOSED DESIGN</p>
+            <h3>{{ analysis.proposedWorkflow.name }}</h3>
+          </div>
+          <span class="mode-label">Draft workflow</span>
+        </div>
+        <p class="trigger-line"><strong>Trigger:</strong> {{ analysis.proposedWorkflow.trigger }}</p>
+        <ol class="workflow-list">
+          @for (step of analysis.proposedWorkflow.steps; track step.id; let index = $index) {
+            <li class="workflow-step">
+              <span class="step-index">{{ index + 1 }}</span>
+              <div class="step-content">
+                <div class="item-heading">
+                  <strong>{{ step.name }}</strong>
+                  <span class="step-type">{{ step.type }}</span>
+                </div>
+                <p>{{ step.description }}</p>
+                @if (step.config['connector']; as connector) {
+                  <span class="connector-label">{{ connector }}</span>
+                }
+              </div>
+              @if (step.type === 'approval') {
+                <span class="approval-indicator">Human gate</span>
+              }
+            </li>
+          }
+        </ol>
+      </article>
+
+      <div class="content-grid">
+        <article class="result-card">
+          <h3>Required integrations</h3>
+          @if (analysis.integrations.length > 0) {
+            <div class="integration-list">
+              @for (integration of analysis.integrations; track integration.name) {
+                <div class="integration-item">
+                  <div>
+                    <strong>{{ integration.name }}</strong>
+                    <p>{{ integration.purpose }}</p>
+                  </div>
+                  <span class="status-tag">Planned</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="muted">No external integrations detected yet.</p>
+          }
+        </article>
+
+        <article class="result-card approval-card">
+          <div class="item-heading">
+            <h3>Human approval</h3>
+            <span class="approval-status" [class.approval-required]="analysis.humanApproval.required">
+              {{ analysis.humanApproval.required ? 'Required' : 'Recommended' }}
+            </span>
+          </div>
+          <p>{{ analysis.humanApproval.reason }}</p>
+          <p class="muted">Approval gate: {{ analysis.humanApproval.gateBefore }}</p>
+        </article>
+      </div>
+
+      <div class="content-grid">
+        <article class="result-card">
+          <h3>Risks and controls</h3>
+          <ul class="plain-list">
+            @for (risk of analysis.risks; track risk) {
+              <li>{{ risk }}</li>
+            }
+          </ul>
+        </article>
+        <article class="result-card">
+          <h3>Open questions</h3>
+          <ul class="plain-list">
+            @for (question of analysis.questions; track question) {
+              <li>{{ question }}</li>
+            }
+          </ul>
+        </article>
+      </div>
+
+      @if (analysis.assumptions.length > 0) {
+        <article class="result-card assumptions-card">
+          <h3>Assumptions to confirm</h3>
+          <ul class="plain-list">
+            @for (assumption of analysis.assumptions; track assumption) {
+              <li>{{ assumption }}</li>
+            }
+          </ul>
+        </article>
+      }
+
+      <p class="analysis-disclaimer">{{ analysis.analysisNote }}</p>
     </section>
   }
 </main>
