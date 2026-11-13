@@ -73,7 +73,11 @@ def run_live_execution(
     db: Session = Depends(get_db),
 ):
     try:
-        return ExecutionService(db).run_live(execution_id, request.confirm_live_execution)
+        return ExecutionService(db).run_live(
+            execution_id,
+            request.confirm_live_execution,
+            request.confirmation_token,
+        )
     except KeyError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ValueError as error:
