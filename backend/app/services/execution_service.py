@@ -279,7 +279,7 @@ class ExecutionService:
                 "message": message,
                 "httpStatus": http_status,
                 "errorType": error_type,
-                "externalSideEffect": final_status == "succeeded",
+                "externalSideEffect": True if final_status == "succeeded" else None,
                 "recordedAt": datetime.now(timezone.utc).isoformat(),
             },
         ]
