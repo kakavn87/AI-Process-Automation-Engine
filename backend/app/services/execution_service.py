@@ -124,11 +124,17 @@ class ExecutionService:
     @staticmethod
     def live_execution_readiness() -> dict:
         endpoint = settings.WORKFLOW_WEBHOOK_URL.strip()
-        enabled = settings.WEBHOOK_EXECUTION_ENABLED
+        enabled = settings.WEBHOOK_EXECUTION_ENABLED and not settings.AUTH_ENABLED
         status = "disabled"
         message = "Live execution is disabled. The workflow remains in simulation mode."
 
-        if enabled and not endpoint:
+        if settings.AUTH_ENABLED and settings.WEBHOOK_EXECUTION_ENABLED:
+            status = "workspace_configuration_required"
+            message = (
+                "Live webhook dispatch is disabled for authenticated workspaces until "
+                "per-workspace endpoint credentials and authorization are configured."
+            )
+        elif enabled and not endpoint:
             status = "missing_endpoint"
             message = "Add WORKFLOW_WEBHOOK_URL to configure the approved webhook endpoint."
         elif enabled and not settings.WORKFLOW_LIVE_EXECUTION_TOKEN.strip():
