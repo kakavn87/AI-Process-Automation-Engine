@@ -31,7 +31,7 @@ class WorkflowExecutor:
                 "status": "simulated",
                 "message": (
                     "External action simulated; no email, Teams message, or external system was contacted."
-                    if step_type in {"notify", "email", "teams"}
+                    if step_type in {"notify", "email", "teams", "http"}
                     else "Workflow step simulated successfully."
                 ),
             })
