@@ -1,3 +1,6 @@
+import logging
+from uuid import uuid4
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from typing import Literal
 from sqlalchemy.orm import Session
@@ -9,6 +12,9 @@ from app.services.ai_usage_service import AIUsageService
 from app.services.process_service import ProcessService
 from app.services.workflow_session_service import WorkflowSessionService
 from app.services.document_service import DocumentProcessingService, MAX_FILE_BYTES, MAX_TOTAL_BYTES
+from app.services.knowledge_base_service import KnowledgeBaseService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/processes", tags=["processes"])
 
@@ -58,11 +64,57 @@ async def analyze_process_with_documents(
             detail="Image-only process analysis needs a configured vision-capable AI model. Select automatic or AI analysis, or add a text description.",
         )
 
-    analysis_description = description.strip()
+    session_id = str(uuid4())
+    knowledge = None
+    rag_index = {"enabled": False, "indexedChunks": 0, "status": "disabled"}
+    retrieved_evidence: list[dict] = []
+
     if extracted["text_context"]:
+        try:
+            knowledge = KnowledgeBaseService()
+            rag_index = knowledge.index_session(session_id, extracted["text_context"])
+            if rag_index["status"] == "indexed":
+                retrieval_query = description.strip() or (
+                    "Identify the complete business process, including steps, roles, inputs, "
+                    "outputs, systems, business rules, decisions, exceptions and approvals."
+                )
+                retrieved_evidence = knowledge.search(
+                    session_id,
+                    retrieval_query,
+                    top_k=settings.RAG_TOP_K,
+                )
+        except Exception:
+            logger.exception("Session knowledge indexing or retrieval failed; using extracted text fallback.")
+            extracted["warnings"].append(
+                "The vector knowledge store was unavailable. This analysis used the extracted document text directly."
+            )
+            retrieved_evidence = []
+            knowledge = None
+
+    if settings.RAG_ENABLED and rag_index["status"] == "setup_required":
+        extracted["warnings"].append(
+            "RAG is enabled but not fully configured. Configure Qdrant and the server-side embedding gateway to index reusable session knowledge."
+        )
+
+    if retrieved_evidence:
+        reference_context = "\n\n".join(
+            (
+                f"[Retrieved source: {item['sourceFile']}"
+                + (f" | page {item['page']}" if item.get("page") else "")
+                + f" | relevance {item['score']}]\n{item['content']}"
+            )
+            for item in retrieved_evidence
+        )
+        context_label = "RAG-retrieved document evidence"
+    else:
+        reference_context = extracted["text_context"]
+        context_label = "Reference document evidence"
+
+    analysis_description = description.strip()
+    if reference_context:
         analysis_description = (
-            f"{analysis_description}\n\nReference document evidence:\n{extracted['text_context']}"
-            if analysis_description else extracted["text_context"]
+            f"{analysis_description}\n\n{context_label}:\n{reference_context}"
+            if analysis_description else reference_context
         )
     analysis_description = analysis_description[:45_000]
 
@@ -74,18 +126,36 @@ async def analyze_process_with_documents(
         image_data_urls=extracted["image_data_urls"],
     )
     usage_telemetry = analysis.pop("_aiUsageTelemetry", None)
-    # Do not persist extracted document text in a workflow session.
-    # Keep the original short user description and derived process analysis only.
+    # Do not store raw extracted documents in the relational workflow session.
+    # RAG chunks, when enabled, are stored in Qdrant under this session's UUID.
     analysis["description"] = description.strip() or "Uploaded process documents"
+    analysis["knowledgeBase"] = {
+        **rag_index,
+        "retrievedChunks": len(retrieved_evidence),
+        "scope": "process_session",
+    }
+    analysis["sourceEvidence"] = [
+        {
+            "filename": item["sourceFile"],
+            "page": item.get("page"),
+            "score": item["score"],
+            "excerpt": item["content"][:500],
+        }
+        for item in retrieved_evidence
+    ]
     session = WorkflowSessionService(db).create(
         description=description.strip() or "Uploaded process documents",
         analysis=analysis,
         strategy=analysis_strategy,
         language=analysis_language,
         business_domain=business_domain,
+        session_id=session_id,
     )
     if usage_telemetry:
         AIUsageService(db).record(session["id"], usage_telemetry)
+    if knowledge:
+        for embedding_event in knowledge.telemetry_events:
+            AIUsageService(db).record(session["id"], embedding_event)
 
     if extracted["image_data_urls"] and not analysis.get("llmUsed"):
         extracted["warnings"].append(

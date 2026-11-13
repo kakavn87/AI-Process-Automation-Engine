@@ -21,11 +21,12 @@ class WorkflowSessionService:
         strategy: str = "auto",
         language: str = "de",
         business_domain: str = "general",
+        session_id: str | None = None,
     ) -> dict:
         questions = self.question_service.build(analysis.get("questions") or [])
         initial_status = "needs_input" if questions else "processing"
         session = WorkflowSession(
-            id=str(uuid4()),
+            id=session_id or str(uuid4()),
             description=description,
             analysis_strategy=strategy,
             language=language,

@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.core.config import settings
 from app.services.execution_service import ExecutionService
+from app.services.knowledge_base_service import KnowledgeBaseService
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
 
@@ -25,11 +26,27 @@ def _safe_http_url(value: str) -> str | None:
     return candidate.rstrip("/")
 
 
+def _rag_readiness() -> dict:
+    try:
+        return KnowledgeBaseService().readiness()
+    except Exception:
+        return {
+            "enabled": settings.RAG_ENABLED,
+            "configured": False,
+            "connected": False,
+            "status": "unavailable",
+            "collection": settings.QDRANT_COLLECTION,
+            "embeddingModel": settings.RAG_EMBEDDING_MODEL,
+            "scope": "process_session",
+            "message": "The configured vector store could not be initialized. Check the server-side Qdrant settings.",
+        }
+
+
 @router.get("/readiness")
 def get_integration_readiness():
     """Expose non-secret integration state for the Step 6 setup dashboard."""
     base_url = settings.OPENAI_BASE_URL.strip()
-    is_litellm = "litellm" in base_url.lower()
+    is_litellm = settings.AI_GATEWAY_PROVIDER.strip().lower() == "litellm"
     gateway_provider = (
         "LiteLLM" if is_litellm
         else "OpenAI-compatible gateway" if base_url
@@ -44,12 +61,15 @@ def get_integration_readiness():
             "configured": bool(settings.OPENAI_API_KEY.strip()),
             "baseUrlConfigured": bool(base_url),
             "model": settings.OPENAI_MODEL,
-            "status": "ready" if settings.OPENAI_API_KEY.strip() else "not_configured",
+            "visionModel": settings.OPENAI_VISION_MODEL.strip() or settings.OPENAI_MODEL,
+            "embeddingModel": settings.RAG_EMBEDDING_MODEL,
+            "status": "configured" if settings.OPENAI_API_KEY.strip() else "not_configured",
         },
+        "rag": _rag_readiness(),
         "openWebUI": {
             "configured": open_webui_url is not None,
             "url": open_webui_url,
-            "status": "ready" if open_webui_url else "not_configured",
+            "status": "configured" if open_webui_url else "not_configured",
         },
         "businessConnectors": [
             {

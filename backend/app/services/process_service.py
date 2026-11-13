@@ -61,7 +61,8 @@ class ProcessService:
                     )
                 self._apply_ai_result(analysis, ai_result, business_domain=business_domain)
                 analysis["llmUsed"] = True
-                analysis["llmModel"] = self.ai_service.model
+                telemetry = getattr(self.ai_service, "last_call_telemetry", None)
+                analysis["llmModel"] = (telemetry or {}).get("model") or self.ai_service.model
                 analysis["analysisMode"] = "openai_responses"
                 analysis["analysisNote"] = (
                     f"Mit der OpenAI Responses API ({self.ai_service.model}) analysiert. "

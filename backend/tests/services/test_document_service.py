@@ -69,3 +69,35 @@ def test_renders_pdf_pages_for_diagram_vision():
     assert result["documents"][0]["pages"] == 1
     assert len(result["image_data_urls"]) == 1
     assert result["image_data_urls"][0].startswith("data:image/jpeg;base64,")
+
+
+def test_extracts_drawio_nodes_and_connections():
+    xml = b"""<mxfile><diagram><mxGraphModel><root>
+      <mxCell id="0"/><mxCell id="1" parent="0"/>
+      <mxCell id="2" value="Receive request" vertex="1" parent="1"/>
+      <mxCell id="3" value="Approve request" vertex="1" parent="1"/>
+      <mxCell id="4" edge="1" source="2" target="3"/>
+    </root></mxGraphModel></diagram></mxfile>"""
+
+    result = DocumentProcessingService._extract_xml_diagram("process.drawio", xml, ".drawio")
+
+    assert "Receive request" in result
+    assert "Approve request" in result
+    assert "Receive request -> Approve request" in result
+
+
+def test_extracts_bpmn_tasks_and_sequence_flow():
+    xml = b"""<?xml version="1.0"?>
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+      <process id="purchase">
+        <startEvent id="start" name="Request received"/>
+        <task id="approve" name="Manager approval"/>
+        <sequenceFlow id="flow1" sourceRef="start" targetRef="approve"/>
+      </process>
+    </definitions>"""
+
+    result = DocumentProcessingService._extract_xml_diagram("purchase.bpmn", xml, ".bpmn")
+
+    assert "Request received" in result
+    assert "Manager approval" in result
+    assert "start -> approve" in result

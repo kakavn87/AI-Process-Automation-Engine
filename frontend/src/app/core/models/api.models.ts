@@ -95,6 +95,8 @@ export interface ProcessAnalysis {
   description: string;
   sourceDocuments?: ProcessDocumentSource[];
   documentWarnings?: string[];
+  knowledgeBase?: { enabled: boolean; indexedChunks: number; status: string; retrievedChunks: number; scope: string };
+  sourceEvidence?: Array<{ filename: string; page: number | null; score: number; excerpt: string }>;
   analysisMode: string;
   analysisNote: string;
   llmUsed: boolean;
@@ -219,7 +221,19 @@ export interface IntegrationReadiness {
     configured: boolean;
     baseUrlConfigured: boolean;
     model: string;
+    visionModel?: string;
+    embeddingModel?: string;
     status: string;
+  };
+  rag: {
+    enabled: boolean;
+    configured: boolean;
+    connected: boolean;
+    status: string;
+    collection: string;
+    embeddingModel: string;
+    scope: string;
+    message: string;
   };
   openWebUI: { configured: boolean; url: string | null; status: string };
   businessConnectors: Array<{ id: string; name: string; status: string; description: string }>;
