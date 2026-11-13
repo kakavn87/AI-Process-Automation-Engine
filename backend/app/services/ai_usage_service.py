@@ -8,8 +8,9 @@ from app.models.workflow_session import AIUsageEvent
 
 
 class AIUsageService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, tenant_id: str | None = None):
         self.db = db
+        self.tenant_id = tenant_id
 
     def record(self, session_id: str | None, telemetry: dict) -> AIUsageEvent:
         input_tokens = telemetry.get("inputTokens")
@@ -33,6 +34,7 @@ class AIUsageService:
 
         event = AIUsageEvent(
             id=str(uuid4()),
+            tenant_id=self.tenant_id,
             session_id=session_id,
             provider=telemetry.get("provider", "openai"),
             model=telemetry.get("model") or settings.OPENAI_MODEL,
@@ -51,8 +53,11 @@ class AIUsageService:
         return event
 
     def summary(self, limit: int = 25) -> dict:
-        rows = self.db.query(AIUsageEvent).order_by(AIUsageEvent.created_at.desc()).limit(limit).all()
-        totals = self.db.query(
+        base_query = self.db.query(AIUsageEvent)
+        if self.tenant_id is not None:
+            base_query = base_query.filter(AIUsageEvent.tenant_id == self.tenant_id)
+        rows = base_query.order_by(AIUsageEvent.created_at.desc()).limit(limit).all()
+        totals = base_query.with_entities(
             func.count(AIUsageEvent.id),
             func.sum(AIUsageEvent.input_tokens),
             func.sum(AIUsageEvent.output_tokens),
@@ -60,18 +65,18 @@ class AIUsageService:
             func.sum(AIUsageEvent.estimated_cost_usd),
         ).one()
         success_count = (
-            self.db.query(func.count(AIUsageEvent.id))
-            .filter(AIUsageEvent.status == "success")
+            base_query.filter(AIUsageEvent.status == "success")
+            .with_entities(func.count(AIUsageEvent.id))
             .scalar() or 0
         )
         fallback_count = (
-            self.db.query(func.count(AIUsageEvent.id))
-            .filter(AIUsageEvent.status == "fallback")
+            base_query.filter(AIUsageEvent.status == "fallback")
+            .with_entities(func.count(AIUsageEvent.id))
             .scalar() or 0
         )
         priced_count = (
-            self.db.query(func.count(AIUsageEvent.id))
-            .filter(AIUsageEvent.estimated_cost_usd.is_not(None))
+            base_query.filter(AIUsageEvent.estimated_cost_usd.is_not(None))
+            .with_entities(func.count(AIUsageEvent.id))
             .scalar() or 0
         )
 
