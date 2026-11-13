@@ -86,6 +86,25 @@ export class ProcessPageComponent implements OnInit {
     });
   }
 
+  integrationStatusLabel(status: string): string {
+    if (this.language() !== 'de') return status.replaceAll('_', ' ');
+    const labels: Record<string, string> = {
+      configured: 'Konfiguriert',
+      not_configured: 'Nicht konfiguriert',
+      ready: 'Bereit',
+      setup_required: 'Einrichtung erforderlich',
+      planned: 'Geplant',
+      disabled: 'Deaktiviert',
+      connected: 'Verbunden',
+      not_connected: 'Nicht verbunden',
+      unavailable: 'Nicht verfügbar',
+      enabled: 'Aktiv',
+      active: 'Aktiv',
+      missing: 'Fehlt'
+    };
+    return labels[status.toLowerCase()] ?? status.replaceAll('_', ' ');
+  }
+
   onWorkflowSessionChange(session: WorkflowSession | null) {
     this.workflowSession.set(session);
   }
