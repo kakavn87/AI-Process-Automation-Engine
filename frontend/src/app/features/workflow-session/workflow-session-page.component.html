@@ -151,10 +151,20 @@
         <div class="session-action-row">
           <span>{{ isGerman ? 'Sie können die Fragen auch in mehreren Schritten beantworten.' : 'You can answer the questions in multiple submissions.' }}</span>
           <button class="session-primary" type="button" (click)="submitAnswers()" [disabled]="submitting()">
-            {{ submitting() ? (isGerman ? 'Wird gespeichert …' : 'Saving …') : (isGerman ? 'Antworten speichern & fortfahren' : 'Save answers & continue') }}
-            <span>→</span>
+            @if (submitting()) { <span class="ai-inline-spinner" aria-hidden="true"></span> }
+            {{ submitting() ? (isGerman ? 'KI optimiert Ihren Prozess …' : 'AI is optimizing your process …') : (isGerman ? 'Antworten speichern & fortfahren' : 'Save answers & continue') }}
+            @if (!submitting()) { <span>→</span> }
           </button>
         </div>
+        @if (submitting()) {
+          <div class="ai-loading-panel session-submission-loading" role="status" aria-live="polite" aria-busy="true">
+            <span class="ai-loading-spinner" aria-hidden="true"></span>
+            <div>
+              <strong>{{ isGerman ? 'Ihre Antworten werden ausgewertet …' : 'Your answers are being analyzed …' }}</strong>
+              <p>{{ isGerman ? 'Die KI erstellt einen verbesserten Zielprozess. Anschließend prüft Python die Workflow-Schritte und Freigaberegeln. Dieser Schritt kann etwas dauern.' : 'AI is designing an improved target process. Python then validates the workflow steps and approval rules. This may take a little while.' }}</p>
+            </div>
+          </div>
+        }
       </section>
     }
 
