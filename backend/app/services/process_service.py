@@ -66,9 +66,13 @@ class ProcessService:
                 self._apply_ai_result(analysis, ai_result, business_domain=business_domain)
                 analysis["llmUsed"] = True
                 analysis["llmModel"] = self.ai_service.model
-                provider_url = settings.OPENAI_BASE_URL.strip().lower()
-                provider_label = "LiteLLM Gateway" if "litellm" in provider_url else "OpenAI-compatible AI Gateway" if provider_url else "OpenAI Responses API"
-                analysis["analysisMode"] = "litellm_responses" if "litellm" in provider_url else "openai_compatible_responses" if provider_url else "openai_responses"
+                provider = self.ai_service._provider_name()
+                provider_label = (
+                    "LiteLLM Gateway" if provider == "litellm"
+                    else "OpenAI-compatible AI Gateway" if provider == "openai_compatible"
+                    else "OpenAI Responses API"
+                )
+                analysis["analysisMode"] = f"{provider}_responses"
                 analysis["analysisNote"] = (
                     f"Mit {provider_label} ({self.ai_service.model}) analysiert. "
                     "Integrationen sind nicht verbunden; die Workflow-Ausführung wird nur simuliert."
