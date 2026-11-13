@@ -41,6 +41,16 @@ export interface ProposedWorkflow {
   steps: WorkflowStepAnalysis[];
 }
 
+export interface RoutingDecision {
+  requestedStrategy: 'auto' | 'rules' | 'llm';
+  selectedEngine: 'rules' | 'llm';
+  llmAvailable: boolean;
+  ruleConfidence: number;
+  rulesSuitable: boolean;
+  complexityFlags: string[];
+  reason: string;
+}
+
 export interface ProcessAnalysis {
   automationScore: number;
   signals: string[];
@@ -50,6 +60,7 @@ export interface ProcessAnalysis {
   llmUsed: boolean;
   llmModel: string | null;
   detectedDetails: DetectedProcessDetails;
+  routingDecision: RoutingDecision;
   summary: string;
   currentProcess: string[];
   automationOpportunities: AutomationOpportunity[];

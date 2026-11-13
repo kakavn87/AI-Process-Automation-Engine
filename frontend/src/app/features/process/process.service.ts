@@ -7,11 +7,11 @@ export class ProcessService {
   private readonly api = inject(ApiService);
   private readonly store = inject(ProcessStore);
 
-  analyze(description: string) {
+  analyze(description: string, analysisStrategy: 'auto' | 'rules' | 'llm' = 'auto') {
     this.store.setLoading(true);
     this.store.setError(null);
 
-    this.api.analyzeProcess(description).subscribe({
+    this.api.analyzeProcess(description, analysisStrategy).subscribe({
       next: result => {
         this.store.setAnalysis(result);
         this.store.setLoading(false);

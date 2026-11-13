@@ -21,12 +21,13 @@ export class ProcessPageComponent {
   readonly executionError = signal<string | null>(null);
 
   description = '';
+  analysisStrategy: 'auto' | 'rules' | 'llm' = 'auto';
 
   analyze() {
     this.execution.set(null);
     this.executionError.set(null);
     this.store.setDescription(this.description);
-    this.service.analyze(this.description);
+    this.service.analyze(this.description, this.analysisStrategy);
   }
 
   startExecution() {

@@ -6,6 +6,18 @@
   </header>
 
   <section class="input-panel">
+    <div class="analysis-controls">
+      <div>
+        <label for="analysis-strategy">Analysis strategy</label>
+        <p class="field-hint">Choose whether Python rules or the paid LLM should analyze this request.</p>
+      </div>
+      <select id="analysis-strategy" class="strategy-select" [(ngModel)]="analysisStrategy">
+        <option value="auto">Automatic · Hybrid (recommended)</option>
+        <option value="rules">Python rules · no LLM cost</option>
+        <option value="llm">AI analysis · uses API credits</option>
+      </select>
+    </div>
+
     <label for="process-description">Describe a business process</label>
     <p class="field-hint">Explain how the work starts, which systems and files are involved, and what the final outcome should be.</p>
     <textarea
@@ -35,7 +47,7 @@
           <h2>Process assessment</h2>
         </div>
         <span class="mode-label" [class.ai-mode]="analysis.llmUsed">
-          {{ analysis.llmUsed ? 'OpenAI LLM · ' + analysis.llmModel : 'Rules fallback' }}
+          {{ analysis.llmUsed ? 'OpenAI LLM · ' + analysis.llmModel : 'Python rules · no LLM call' }}
         </span>
       </div>
 
@@ -60,9 +72,17 @@
         </article>
       </div>
 
-      @if (!analysis.llmUsed) {
+      <div class="routing-note">
+        <strong>{{ analysis.routingDecision.selectedEngine === 'llm' ? 'LLM selected' : 'Python selected' }}:</strong>
+        {{ analysis.routingDecision.reason }}
+        @if (analysis.routingDecision.complexityFlags.length > 0) {
+          <span class="routing-flags">Signals requiring deeper analysis: {{ analysis.routingDecision.complexityFlags.join(', ') }}</span>
+        }
+      </div>
+
+      @if (analysis.routingDecision.requestedStrategy === 'llm' && !analysis.routingDecision.llmAvailable) {
         <div class="setup-hint">
-          <strong>LLM not active:</strong> add OPENAI_API_KEY to the backend service environment on Render. The application is using its rules-based fallback until then.
+          <strong>API key missing:</strong> AI analysis was requested, but the backend has no OPENAI_API_KEY. This request was handled by Python rules instead.
         </div>
       }
 

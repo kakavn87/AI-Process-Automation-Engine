@@ -8,8 +8,11 @@ export class ApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/api`;
 
-  analyzeProcess(description: string) {
-    return this.http.post<ProcessAnalysis>(`${this.baseUrl}/processes/analyze`, { description });
+  analyzeProcess(description: string, analysisStrategy: 'auto' | 'rules' | 'llm' = 'auto') {
+    return this.http.post<ProcessAnalysis>(`${this.baseUrl}/processes/analyze`, {
+      description,
+      analysis_strategy: analysisStrategy
+    });
   }
 
   startExecution(workflow: ProposedWorkflow) {

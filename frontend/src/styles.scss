@@ -7,7 +7,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; background: #f4f6fa; }
-button, textarea { font: inherit; }
+button, textarea, select { font: inherit; }
 
 .page-shell { max-width: 1120px; margin: 0 auto; padding: 48px 28px 72px; }
 .hero { margin-bottom: 28px; }
@@ -17,6 +17,10 @@ h1 { margin: 0; color: #101828; font-size: clamp(28px, 4vw, 40px); letter-spacin
 .input-panel, .result-card, .score-card, .summary-card { border: 1px solid #e3e8f0; border-radius: 16px; background: #fff; box-shadow: 0 5px 20px rgba(16, 24, 40, .035); }
 .input-panel { padding: 24px; }
 .input-panel label { display: block; font-weight: 700; font-size: 15px; }
+.analysis-controls { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid #edf0f5; }
+.analysis-controls .field-hint { margin: 6px 0 0; }
+.strategy-select { min-width: 270px; padding: 10px 12px; border: 1px solid #d8deea; border-radius: 9px; background: #fff; color: #253047; outline: none; }
+.strategy-select:focus { border-color: #6687c5; box-shadow: 0 0 0 3px rgba(74, 112, 184, .12); }
 .field-hint { color: #768196; font-size: 12px; }
 .input-panel .field-hint { margin: 7px 0 12px; }
 textarea { display: block; width: 100%; min-height: 150px; resize: vertical; padding: 14px 15px; border: 1px solid #d8deea; border-radius: 10px; outline: none; color: #182230; line-height: 1.6; }
@@ -45,6 +49,8 @@ h3 { margin: 0 0 16px; font-size: 17px; letter-spacing: -.02em; }
 .summary-card > p { margin: 9px 0 15px; color: #344054; font-size: 15px; }
 .signals-list { display: flex; flex-wrap: wrap; gap: 7px; }
 .signal-chip { border: 1px solid #dfe6f1; border-radius: 7px; padding: 5px 8px; background: #f8faff; color: #34517e; font-size: 11px; font-weight: 700; }
+.routing-note { display: grid; gap: 5px; margin-top: 15px; border: 1px solid #dfe6f1; border-radius: 10px; padding: 12px 14px; background: #f8faff; color: #475467; font-size: 12px; line-height: 1.6; }
+.routing-flags { color: #8a5b17; font-size: 11px; }
 .setup-hint { margin-top: 15px; border: 1px solid #ead9ad; border-radius: 10px; padding: 12px 14px; background: #fffaf0; color: #74571b; font-size: 12px; line-height: 1.6; }
 .content-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
 .numbered-list, .plain-list { margin: 0; padding-left: 20px; color: #475467; font-size: 13px; line-height: 1.65; }
@@ -96,6 +102,8 @@ h3 { margin: 0 0 16px; font-size: 17px; letter-spacing: -.02em; }
 @media (max-width: 760px) {
   .page-shell { padding: 30px 16px 48px; }
   .overview-grid, .content-grid { grid-template-columns: 1fr; }
+  .analysis-controls { align-items: stretch; flex-direction: column; }
+  .strategy-select { width: 100%; min-width: 0; }
   .section-heading, .form-footer { align-items: flex-start; }
   .form-footer { flex-direction: column; }
   .form-footer button { width: 100%; }
