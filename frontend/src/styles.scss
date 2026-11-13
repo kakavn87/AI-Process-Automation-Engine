@@ -2239,3 +2239,43 @@ body { background: #f3f5f9; color: #111827; }
   .workspace-invite-form { grid-template-columns: 1fr; }
   .workspace-invite-form .button-primary { grid-column: auto; width: 100%; }
 }
+
+
+/* Workspace creation */
+.workspace-create-panel { display: grid; gap: 13px; }
+.workspace-create-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+}
+.workspace-create-field { display: grid; gap: 7px; min-width: 0; }
+.workspace-create-field label {
+  color: #35415a;
+  font-size: 11px;
+  font-weight: 800;
+}
+.workspace-create-field input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #dfe4ed;
+  border-radius: 9px;
+  padding: 0 11px;
+  color: #25314a;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+}
+.workspace-create-form .button-primary { min-height: 42px; white-space: nowrap; }
+.workspace-create-success {
+  padding: 11px 13px;
+  border: 1px solid #bbf7d0;
+  border-radius: 9px;
+  color: #166534;
+  background: #f0fdf4;
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .workspace-create-form { grid-template-columns: 1fr; }
+  .workspace-create-form .button-primary { width: 100%; }
+}
