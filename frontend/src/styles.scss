@@ -2006,12 +2006,17 @@ body { background: #f3f5f9; color: #111827; }
 
 /* Horizontal workflow navigation shared across the main workspace. */
 .workflow-stepper {
+  position: sticky;
+  top: 66px;
+  z-index: 14;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(128px, 1fr));
   gap: 9px;
-  margin: 8px 0 27px;
+  margin: 0 0 27px;
   overflow-x: auto;
-  padding: 0 1px 6px;
+  padding: 8px 1px;
+  background: rgba(255, 255, 255, .94);
+  backdrop-filter: blur(14px);
   scrollbar-width: thin;
 }
 .workflow-stepper-item {
@@ -2114,13 +2119,11 @@ body { background: #f3f5f9; color: #111827; }
 }
 .workflow-stepper-item.is-error .workflow-stepper-copy strong { color: #991b1b; }
 @media (max-width: 900px) {
-  .workflow-stepper {
-    grid-template-columns: repeat(5, minmax(128px, 1fr));
-    scroll-snap-type: x proximity;
-  }
+  .workflow-stepper { scroll-snap-type: x proximity; }
 }
 @media (max-width: 700px) {
   .workflow-stepper {
+    top: 58px;
     grid-template-columns: repeat(5, minmax(120px, 1fr));
     gap: 8px;
     margin-bottom: 22px;
