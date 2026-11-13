@@ -18,7 +18,13 @@
       <a class="nav-link" href="#data"><span class="nav-icon">▤</span>{{ i18n.navData }}</a>
 
       <span class="nav-label nav-label-spaced">{{ language() === 'de' ? 'EINSTELLUNGEN' : 'SETTINGS' }}</span>
+      @if (auth.isAuthenticated()) {
+        <a class="nav-link" href="#workspace-settings"><span class="nav-icon">▣</span>{{ language() === 'de' ? 'Arbeitsbereiche' : 'Workspaces' }}</a>
+      }
       <a class="nav-link" href="#integrations"><span class="nav-icon">⚙</span>{{ language() === 'de' ? 'KI-Plattform & Integrationen' : 'AI platform & integrations' }}</a>
+      @if (canManageWorkspace()) {
+        <a class="nav-link" href="#workspace-members"><span class="nav-icon">♙</span>{{ language() === 'de' ? 'Mitglieder' : 'Members' }}</a>
+      }
       <a class="nav-link" href="#governance"><span class="nav-icon">◇</span>{{ i18n.navSecurity }}</a>
     </nav>
 
@@ -32,7 +38,19 @@
     <header class="topbar">
       <div class="breadcrumb"><span>AI Process Optimierung</span><span class="crumb-separator">/</span><strong>{{ i18n.navOverview }}</strong></div>
       <div class="topbar-actions">
-        <span class="environment-label"><span class="health-dot"></span>{{ i18n.workspace }}</span>
+        @if (auth.isAuthenticated() && auth.user(); as currentUser) {
+          <div class="account-summary">
+            <span class="account-summary-copy">
+              <strong>{{ currentUser.tenant.name }}</strong>
+              <small>{{ currentUser.full_name || currentUser.email }}</small>
+            </span>
+            <button class="logout-button" type="button" (click)="auth.logout()">
+              {{ language() === 'de' ? 'Abmelden' : 'Sign out' }}
+            </button>
+          </div>
+        } @else {
+          <span class="environment-label"><span class="health-dot"></span>{{ i18n.workspace }}</span>
+        }
         <div class="language-switch" role="group" [attr.aria-label]="i18n.language">
           <button type="button" [class.active]="language() === 'de'" [attr.aria-pressed]="language() === 'de'" (click)="setLanguage('de')">DE</button>
           <button type="button" [class.active]="language() === 'en'" [attr.aria-pressed]="language() === 'en'" (click)="setLanguage('en')">EN</button>
@@ -504,6 +522,94 @@
           <div class="result-panel">{{ language() === 'de' ? 'Integrationsstatus wird geladen …' : 'Loading integration status …' }}</div>
         }
       </section>
+
+
+
+      @if (auth.isAuthenticated()) {
+        <section class="section-block workspace-create-section" id="workspace-settings">
+          <div class="section-header">
+            <div>
+              <div class="section-kicker">{{ language() === 'de' ? 'ARBEITSBEREICH · MANDANTENVERWALTUNG' : 'WORKSPACE · TENANT MANAGEMENT' }}</div>
+              <h2>{{ language() === 'de' ? 'Neuen Arbeitsbereich erstellen' : 'Create a workspace' }}</h2>
+              <p>{{ language() === 'de' ? 'Jeder Arbeitsbereich erhält eigene Mitglieder, Workflows und Nutzungsdaten. Nach dem Erstellen wechseln Sie direkt in den neuen Arbeitsbereich.' : 'Each workspace has its own members, workflows and usage records. After creation you are switched into the new workspace.' }}</p>
+            </div>
+          </div>
+          <article class="result-panel workspace-create-panel">
+            <form class="workspace-create-form" (ngSubmit)="createWorkspace()">
+              <div class="workspace-create-field">
+                <label for="new-workspace-name">{{ language() === 'de' ? 'Name des Arbeitsbereichs' : 'Workspace name' }}</label>
+                <input id="new-workspace-name" name="newWorkspaceName" type="text"
+                  [(ngModel)]="newWorkspaceName" required minlength="2" maxlength="120"
+                  [placeholder]="language() === 'de' ? 'z. B. Musterfirma GmbH' : 'e.g. Example Company'" />
+              </div>
+              <button class="button-primary" type="submit" [disabled]="workspaceCreating() || newWorkspaceName.trim().length < 2">
+                {{ workspaceCreating()
+                  ? (language() === 'de' ? 'Arbeitsbereich wird erstellt …' : 'Creating workspace …')
+                  : (language() === 'de' ? 'Arbeitsbereich erstellen' : 'Create workspace') }}
+                <span>→</span>
+              </button>
+            </form>
+            @if (workspaceCreateError(); as error) {
+              <div class="workspace-invite-error" role="alert">{{ error }}</div>
+            }
+            @if (workspaceCreateSuccess(); as success) {
+              <div class="workspace-create-success" role="status">{{ success }}</div>
+            }
+          </article>
+        </section>
+      }
+
+      @if (canManageWorkspace()) {
+        <section class="section-block workspace-members-section" id="workspace-members">
+          <div class="section-header">
+            <div>
+              <div class="section-kicker">{{ language() === 'de' ? 'ARBEITSBEREICH · ZUGRIFFSVERWALTUNG' : 'WORKSPACE · ACCESS MANAGEMENT' }}</div>
+              <h2>{{ language() === 'de' ? 'Mitglieder einladen' : 'Invite workspace members' }}</h2>
+              <p>{{ language() === 'de' ? 'Erstellen Sie einen einmaligen Einladungscode und teilen Sie ihn über einen sicheren Kanal mit dem neuen Mitglied.' : 'Create a one-time invitation code and share it with the new member through a secure channel.' }}</p>
+            </div>
+          </div>
+          <article class="result-panel workspace-invite-panel">
+            <form class="workspace-invite-form" (ngSubmit)="createWorkspaceInvitation()">
+              <div class="workspace-invite-field">
+                <label for="workspace-invite-email">{{ language() === 'de' ? 'E-Mail-Adresse' : 'Email address' }}</label>
+                <input id="workspace-invite-email" name="workspaceInviteEmail" type="email"
+                  [(ngModel)]="workspaceInviteEmail" required email
+                  placeholder="name@unternehmen.de" />
+              </div>
+              <div class="workspace-invite-field">
+                <label for="workspace-invite-role">{{ language() === 'de' ? 'Rolle im Arbeitsbereich' : 'Workspace role' }}</label>
+                <select id="workspace-invite-role" name="workspaceInviteRole" [(ngModel)]="workspaceInviteRole">
+                  <option value="member">{{ language() === 'de' ? 'Mitglied' : 'Member' }}</option>
+                  <option value="approver">{{ language() === 'de' ? 'Freigabeberechtigt' : 'Approver' }}</option>
+                  <option value="admin">{{ language() === 'de' ? 'Administrator' : 'Administrator' }}</option>
+                </select>
+              </div>
+              <button class="button-primary" type="submit" [disabled]="invitationLoading() || !workspaceInviteEmail.trim()">
+                {{ invitationLoading()
+                  ? (language() === 'de' ? 'Einladung wird erstellt …' : 'Creating invitation …')
+                  : (language() === 'de' ? 'Einladung erstellen' : 'Create invitation') }}
+                <span>→</span>
+              </button>
+            </form>
+            @if (invitationError(); as error) {
+              <div class="workspace-invite-error" role="alert">{{ error }}</div>
+            }
+            @if (invitationResult(); as invitation) {
+              <div class="workspace-invite-result">
+                <div>
+                  <strong>{{ language() === 'de' ? 'Einladung erstellt' : 'Invitation created' }}</strong>
+                  <p>{{ invitation.email }} · {{ invitation.role }} · {{ language() === 'de' ? 'Gültig bis' : 'Expires' }} {{ invitation.expires_at | date:'short' }}</p>
+                </div>
+                <label for="workspace-invite-token">{{ language() === 'de' ? 'Einmaliger Einladungscode' : 'One-time invitation code' }}</label>
+                <textarea id="workspace-invite-token" rows="2" readonly [value]="invitation.invitation_token"></textarea>
+                <small>{{ language() === 'de'
+                  ? 'Der Code wird nur jetzt angezeigt. Teilen Sie ihn über einen sicheren Kanal. Der Empfänger kann ihn auf der Anmeldeseite einlösen.'
+                  : 'The code is shown only now. Share it through a secure channel; the recipient can redeem it from the sign-in page.' }}</small>
+              </div>
+            }
+          </article>
+        </section>
+      }
 
       <footer class="page-footer">
         <span><strong>AI Process Optimierung</strong> · {{ i18n.product }}</span>

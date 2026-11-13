@@ -3,11 +3,16 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
+from app.api.routes.auth import router as auth_router
+from app.api.routes.health import router as health_router
 from app.core.config import settings
+from app.core.database import SessionLocal
+from app.dependencies.auth import get_tenant_context
+from app.services.auth_service import AuthService
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Run versioned schema changes before the API accepts traffic. This also
@@ -16,6 +21,9 @@ async def lifespan(app: FastAPI):
     backend_dir = Path(__file__).resolve().parents[1]
     alembic_config = Config(str(backend_dir / "alembic.ini"))
     command.upgrade(alembic_config, "head")
+    if settings.AUTH_ENABLED:
+        with SessionLocal() as db:
+            AuthService(db).bootstrap()
     yield
 
 
@@ -38,7 +46,15 @@ if settings.IS_PULL_REQUEST and settings.preview_cors_origin_regex:
 
 app.add_middleware(CORSMiddleware, **cors_options)
 
-app.include_router(api_router, prefix="/api")
+# Health and sign-in bootstrap stay public. All business APIs require an
+# authenticated tenant context when AUTH_ENABLED is switched on.
+app.include_router(health_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
+app.include_router(
+    api_router,
+    prefix="/api",
+    dependencies=[Depends(get_tenant_context)],
+)
 
 
 @app.get("/", tags=["system"])

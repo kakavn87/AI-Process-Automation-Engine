@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.config import settings
+from app.dependencies.auth import TenantContext, get_tenant_context
 from app.schemas.process import ProcessAnalyzeRequest
 from app.services.ai_usage_service import AIUsageService
 from app.services.process_service import ProcessService
@@ -28,6 +29,7 @@ async def analyze_process_with_documents(
     business_domain: str = Form(default="general", max_length=80),
     files: list[UploadFile] = File(...),
     db: Session = Depends(get_db),
+    tenant_context: TenantContext = Depends(get_tenant_context),
 ):
     processor = DocumentProcessingService()
     uploaded: list[tuple[str, bytes]] = []
@@ -150,7 +152,7 @@ async def analyze_process_with_documents(
     # Persist extraction details with the workflow session, not only in the initial response.
     analysis["sourceDocuments"] = extracted["documents"]
     analysis["documentWarnings"] = extracted["warnings"]
-    session = WorkflowSessionService(db).create(
+    session = WorkflowSessionService(db, tenant_id=tenant_context.tenant_id).create(
         description=description.strip() or "Uploaded process documents",
         analysis=analysis,
         strategy=analysis_strategy,
@@ -159,10 +161,10 @@ async def analyze_process_with_documents(
         session_id=session_id,
     )
     if usage_telemetry:
-        AIUsageService(db).record(session["id"], usage_telemetry)
+        AIUsageService(db, tenant_id=tenant_context.tenant_id).record(session["id"], usage_telemetry)
     if knowledge:
         for embedding_event in knowledge.telemetry_events:
-            AIUsageService(db).record(session["id"], embedding_event)
+            AIUsageService(db, tenant_id=tenant_context.tenant_id).record(session["id"], embedding_event)
 
     return {
         **analysis,
@@ -173,7 +175,11 @@ async def analyze_process_with_documents(
 
 
 @router.post("/analyze")
-def analyze_process(request: ProcessAnalyzeRequest, db: Session = Depends(get_db)):
+def analyze_process(
+    request: ProcessAnalyzeRequest,
+    db: Session = Depends(get_db),
+    tenant_context: TenantContext = Depends(get_tenant_context),
+):
     analysis = ProcessService(db).analyze(
         request.description,
         strategy=request.analysis_strategy,
@@ -182,7 +188,7 @@ def analyze_process(request: ProcessAnalyzeRequest, db: Session = Depends(get_db
     )
     usage_telemetry = analysis.pop("_aiUsageTelemetry", None)
 
-    session = WorkflowSessionService(db).create(
+    session = WorkflowSessionService(db, tenant_id=tenant_context.tenant_id).create(
         description=request.description,
         analysis=analysis,
         strategy=request.analysis_strategy,
@@ -190,7 +196,7 @@ def analyze_process(request: ProcessAnalyzeRequest, db: Session = Depends(get_db
         business_domain=request.business_domain,
     )
     if usage_telemetry:
-        AIUsageService(db).record(session["id"], usage_telemetry)
+        AIUsageService(db, tenant_id=tenant_context.tenant_id).record(session["id"], usage_telemetry)
 
     return {
         **analysis,

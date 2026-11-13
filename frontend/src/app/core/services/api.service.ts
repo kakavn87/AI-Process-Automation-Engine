@@ -137,6 +137,17 @@ export class ApiService {
     );
   }
 
+  createWorkspaceInvitation(email: string, role: 'admin' | 'member' | 'approver') {
+    return this.request('/auth/invitations', url =>
+      this.http.post<{
+        email: string;
+        role: string;
+        invitation_token: string;
+        expires_at: string;
+      }>(url, { email, role })
+    );
+  }
+
   getIntegrationReadiness() {
     return this.request('/integrations/readiness', url =>
       this.http.get<IntegrationReadiness>(url)

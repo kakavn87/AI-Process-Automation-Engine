@@ -122,3 +122,33 @@ def test_preview_postgres_url_is_normalized_without_using_production_database():
     assert settings.sqlalchemy_database_url == (
         "postgresql+psycopg://preview:secret@db.example.com/preview"
     )
+
+
+def test_authentication_is_disabled_by_default():
+    settings = Settings(_env_file=None)
+    assert settings.AUTH_ENABLED is False
+
+
+def test_authentication_requires_a_long_jwt_secret():
+    with pytest.raises(ValueError, match="JWT_SECRET_KEY"):
+        Settings(
+            _env_file=None,
+            AUTH_ENABLED=True,
+            JWT_SECRET_KEY="short-secret",
+        )
+
+
+def test_pull_request_preview_never_inherits_production_authentication_secrets():
+    settings = Settings(
+        _env_file=None,
+        IS_PULL_REQUEST=True,
+        AUTH_ENABLED=True,
+        JWT_SECRET_KEY="production-signing-secret-with-more-than-32-characters",
+        BOOTSTRAP_ADMIN_EMAIL="admin@example.com",
+        BOOTSTRAP_ADMIN_PASSWORD="Production-Password-12!",
+    )
+
+    assert settings.AUTH_ENABLED is False
+    assert settings.JWT_SECRET_KEY == ""
+    assert settings.BOOTSTRAP_ADMIN_EMAIL == ""
+    assert settings.BOOTSTRAP_ADMIN_PASSWORD == ""

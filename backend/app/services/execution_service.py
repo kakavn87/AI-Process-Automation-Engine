@@ -16,14 +16,22 @@ from app.models.workflow_session import WorkflowSession
 
 
 class ExecutionService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, tenant_id: str | None = None):
         self.db = db
+        self.tenant_id = tenant_id
         self.executor = WorkflowExecutor()
+
+    def _query_execution(self, execution_id: str):
+        query = self.db.query(ApprovalExecution).filter(ApprovalExecution.id == execution_id)
+        if self.tenant_id is not None:
+            query = query.filter(ApprovalExecution.tenant_id == self.tenant_id)
+        return query.one_or_none()
 
     def create(self, workflow: dict) -> dict:
         validate(workflow)
         execution = ApprovalExecution(
             id=str(uuid4()),
+            tenant_id=self.tenant_id,
             workflow_name=workflow.get("name", "Untitled workflow"),
             workflow_definition=workflow,
             status="awaiting_approval",
@@ -39,20 +47,22 @@ class ExecutionService:
         return self._serialize(execution)
 
     def get(self, execution_id: str) -> dict | None:
-        execution = self.db.get(ApprovalExecution, execution_id)
+        execution = self._query_execution(execution_id)
         return self._serialize(execution) if execution else None
 
     def list(self, limit: int = 20) -> list[dict]:
+        query = self.db.query(ApprovalExecution)
+        if self.tenant_id is not None:
+            query = query.filter(ApprovalExecution.tenant_id == self.tenant_id)
         items = (
-            self.db.query(ApprovalExecution)
-            .order_by(ApprovalExecution.created_at.desc())
+            query.order_by(ApprovalExecution.created_at.desc())
             .limit(limit)
             .all()
         )
         return [self._serialize(item) for item in items]
 
     def approve(self, execution_id: str, note: str | None = None) -> dict:
-        execution = self.db.get(ApprovalExecution, execution_id)
+        execution = self._query_execution(execution_id)
         if execution is None:
             raise KeyError("Execution was not found.")
         if execution.status != "awaiting_approval":
@@ -81,7 +91,7 @@ class ExecutionService:
         return self._serialize(execution)
 
     def reject(self, execution_id: str, note: str | None = None) -> dict:
-        execution = self.db.get(ApprovalExecution, execution_id)
+        execution = self._query_execution(execution_id)
         if execution is None:
             raise KeyError("Execution was not found.")
         if execution.status != "awaiting_approval":
@@ -114,11 +124,17 @@ class ExecutionService:
     @staticmethod
     def live_execution_readiness() -> dict:
         endpoint = settings.WORKFLOW_WEBHOOK_URL.strip()
-        enabled = settings.WEBHOOK_EXECUTION_ENABLED
+        enabled = settings.WEBHOOK_EXECUTION_ENABLED and not settings.AUTH_ENABLED
         status = "disabled"
         message = "Live execution is disabled. The workflow remains in simulation mode."
 
-        if enabled and not endpoint:
+        if settings.AUTH_ENABLED and settings.WEBHOOK_EXECUTION_ENABLED:
+            status = "workspace_configuration_required"
+            message = (
+                "Live webhook dispatch is disabled for authenticated workspaces until "
+                "per-workspace endpoint credentials and authorization are configured."
+            )
+        elif enabled and not endpoint:
             status = "missing_endpoint"
             message = "Add WORKFLOW_WEBHOOK_URL to configure the approved webhook endpoint."
         elif enabled and not settings.WORKFLOW_LIVE_EXECUTION_TOKEN.strip():
@@ -169,7 +185,7 @@ class ExecutionService:
     def run_live(self, execution_id: str, confirmed: bool, confirmation_token: str) -> dict:
         if confirmed is not True:
             raise ValueError("Explicit confirmation is required before sending data to the configured webhook.")
-        execution = self.db.get(ApprovalExecution, execution_id)
+        execution = self._query_execution(execution_id)
         if execution is None:
             raise KeyError("Execution was not found.")
         if execution.status != "completed":
@@ -304,11 +320,12 @@ class ExecutionService:
         if not sqlalchemy_inspect(self.db.get_bind()).has_table(WorkflowSession.__tablename__):
             return
 
-        session = (
-            self.db.query(WorkflowSession)
-            .filter(WorkflowSession.related_execution_id == execution_id)
-            .one_or_none()
+        query = self.db.query(WorkflowSession).filter(
+            WorkflowSession.related_execution_id == execution_id
         )
+        if self.tenant_id is not None:
+            query = query.filter(WorkflowSession.tenant_id == self.tenant_id)
+        session = query.one_or_none()
         if session is None:
             return
         session.status = status

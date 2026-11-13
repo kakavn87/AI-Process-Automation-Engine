@@ -1,6 +1,8 @@
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../../core/services/api.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { IntegrationReadiness, TabularDataResult, WorkflowSession } from '../../../../core/models/api.models';
 import { ProcessStore } from '../../process.store';
 import { ProcessService } from '../../process.service';
@@ -23,11 +25,12 @@ interface Industry {
 @Component({
   selector: 'app-process-page',
   standalone: true,
-  imports: [FormsModule, WorkflowSessionPageComponent],
+  imports: [FormsModule, WorkflowSessionPageComponent, DatePipe],
   templateUrl: './process-page.component.html'
 })
 export class ProcessPageComponent implements OnInit {
   readonly store = inject(ProcessStore);
+  readonly auth = inject(AuthService);
   private readonly service = inject(ProcessService);
   private readonly api = inject(ApiService);
 
@@ -42,6 +45,20 @@ export class ProcessPageComponent implements OnInit {
   readonly integrationLoading = signal(false);
   readonly integrationError = signal<string | null>(null);
   readonly workflowSession = signal<WorkflowSession | null>(null);
+  readonly workspaceCreating = signal(false);
+  readonly workspaceCreateError = signal<string | null>(null);
+  readonly workspaceCreateSuccess = signal<string | null>(null);
+  newWorkspaceName = '';
+  readonly invitationLoading = signal(false);
+  readonly invitationError = signal<string | null>(null);
+  readonly invitationResult = signal<{
+    email: string;
+    role: string;
+    invitation_token: string;
+    expires_at: string;
+  } | null>(null);
+  workspaceInviteEmail = '';
+  workspaceInviteRole: 'admin' | 'member' | 'approver' = 'member';
 
   selectedDataFile: File | null = null;
   processFiles: File[] = [];
@@ -82,6 +99,64 @@ export class ProcessPageComponent implements OnInit {
             : 'Could not load integration status.'
         );
         this.integrationLoading.set(false);
+      }
+    });
+  }
+
+  createWorkspace(): void {
+    const name = this.newWorkspaceName.trim();
+    if (!name || this.workspaceCreating() || !this.auth.isAuthenticated()) return;
+
+    this.workspaceCreating.set(true);
+    this.workspaceCreateError.set(null);
+    this.workspaceCreateSuccess.set(null);
+    this.auth.createWorkspace(name).subscribe({
+      next: () => {
+        this.newWorkspaceName = '';
+        this.workspaceCreateSuccess.set(this.language() === 'de'
+          ? 'Arbeitsbereich erstellt. Sie sind jetzt im neuen Arbeitsbereich angemeldet.'
+          : 'Workspace created. You are now signed in to the new workspace.');
+        this.workspaceCreating.set(false);
+        this.invitationResult.set(null);
+      },
+      error: response => {
+        const detail = response?.error?.detail;
+        this.workspaceCreateError.set(typeof detail === 'string'
+          ? detail
+          : (this.language() === 'de'
+            ? 'Der Arbeitsbereich konnte nicht erstellt werden.'
+            : 'Could not create the workspace.'));
+        this.workspaceCreating.set(false);
+      }
+    });
+  }
+
+  canManageWorkspace(): boolean {
+    const role = this.auth.user()?.role;
+    return this.auth.isAuthenticated() && (role === 'owner' || role === 'admin');
+  }
+
+  createWorkspaceInvitation(): void {
+    const email = this.workspaceInviteEmail.trim().toLowerCase();
+    if (!email || this.invitationLoading() || !this.canManageWorkspace()) return;
+
+    this.invitationLoading.set(true);
+    this.invitationError.set(null);
+    this.invitationResult.set(null);
+    this.api.createWorkspaceInvitation(email, this.workspaceInviteRole).subscribe({
+      next: result => {
+        this.invitationResult.set(result);
+        this.workspaceInviteEmail = '';
+        this.invitationLoading.set(false);
+      },
+      error: response => {
+        const detail = response?.error?.detail;
+        this.invitationError.set(typeof detail === 'string'
+          ? detail
+          : (this.language() === 'de'
+            ? 'Die Einladung konnte nicht erstellt werden.'
+            : 'Could not create the invitation.'));
+        this.invitationLoading.set(false);
       }
     });
   }
