@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import {
   AIUsageSummary,
   ApprovalExecution,
+  IntegrationReadiness,
   LiveExecutionReadiness,
   ProcessAnalysis,
   ProposedWorkflow,
@@ -117,6 +118,12 @@ export class ApiService {
   rejectExecution(id: string, note = '') {
     return this.request('/executions/' + encodeURIComponent(id) + '/reject', url =>
       this.http.post<ApprovalExecution>(url, { note })
+    );
+  }
+
+  getIntegrationReadiness() {
+    return this.request('/integrations/readiness', url =>
+      this.http.get<IntegrationReadiness>(url)
     );
   }
 
