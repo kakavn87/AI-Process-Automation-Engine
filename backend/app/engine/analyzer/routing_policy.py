@@ -54,8 +54,6 @@ class ProcessRoutingPolicy:
         )
         if unsupported_systems:
             complexity_flags.append("unsupported_systems")
-        if len(description) > 1600:
-            complexity_flags.append("long_description")
 
         activity_score = min(len(activities), 4) * 15
         context_score = min(context_count, 3) * 10

@@ -68,6 +68,7 @@ export interface ProcessSpecification {
 
 export interface ProcessAnalysis {
   automationScore: number;
+  automationScoreNote?: string;
   signals: string[];
   description: string;
   analysisMode: string;
