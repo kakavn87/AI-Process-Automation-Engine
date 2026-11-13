@@ -5,6 +5,7 @@ import { ApiService } from '../../core/services/api.service';
 import {
   AIUsageSummary,
   ApprovalExecution,
+  LiveExecutionReadiness,
   WorkflowSession
 } from '../../core/models/api.models';
 
@@ -23,6 +24,9 @@ export class WorkflowSessionPageComponent implements OnInit {
   readonly session = signal<WorkflowSession | null>(null);
   readonly execution = signal<ApprovalExecution | null>(null);
   readonly usage = signal<AIUsageSummary | null>(null);
+  readonly liveReadiness = signal<LiveExecutionReadiness | null>(null);
+  readonly liveConfirmed = signal(false);
+  readonly liveLoading = signal(false);
   readonly answerValues = signal<Record<string, string | boolean>>({});
   readonly loading = signal(false);
   readonly submitting = signal(false);
@@ -37,6 +41,7 @@ export class WorkflowSessionPageComponent implements OnInit {
       if (this.sessionId) this.loadSession();
     });
     this.loadUsage();
+    this.loadLiveReadiness();
   }
 
   get isGerman(): boolean {
@@ -65,6 +70,13 @@ export class WorkflowSessionPageComponent implements OnInit {
     });
   }
 
+  loadLiveReadiness(): void {
+    this.api.getLiveExecutionReadiness().subscribe({
+      next: result => this.liveReadiness.set(result),
+      error: () => this.liveReadiness.set(null)
+    });
+  }
+
   loadUsage(): void {
     this.api.getUsageSummary(10).subscribe({
       next: result => this.usage.set(result),
@@ -78,6 +90,29 @@ export class WorkflowSessionPageComponent implements OnInit {
       error: () => this.error.set(this.isGerman
         ? 'Der Freigabestatus konnte nicht geladen werden.'
         : 'Could not load the approval status.')
+    });
+  }
+
+  runLiveExecution(): void {
+    const current = this.execution();
+    if (!current || !this.liveReadiness()?.ready || !this.liveConfirmed() || this.liveLoading()) return;
+
+    this.liveLoading.set(true);
+    this.error.set(null);
+    this.api.runLiveExecution(current.id).subscribe({
+      next: result => {
+        this.execution.set(result);
+        this.liveConfirmed.set(false);
+        this.liveLoading.set(false);
+        this.loadSession();
+      },
+      error: error => {
+        this.error.set(error?.error?.detail || (this.isGerman
+          ? 'Die externe Ausführung konnte nicht bestätigt werden.'
+          : 'The external execution could not be confirmed.'));
+        this.liveLoading.set(false);
+        this.loadExecution(current.id);
+      }
     });
   }
 
@@ -168,7 +203,11 @@ export class WorkflowSessionPageComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
-  stepState(step: number, status: string): 'complete' | 'active' | 'pending' {
+  stepState(
+    step: number,
+    status: string,
+    liveStatus = 'not_started'
+  ): 'complete' | 'active' | 'pending' {
     if (step === 1) return 'complete';
     if (step === 2) return status === 'needs_input' ? 'active' : 'complete';
     if (step === 3) {
@@ -181,10 +220,16 @@ export class WorkflowSessionPageComponent implements OnInit {
       if (status === 'completed' || status === 'rejected') return 'complete';
       return 'pending';
     }
+    if (step === 5) return status === 'completed' || status === 'rejected' ? 'complete' : 'pending';
+    if (step === 6) {
+      if (liveStatus === 'succeeded') return 'complete';
+      if (status === 'completed') return liveStatus === 'running' ? 'active' : 'active';
+      return 'pending';
+    }
     return 'pending';
   }
 
-  stepDescription(step: number, status: string): string {
+  stepDescription(step: number, status: string, liveStatus = 'not_started'): string {
     if (step === 2) {
       return this.isGerman
         ? (status === 'needs_input' ? 'Ihre Angaben werden benötigt' : 'Klärung abgeschlossen')
@@ -202,6 +247,15 @@ export class WorkflowSessionPageComponent implements OnInit {
       if (status === 'completed') return this.isGerman ? 'Simulation abgeschlossen' : 'Simulation completed';
       if (status === 'rejected') return this.isGerman ? 'Anfrage abgelehnt' : 'Request rejected';
       return this.isGerman ? 'Nach der Verarbeitung' : 'After processing';
+    }
+    if (step === 5) {
+      return this.isGerman ? 'Nutzung & Kosten erfasst' : 'Usage & costs recorded';
+    }
+    if (step === 6) {
+      if (liveStatus === 'succeeded') return this.isGerman ? 'Webhook bestätigt' : 'Webhook confirmed';
+      if (liveStatus === 'running') return this.isGerman ? 'Wird übertragen …' : 'Dispatch in progress';
+      if (liveStatus === 'failed' || liveStatus === 'unknown') return this.isGerman ? 'Ergebnis prüfen' : 'Check delivery result';
+      return this.isGerman ? 'Externe Verbindung optional' : 'External connection optional';
     }
     return '';
   }
