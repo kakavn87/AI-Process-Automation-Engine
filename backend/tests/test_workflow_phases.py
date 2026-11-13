@@ -129,7 +129,8 @@ class FakeOptimizationAIService:
                     "unit": "Minuten",
                     "direction": "lower_is_better",
                     "rationale": "The target is an explicit model estimate based on automatic intake.",
-                    "evidence_basis": "model_estimate",
+                    "current_value_source": "user_input",
+                    "proposed_value_source": "model_estimate",
                     "confidence": "medium",
                 }
             ],
@@ -538,7 +539,8 @@ def test_optimization_metrics_are_calculated_by_python_only():
             "unit": "minutes",
             "direction": "lower_is_better",
             "rationale": "Estimated from the proposed automation.",
-            "evidence_basis": "model_estimate",
+            "current_value_source": "user_input",
+            "proposed_value_source": "model_estimate",
             "confidence": "low",
         },
         {
@@ -548,7 +550,8 @@ def test_optimization_metrics_are_calculated_by_python_only():
             "unit": "%",
             "direction": "higher_is_better",
             "rationale": "No baseline was provided.",
-            "evidence_basis": "not_available",
+            "current_value_source": "not_available",
+            "proposed_value_source": "not_available",
             "confidence": "low",
         },
     ])
