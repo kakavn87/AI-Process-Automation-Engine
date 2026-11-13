@@ -104,10 +104,26 @@ class AIProcessOptimizationOutput(BaseModel):
 class AIService:
     """OpenAI Responses API adapter with best-effort usage telemetry."""
 
-    def __init__(self, api_key: str | None = None, model: str | None = None):
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model: str | None = None,
+        analysis_model: str | None = None,
+        optimization_model: str | None = None,
+    ):
         configured_key = settings.OPENAI_API_KEY if api_key is None else api_key
         self.model = model or settings.OPENAI_MODEL
-        self.vision_model = settings.OPENAI_VISION_MODEL.strip() or self.model
+        self.analysis_model = (
+            analysis_model
+            or settings.OPENAI_ANALYSIS_MODEL.strip()
+            or self.model
+        )
+        self.optimization_model = (
+            optimization_model
+            or settings.OPENAI_OPTIMIZATION_MODEL.strip()
+            or self.model
+        )
+        self.vision_model = settings.OPENAI_VISION_MODEL.strip() or self.analysis_model
         base_url = settings.OPENAI_BASE_URL.strip() or None
         self._client = (
             OpenAI(api_key=configured_key, base_url=base_url, timeout=45.0, max_retries=1)
@@ -138,7 +154,7 @@ class AIService:
             raise RuntimeError("OPENAI_API_KEY is not configured.")
 
         started = time.perf_counter()
-        active_model = self.vision_model if image_data_urls else self.model
+        active_model = self.vision_model if image_data_urls else self.analysis_model
         output_language = "German" if language == "de" else "English"
         system_prompt = f"""
 You are the process analysis engine for an enterprise workflow automation product.
@@ -205,7 +221,7 @@ workflow configuration. Connector should be an empty string when no connector is
                     },
                 ],
                 text_format=AIProcessAnalysisOutput,
-                max_output_tokens=7500,
+                max_output_tokens=4500,
             )
 
             parsed = response.output_parsed
@@ -267,22 +283,48 @@ workflow configuration. Connector should be an empty string when no connector is
             for question in questions
             if question.get("id") in answers
         ]
+        # The first analysis already interpreted the source material. Keep the second
+        # request focused on its structured findings and the user's new answers instead
+        # of resending large document extracts in full.
+        source_evidence = [
+            {
+                "source_file": item.get("filename") or item.get("sourceFile"),
+                "page": item.get("page"),
+                "excerpt": str(item.get("excerpt") or item.get("content") or "")[:400],
+            }
+            for item in (analysis.get("sourceEvidence") or [])[:5]
+        ]
+        source_documents = [
+            {
+                "filename": item.get("filename"),
+                "file_type": item.get("fileType"),
+                "page_count": item.get("pageCount"),
+            }
+            for item in (analysis.get("sourceDocuments") or [])[:8]
+        ]
         first_pass = {
-            "summary": analysis.get("summary"),
-            "current_process": analysis.get("currentProcess"),
+            "summary": str(analysis.get("summary") or "")[:1800],
+            "current_process": (analysis.get("currentProcess") or [])[:8],
             "process_specification": analysis.get("processSpecification"),
             "detected_details": analysis.get("detectedDetails"),
-            "automation_opportunities": analysis.get("automationOpportunities"),
-            "integrations": analysis.get("integrations"),
-            "risks": analysis.get("risks"),
-            "assumptions": analysis.get("assumptions"),
-            "open_questions": analysis.get("questions"),
-            "source_evidence": analysis.get("sourceEvidence"),
-            "source_documents": analysis.get("sourceDocuments"),
+            "automation_opportunities": (analysis.get("automationOpportunities") or [])[:5],
+            "integrations": (analysis.get("integrations") or [])[:6],
+            "risks": (analysis.get("risks") or [])[:5],
+            "assumptions": (analysis.get("assumptions") or [])[:5],
+            "open_questions": (analysis.get("questions") or [])[:5],
+            "source_evidence": source_evidence,
+            "source_documents": source_documents,
             "proposed_workflow": analysis.get("proposedWorkflow"),
         }
+        description_context = description.strip()
+        if len(description_context) > 12000:
+            description_context = (
+                description_context[:8500]
+                + "\\n\\n[Weitere Dokumentdetails wurden in der ersten Analyse zusammengefasst.]\\n\\n"
+                + description_context[-3000:]
+            )
         context = {
-            "original_process_description": description,
+            "original_process_description": description_context,
             "first_stage_analysis": first_pass,
             "questions_and_confirmed_answers": confirmed_answers,
         }
@@ -328,7 +370,7 @@ The exact required JSON Schema is:
         response = None
         try:
             response = self._client.responses.create(
-                model=self.model,
+                model=self.optimization_model,
                 input=[
                     {"role": "system", "content": system_prompt},
                     {
@@ -342,7 +384,7 @@ The exact required JSON Schema is:
                 # JSON mode is broadly supported by OpenAI-compatible gateways.
                 # Pydantic still validates every field before the workflow is accepted.
                 text={"format": {"type": "json_object"}},
-                max_output_tokens=7500,
+                max_output_tokens=5000,
             )
             output_text = getattr(response, "output_text", None)
             if not output_text:
@@ -352,7 +394,7 @@ The exact required JSON Schema is:
             usage = getattr(response, "usage", None)
             self.last_call_telemetry = {
                 "provider": self._provider_name(),
-                "model": self.model,
+                "model": self.optimization_model,
                 "task": "process_optimization",
                 "status": "success",
                 "inputTokens": getattr(usage, "input_tokens", None) if usage else None,
