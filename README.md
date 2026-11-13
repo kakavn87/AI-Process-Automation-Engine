@@ -1,34 +1,60 @@
 # AI Process Automation Engine
 
-A portfolio MVP demonstrating how a business process can be analyzed, translated into a workflow, validated, and prepared for controlled automation with human approval.
+A portfolio MVP that turns natural-language business process descriptions into structured workflow proposals, checks approval gates, and records human approval decisions.
 
 ## What this demonstrates
 
-- **Python / FastAPI** backend organized by API, services, domain engine, connectors, schemas, and persistence models.
-- **Angular 19** standalone frontend organized by feature.
-- **Angular Signals** stores for process, workflow, and execution state.
-- **Connector boundary** with safe mock connectors and placeholders for Microsoft Graph integrations.
-- **Human approval** as an explicit workflow gate before consequential execution.
+- **Python / FastAPI** backend organized by API routes, application services, a process-analysis engine, connector boundaries, schemas, and SQLAlchemy persistence models.
+- **Angular 19** standalone frontend using Angular Signals for process and execution state.
+- **OpenAI Responses API** with Pydantic Structured Outputs for LLM-based process understanding and workflow proposal generation.
+- **Rules-based fallback** so the demo remains available when an OpenAI API key is not configured or the API is temporarily unavailable.
+- **Human-in-the-loop approval lifecycle**: create an execution request, inspect ordered workflow steps, approve or reject, and retain a decision note.
+- **Server-side safety validation** that enforces an approval step before outbound email, Teams, or notification steps.
+- **Connector boundaries** for Outlook, document parsing, spreadsheets, and Teams. These are planned integrations, not live connections.
 
-> This is a portfolio MVP, not a production-ready autonomous agent. Process analysis currently uses deterministic heuristics; the OpenAI integration and Microsoft Graph connector modules are extension points. No real email, Teams, or external business action is sent by the demo.
+> This is a portfolio MVP, not a production-ready automation platform. Approving a workflow records the decision but does not execute external actions. Authentication/authorization, durable production database migrations, and live connector implementations must be added before real business processes are used.
 
-## Architecture
+## LLM configuration
 
-```text
-Angular UI (Signals stores)
-        |
-        v
-FastAPI routes -> Application services
-                       |
-                       +-> Process analyzer
-                       +-> Workflow generator / validator
-                       +-> Workflow executor
-                       +-> Connector interfaces
-                                +-> Mock connectors
-                                +-> Microsoft Graph (future integration)
+The backend uses the OpenAI **Responses API** and schema-constrained Pydantic output. The default model is `gpt-6-luna`, selected as a cost-sensitive model for focused, high-volume tasks. The model can be changed with `OPENAI_MODEL`.
+
+Set `OPENAI_API_KEY` in the backend environment. Do not commit the key to Git or place it in the Angular frontend.
+
+### Local setup
+
+Copy `backend/.env.example` to `backend/.env`, then add your API key:
+
+```env
+OPENAI_API_KEY=your-api-key
+OPENAI_MODEL=gpt-6-luna
 ```
 
-See [architecture notes](docs/architecture/architecture.md).
+When `OPENAI_API_KEY` is empty, the API returns `analysisMode: "rules_fallback"`. A successful model call returns `analysisMode: "openai_llm"`. If the model request fails, the backend logs the exception and falls back to deterministic analysis.
+
+### Render setup
+
+In the Render Dashboard, open the backend service's **Environment** page and add:
+
+- `OPENAI_API_KEY`: your OpenAI API key (secret)
+- `OPENAI_MODEL`: `gpt-6-luna` (optional; this is already the backend default)
+
+Save the environment changes to trigger a redeploy. The frontend never receives the API key.
+
+## API
+
+- `POST /api/processes/analyze` — analyze a business process and return the workflow proposal.
+- `POST /api/executions/` — create an execution record and pause at human approval.
+- `GET /api/executions/` — list execution records.
+- `GET /api/executions/{id}` — retrieve one execution record.
+- `POST /api/executions/{id}/approve` — record approval and a note.
+- `POST /api/executions/{id}/reject` — reject with a required reason.
+
+Approval states:
+- `awaiting_approval`
+- `approved_ready`
+- `rejected`
+
+An `approved_ready` record is not an executed workflow. No email or Teams message is sent by this version.
 
 ## Run locally
 
@@ -44,7 +70,7 @@ cp .env.example .env  # Windows: copy .env.example .env
 uvicorn app.main:app --reload --port 8000
 ```
 
-API docs: http://localhost:8000/docs
+API documentation: http://localhost:8000/docs
 
 ### Frontend
 
@@ -56,13 +82,18 @@ npm start
 
 Open http://localhost:4200.
 
-## Deployment (Render Blueprint)
+### Tests
 
-The root `render.yaml` defines both services in one Blueprint: a FastAPI web service and an Angular static site. In Render, create a new Blueprint and connect this GitHub repository; Render will discover the root `render.yaml` automatically.
+```bash
+cd backend
+pytest
+```
 
-The Angular production environment currently points to the backend's default Render hostname. The backend CORS allow-list contains the matching default frontend hostname. If Render assigns different hostnames, update `frontend/src/environments/environment.prod.ts` and the backend `CORS_ORIGINS` environment variable.
+## Deployment (Render)
 
-The API currently runs without requiring persistent database writes for the demo. SQLite on a free web service is not durable across all redeploys/restarts; use managed PostgreSQL and migrations before storing real business data.
+The root `render.yaml` defines the FastAPI backend and Angular static frontend. The frontend's production environment points to the deployed backend URL; the backend CORS allow-list includes the deployed frontend URL.
+
+The current Free service uses SQLite for the approval demo. SQLite data on an ephemeral web-service filesystem is not a durable production store. Use managed PostgreSQL and migration tooling before storing important business records.
 
 ## Project structure
 
@@ -75,17 +106,9 @@ backend/app/
   engine/          analyzer, workflow, execution engine
   models/           SQLAlchemy persistence models
   schemas/          Pydantic request/response schemas
-  services/         application orchestration
+  services/         application orchestration and LLM provider
 frontend/src/app/
   core/             shared API access and API models
   features/         process, workflow, execution features and stores
   shared/           reusable UI components
 ```
-
-## Status
-
-The current version is an architectural and functional scaffold. The process analyzer provides a rule-based score, while persistence, full workflow CRUD, authentication, real AI-driven workflow generation, approval UI, and live Microsoft Graph actions remain planned work.
-
-## Live demo status
-
-Render Blueprint provisions the FastAPI backend and Angular static frontend on the Free plan. The production frontend uses the Render backend URL; keep `CORS_ORIGINS` aligned with the deployed frontend hostname. The demo currently uses heuristic process analysis and mock connectors.
