@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
@@ -16,7 +16,7 @@ import {
   templateUrl: './workflow-session-page.component.html',
   styleUrl: './workflow-session-page.component.scss'
 })
-export class WorkflowSessionPageComponent implements OnInit {
+export class WorkflowSessionPageComponent implements OnInit, OnChanges {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly api = inject(ApiService);
@@ -34,13 +34,33 @@ export class WorkflowSessionPageComponent implements OnInit {
   readonly executionLoading = signal(false);
   readonly error = signal<string | null>(null);
 
-  private sessionId = '';
+  @Input() sessionId = '';
+  @Input() embedded = false;
+
+  private activeSessionId = '';
+  private initialized = false;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['sessionId'] && this.initialized && this.sessionId &&
+        this.sessionId !== this.activeSessionId) {
+      this.activeSessionId = this.sessionId;
+      this.session.set(null);
+      this.execution.set(null);
+      this.loadSession();
+    }
+  }
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
-      this.sessionId = params.get('sessionId') ?? '';
-      if (this.sessionId) this.loadSession();
-    });
+    this.initialized = true;
+    if (this.sessionId) {
+      this.activeSessionId = this.sessionId;
+      this.loadSession();
+    } else {
+      this.route.paramMap.subscribe(params => {
+        this.activeSessionId = params.get('sessionId') ?? '';
+        if (this.activeSessionId) this.loadSession();
+      });
+    }
     this.loadUsage();
     this.loadLiveReadiness();
   }
@@ -56,7 +76,7 @@ export class WorkflowSessionPageComponent implements OnInit {
   loadSession(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.api.getWorkflowSession(this.sessionId).subscribe({
+    this.api.getWorkflowSession(this.activeSessionId).subscribe({
       next: result => {
         this.session.set(result);
         this.loading.set(false);
