@@ -1,6 +1,6 @@
-# AI Process Automation Engine
+# AI Process Optimierung
 
-A portfolio MVP that turns natural-language business process descriptions into structured workflow proposals, enforces a human approval gate, and records simulated execution events.
+AI Process Optimierung is a portfolio MVP that turns natural-language business process descriptions into structured workflow proposals, enforces a human approval gate, and records simulated execution events.
 
 ## What this demonstrates
 
