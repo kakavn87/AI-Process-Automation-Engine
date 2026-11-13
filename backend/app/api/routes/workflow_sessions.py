@@ -79,6 +79,20 @@ def submit_workflow_answers(
         raise HTTPException(status_code=422, detail=str(error)) from error
 
 
+@router.post("/{session_id}/optimize")
+def retry_workflow_optimization(
+    session_id: str,
+    db: Session = Depends(get_db),
+    tenant_context: TenantContext = Depends(get_tenant_context),
+):
+    try:
+        return WorkflowSessionService(db, tenant_id=tenant_context.tenant_id).retry_optimization(session_id)
+    except KeyError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
 @router.post("/{session_id}/execute", status_code=201)
 def create_session_execution(
     session_id: str,
