@@ -23,6 +23,7 @@ import { AuthService } from '../../core/services/auth.service';
           <label for="login-password">Passwort</label>
           <input id="login-password" name="password" type="password" autocomplete="current-password"
             [(ngModel)]="password" required placeholder="Passwort eingeben" />
+          @if (auth.error()) { <div class="login-error" role="alert">{{ auth.error() }}</div> }
           @if (error()) { <div class="login-error" role="alert">{{ error() }}</div> }
           <button type="submit" [disabled]="loginForm.invalid || loading()">
             {{ loading() ? 'Anmeldung läuft …' : 'Anmelden' }}
