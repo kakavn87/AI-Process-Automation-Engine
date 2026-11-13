@@ -470,6 +470,7 @@ def test_answers_trigger_a_second_llm_optimization_and_usage_is_recorded():
         assert prepared["analysis"]["originalWorkflow"]["name"] == "Initial invoice workflow"
         assert prepared["analysis"]["proposedWorkflow"]["name"] == "Optimierte Rechnungsprüfung"
         assert prepared["analysis"]["optimization"]["expectedBenefits"][0]["changePercent"] == 50.0
+        assert prepared["analysis"]["optimization"]["recommendedChanges"][0]["proposedChange"].startswith("PDF-Daten")
         assert prepared["analysis"]["proposedWorkflow"]["executionPolicy"]["externalActionsEnabled"] is False
 
         usage = db.query(AIUsageEvent).filter_by(session_id=created["id"]).all()
