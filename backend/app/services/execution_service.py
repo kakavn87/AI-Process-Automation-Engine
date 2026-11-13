@@ -82,7 +82,11 @@ class ExecutionService:
             {
                 "event": "approval_rejected",
                 "status": "rejected",
-                "message": note or "Rejected by a human reviewer. No workflow steps were executed.",
+                "message": (
+                    f"Rejected: {note}. No workflow steps were executed."
+                    if note
+                    else "Rejected by a human reviewer. No workflow steps were executed."
+                ),
             },
         ]
         execution.updated_at = datetime.now(timezone.utc)
