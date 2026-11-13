@@ -148,9 +148,11 @@
               @if (current.answers[question.id] !== undefined) {
                 <div class="confirmed-answer">
                   <strong>{{ question.prompt }}</strong>
-                  <span>{{ typeof current.answers[question.id] === 'boolean'
-                    ? (current.answers[question.id] ? (isGerman ? 'Ja' : 'Yes') : (isGerman ? 'Nein' : 'No'))
-                    : current.answers[question.id] }}</span>
+                  <span>{{ current.answers[question.id] === true
+                    ? (isGerman ? 'Ja' : 'Yes')
+                    : current.answers[question.id] === false
+                      ? (isGerman ? 'Nein' : 'No')
+                      : current.answers[question.id] }}</span>
                 </div>
               }
             }
