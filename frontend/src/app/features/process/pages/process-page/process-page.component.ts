@@ -1,7 +1,7 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../../core/services/api.service';
-import { TabularDataResult } from '../../../../core/models/api.models';
+import { IntegrationReadiness, TabularDataResult } from '../../../../core/models/api.models';
 import { ProcessStore } from '../../process.store';
 import { ProcessService } from '../../process.service';
 import { WorkflowSessionPageComponent } from '../../../workflow-session/workflow-session-page.component';
@@ -26,7 +26,7 @@ interface Industry {
   imports: [FormsModule, WorkflowSessionPageComponent],
   templateUrl: './process-page.component.html'
 })
-export class ProcessPageComponent {
+export class ProcessPageComponent implements OnInit {
   readonly store = inject(ProcessStore);
   private readonly service = inject(ProcessService);
   private readonly api = inject(ApiService);
@@ -38,6 +38,9 @@ export class ProcessPageComponent {
   readonly dataResult = signal<TabularDataResult | null>(null);
   readonly dataProcessing = signal(false);
   readonly dataError = signal<string | null>(null);
+  readonly integrationReadiness = signal<IntegrationReadiness | null>(null);
+  readonly integrationLoading = signal(false);
+  readonly integrationError = signal<string | null>(null);
 
   selectedDataFile: File | null = null;
   processFiles: File[] = [];
@@ -56,6 +59,29 @@ export class ProcessPageComponent {
           block: 'start'
         });
       }, 0);
+    });
+  }
+
+  ngOnInit() {
+    this.refreshIntegrationReadiness();
+  }
+
+  refreshIntegrationReadiness() {
+    this.integrationLoading.set(true);
+    this.integrationError.set(null);
+    this.api.getIntegrationReadiness().subscribe({
+      next: result => {
+        this.integrationReadiness.set(result);
+        this.integrationLoading.set(false);
+      },
+      error: () => {
+        this.integrationError.set(
+          this.language() === 'de'
+            ? 'Integrationsstatus konnte nicht geladen werden.'
+            : 'Could not load integration status.'
+        );
+        this.integrationLoading.set(false);
+      }
     });
   }
 
