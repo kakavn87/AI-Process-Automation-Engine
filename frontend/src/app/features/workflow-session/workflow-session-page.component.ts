@@ -368,6 +368,24 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
     }).format(value);
   }
 
+  workflowStepTypeLabel(type: string): string {
+    if (!this.isGerman) return type.replaceAll('_', ' ');
+    const labels: Record<string, string> = {
+      trigger: 'Auslöser',
+      collect: 'Daten erfassen',
+      extract: 'Daten extrahieren',
+      transform: 'Daten umwandeln',
+      validate: 'Daten prüfen',
+      generate: 'Ergebnis erstellen',
+      approval: 'Freigabe',
+      notify: 'Benachrichtigung',
+      email: 'E-Mail versenden',
+      teams: 'Teams-Nachricht',
+      http: 'HTTP-Anfrage'
+    };
+    return labels[type] ?? type.replaceAll('_', ' ');
+  }
+
   formatMetric(value: number | null, unit: string): string {
     if (value === null || value === undefined) {
       return this.isGerman ? 'Keine belastbare Angabe' : 'Not quantified';
