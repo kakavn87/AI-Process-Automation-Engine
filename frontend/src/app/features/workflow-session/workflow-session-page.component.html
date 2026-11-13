@@ -1,5 +1,6 @@
-<main class="session-shell">
-  <header class="session-topbar">
+<main class="session-shell" [class.is-embedded]="embedded">
+  @if (!embedded) {
+    <header class="session-topbar">
     <a class="session-brand" routerLink="/">
       <span class="session-brand-mark">AI</span>
       <span><strong>AI Process Optimierung</strong><small>KI-gestützte Prozessoptimierung</small></span>
@@ -8,6 +9,7 @@
       ← {{ isGerman ? 'Zurück zum Prozess-Designer' : 'Back to process builder' }}
     </button>
   </header>
+  }
 
   @if (loading()) {
     <section class="session-loading">
@@ -443,8 +445,11 @@
     </section>
   }
 
-  <footer class="session-footer">
+  @if (!embedded) {
+    <footer class="session-footer">
     <span>AI Process Optimierung · KI-gestützte Prozessautomatisierung</span>
     <span>{{ isGerman ? 'Portfolio-Prototyp · externe Ausführung nur nach Konfiguration & Bestätigung' : 'Portfolio prototype · external execution requires configuration and confirmation' }}</span>
+    <span>Entwickler: Hai Linh Nguyen</span>
   </footer>
+  }
 </main>
