@@ -142,8 +142,8 @@ export class WorkflowSessionPageComponent implements OnInit {
     this.executionLoading.set(true);
     this.error.set(null);
     const note = approve
-      ? (this.isGerman ? 'Über FlowPilot freigegeben.' : 'Approved from FlowPilot.')
-      : (this.isGerman ? 'Über FlowPilot abgelehnt.' : 'Rejected from FlowPilot.');
+      ? (this.isGerman ? 'Über AI Process Optimierung freigegeben.' : 'Approved from AI Process Optimierung.')
+      : (this.isGerman ? 'Über AI Process Optimierung abgelehnt.' : 'Rejected from AI Process Optimierung.');
 
     const request = approve
       ? this.api.approveExecution(current.id, note)
