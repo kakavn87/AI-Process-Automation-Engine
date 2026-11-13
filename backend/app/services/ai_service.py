@@ -286,6 +286,7 @@ workflow configuration. Connector should be an empty string when no connector is
             "first_stage_analysis": first_pass,
             "questions_and_confirmed_answers": confirmed_answers,
         }
+        output_schema = AIProcessOptimizationOutput.model_json_schema()
         system_prompt = f"""
 You are the second-stage process optimization engine for an enterprise workflow automation product.
 
@@ -321,6 +322,8 @@ Workflow constraints:
 - Do not invent API credentials, mailbox names, Teams channels, ERP endpoints or execution capabilities.
 - The workflow is a proposal. Do not execute actions or claim the workflow has been deployed.
 Return exactly one valid JSON object matching the required optimization fields. Output JSON only, without Markdown fences or commentary.
+The exact required JSON Schema is:
+{json.dumps(output_schema, ensure_ascii=False)}
 """
         response = None
         try:
