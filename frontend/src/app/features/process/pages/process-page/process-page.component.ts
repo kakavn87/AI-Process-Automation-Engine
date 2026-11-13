@@ -142,7 +142,7 @@ export class ProcessPageComponent {
     }
   ];
 
-  private readonly de: Record<string, string> = {
+  private readonly de = {
     brand: 'FlowPilot', product: 'AI Process Automation Engine',
     workspace: 'DEMO-ARBEITSBEREICH', language: 'Sprache',
     navOverview: 'Übersicht', navIndustries: 'Geschäftsbereiche', navBuilder: 'Prozess erstellen',
@@ -207,7 +207,7 @@ export class ProcessPageComponent {
     uploadSelected: 'Ausgewählte Datei', domainGeneral: 'Allgemeiner Prozess'
   };
 
-  private readonly en: Record<string, string> = {
+  private readonly en = {
     brand: 'FlowPilot', product: 'AI Process Automation Engine',
     workspace: 'DEMO WORKSPACE', language: 'Language',
     navOverview: 'Overview', navIndustries: 'Business areas', navBuilder: 'Process builder',
