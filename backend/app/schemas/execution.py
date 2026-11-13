@@ -1,4 +1,11 @@
-from pydantic import BaseModel
+from typing import Any
 
-class ExecuteWorkflowRequest(BaseModel):
-    approved: bool = False
+from pydantic import BaseModel, Field
+
+
+class CreateExecutionRequest(BaseModel):
+    workflow: dict[str, Any]
+
+
+class ApprovalDecisionRequest(BaseModel):
+    note: str = Field(default="", max_length=2000)
