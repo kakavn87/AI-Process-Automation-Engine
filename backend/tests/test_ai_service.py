@@ -162,3 +162,25 @@ def test_workflow_mapping_failure_is_not_reported_as_an_openai_request_failure()
     assert "nicht in einen gültigen Workflow" in result["optimization"]["summary"]
     assert "OpenAI-Anfrage fehlgeschlagen" not in result["optimization"]["summary"]
     assert result["_optimizationUsageTelemetry"]["status"] == "success"
+
+
+
+def test_ai_service_supports_separate_analysis_and_optimization_models():
+    service = AIService(
+        api_key="test-key",
+        model="shared-default-model",
+        analysis_model="fast-analysis-model",
+        optimization_model="reasoning-optimization-model",
+    )
+
+    assert service.analysis_model == "fast-analysis-model"
+    assert service.optimization_model == "reasoning-optimization-model"
+    assert service.vision_model == "fast-analysis-model"
+
+
+def test_ai_service_falls_back_to_shared_model_when_task_models_are_not_set():
+    service = AIService(api_key="test-key", model="shared-default-model")
+
+    assert service.analysis_model == "shared-default-model"
+    assert service.optimization_model == "shared-default-model"
+    assert service.vision_model == "shared-default-model"
