@@ -88,6 +88,9 @@ def upgrade() -> None:
                 ),
             )
 
+    # Refresh after creating the identity tables so their indexes are included.
+    existing_tables = set(sa.inspect(bind).get_table_names())
+
     indexes = (
         ("ix_tenants_slug", "tenants", ["slug"], True),
         ("ix_users_email", "users", ["email"], True),
