@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from app.core.config import settings
+from app.core.config import Settings, settings
 from app.core.database import Base
 from app.engine.execution.action_executor import ActionExecutor
 from app.engine.workflow.automation_engine import WorkflowAutomationEngine
@@ -313,3 +313,19 @@ def test_live_webhook_rejects_insecure_or_internal_endpoint(monkeypatch):
         readiness = ExecutionService.live_execution_readiness()
         assert readiness["ready"] is False
         assert readiness["status"] == "invalid_endpoint"
+
+
+def test_pull_request_settings_always_disable_live_webhooks():
+    preview = Settings(
+        IS_PULL_REQUEST=True,
+        OPENAI_API_KEY="production-key",
+        PREVIEW_OPENAI_API_KEY="preview-key",
+        WEBHOOK_EXECUTION_ENABLED=True,
+        WORKFLOW_WEBHOOK_URL="https://hooks.example.com/production",
+        WORKFLOW_WEBHOOK_BEARER_TOKEN="production-token",
+    )
+
+    assert preview.OPENAI_API_KEY == "preview-key"
+    assert preview.WEBHOOK_EXECUTION_ENABLED is False
+    assert preview.WORKFLOW_WEBHOOK_URL == ""
+    assert preview.WORKFLOW_WEBHOOK_BEARER_TOKEN == ""
