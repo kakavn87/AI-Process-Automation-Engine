@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.core.database import Base
 from app.dependencies.auth import TenantContext, get_tenant_context, require_roles
 from app.models.tenant import Tenant, TenantInvitation, TenantMembership, User
+from app.models.workflow_session import WorkflowSession
 from app.schemas.auth import InvitationAcceptRequest, InvitationCreateRequest, LoginRequest
 from app.services.ai_usage_service import AIUsageService
 from app.services.auth_service import AuthService, password_hash
