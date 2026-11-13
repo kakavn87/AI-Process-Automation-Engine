@@ -387,6 +387,16 @@
                   : 'Check the receiving system logs first. Automatic retries are blocked to avoid duplicate external actions.' }}</p>
               </div>
             } @else {
+              <label class="live-token-field">
+                <span>{{ isGerman ? 'Operator-Freigabetoken' : 'Operator confirmation token' }}</span>
+                <input
+                  type="password"
+                  autocomplete="off"
+                  [ngModel]="liveToken()"
+                  (ngModelChange)="liveToken.set($event)"
+                  [ngModelOptions]="{ standalone: true }"
+                  [placeholder]="isGerman ? 'Freigabetoken eingeben' : 'Enter operator token'">
+              </label>
               <label class="live-confirmation">
                 <input
                   type="checkbox"
@@ -401,7 +411,7 @@
                 class="session-primary live-execute-button"
                 type="button"
                 (click)="runLiveExecution()"
-                [disabled]="!liveConfirmed() || liveLoading()">
+                [disabled]="!liveConfirmed() || !liveToken().trim() || liveLoading()">
                 {{ liveLoading()
                   ? (isGerman ? 'Wird übertragen …' : 'Sending …')
                   : (isGerman ? 'Jetzt extern ausführen' : 'Run external action now') }}
@@ -421,9 +431,10 @@
             <code>WEBHOOK_EXECUTION_ENABLED=true</code>
             <code>WORKFLOW_WEBHOOK_URL=https://your-company.example/webhook</code>
             <code>WORKFLOW_WEBHOOK_BEARER_TOKEN=…</code>
+            <code>WORKFLOW_LIVE_EXECUTION_TOKEN=…</code>
             <small>{{ isGerman
-              ? 'Der Token ist optional, wird aber für geschützte Endpunkte empfohlen. Die Zieladresse muss HTTPS verwenden. Die externe Ausführung bleibt deaktiviert, bis diese Werte gesetzt wurden.'
-              : 'The token is optional but recommended for protected endpoints. The target must use HTTPS. External execution remains disabled until these values are configured.' }}</small>
+              ? 'Der Operator-Freigabetoken ist erforderlich und wird beim Senden abgefragt; ein Bearer-Token schützt zusätzlich den Empfänger. Die Zieladresse muss HTTPS verwenden. Die externe Ausführung bleibt deaktiviert, bis diese Werte gesetzt wurden.'
+              : 'The operator confirmation token is required and entered at dispatch time; a bearer token additionally protects the receiver. The target must use HTTPS. External execution remains disabled until these values are configured.' }}</small>
           </div>
         }
       } @else {
