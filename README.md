@@ -85,3 +85,7 @@ frontend/src/app/
 ## Status
 
 The current version is an architectural and functional scaffold. The process analyzer provides a rule-based score, while persistence, full workflow CRUD, authentication, real AI-driven workflow generation, approval UI, and live Microsoft Graph actions remain planned work.
+
+## Live demo status
+
+Render Blueprint provisions the FastAPI backend and Angular static frontend on the Free plan. The production frontend uses the Render backend URL; keep `CORS_ORIGINS` aligned with the deployed frontend hostname. The demo currently uses heuristic process analysis and mock connectors.
