@@ -121,6 +121,7 @@ outputs, require human approval before distribution. A missing detail belongs in
 workflow configuration. Connector should be an empty string when no connector is clearly implied.
 """
 
+        response = None
         try:
             response = self._client.responses.parse(
                 model=self.model,
@@ -158,14 +159,17 @@ workflow configuration. Connector should be an empty string when no connector is
             }
             return parsed.model_dump()
         except Exception as error:
+            # A structured-output parse failure can happen after the provider has
+            # billed the request. Preserve usage whenever the response is available.
+            usage = getattr(response, "usage", None) if response is not None else None
             self.last_call_telemetry = {
                 "provider": "openai",
                 "model": self.model,
                 "task": "process_analysis",
                 "status": "fallback",
-                "inputTokens": None,
-                "outputTokens": None,
-                "totalTokens": None,
+                "inputTokens": getattr(usage, "input_tokens", None) if usage else None,
+                "outputTokens": getattr(usage, "output_tokens", None) if usage else None,
+                "totalTokens": getattr(usage, "total_tokens", None) if usage else None,
                 "durationMs": round((time.perf_counter() - started) * 1000),
                 "errorType": type(error).__name__,
             }
