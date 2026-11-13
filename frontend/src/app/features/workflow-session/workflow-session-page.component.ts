@@ -1,11 +1,10 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import {
   AIUsageSummary,
   ApprovalExecution,
-  IntegrationReadiness,
   LiveExecutionReadiness,
   WorkflowSession
 } from '../../core/models/api.models';
@@ -26,7 +25,6 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
   readonly execution = signal<ApprovalExecution | null>(null);
   readonly usage = signal<AIUsageSummary | null>(null);
   readonly liveReadiness = signal<LiveExecutionReadiness | null>(null);
-  readonly integrationReadiness = signal<IntegrationReadiness | null>(null);
   readonly liveConfirmed = signal(false);
   readonly liveToken = signal('');
   readonly liveLoading = signal(false);
@@ -38,6 +36,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
 
   @Input() sessionId = '';
   @Input() embedded = false;
+  @Output() sessionChange = new EventEmitter<WorkflowSession | null>();
 
   private activeSessionId = '';
   private initialized = false;
@@ -47,6 +46,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
         this.sessionId !== this.activeSessionId) {
       this.activeSessionId = this.sessionId;
       this.session.set(null);
+      this.sessionChange.emit(null);
       this.execution.set(null);
       this.usage.set(null);
       this.loadSession();
@@ -65,7 +65,6 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       });
     }
     this.loadLiveReadiness();
-    this.loadIntegrationReadiness();
   }
 
   get isGerman(): boolean {
@@ -82,6 +81,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
     this.api.getWorkflowSession(this.activeSessionId).subscribe({
       next: result => {
         this.session.set(result);
+        this.sessionChange.emit(result);
         this.loading.set(false);
         this.updateUsageVisibility(result);
         if (result.relatedExecutionId) this.loadExecution(result.relatedExecutionId);
@@ -92,13 +92,6 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
           : 'Could not load the workflow session.');
         this.loading.set(false);
       }
-    });
-  }
-
-  loadIntegrationReadiness(): void {
-    this.api.getIntegrationReadiness().subscribe({
-      next: result => this.integrationReadiness.set(result),
-      error: () => this.integrationReadiness.set(null)
     });
   }
 
@@ -178,6 +171,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
     this.api.submitWorkflowAnswers(current.id, submitted).subscribe({
       next: result => {
         this.session.set(result);
+        this.sessionChange.emit(result);
         this.answerValues.set({});
         this.submitting.set(false);
       },
@@ -199,6 +193,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
     this.api.createSessionExecution(current.id).subscribe({
       next: result => {
         this.session.set(result.session);
+        this.sessionChange.emit(result.session);
         this.execution.set(result.execution);
         this.executionLoading.set(false);
       },
