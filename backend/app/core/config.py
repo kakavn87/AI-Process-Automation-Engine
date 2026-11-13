@@ -36,6 +36,10 @@ class Settings(BaseSettings):
         # Never let a PR preview silently consume the Production OpenAI key.
         if self.IS_PULL_REQUEST:
             self.OPENAI_API_KEY = self.PREVIEW_OPENAI_API_KEY.strip()
+            # PR previews must never inherit a Production webhook destination or token.
+            self.WEBHOOK_EXECUTION_ENABLED = False
+            self.WORKFLOW_WEBHOOK_URL = ""
+            self.WORKFLOW_WEBHOOK_BEARER_TOKEN = ""
         return self
 
     @property
