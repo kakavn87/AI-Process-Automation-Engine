@@ -108,9 +108,12 @@ export class ApiService {
     );
   }
 
-  runLiveExecution(id: string) {
+  runLiveExecution(id: string, confirmationToken: string) {
     return this.request('/executions/' + encodeURIComponent(id) + '/live', url =>
-      this.http.post<ApprovalExecution>(url, { confirm_live_execution: true })
+      this.http.post<ApprovalExecution>(url, {
+        confirm_live_execution: true,
+        confirmation_token: confirmationToken
+      })
     );
   }
 
