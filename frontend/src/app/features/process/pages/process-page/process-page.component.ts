@@ -40,6 +40,8 @@ export class ProcessPageComponent {
   readonly dataError = signal<string | null>(null);
 
   selectedDataFile: File | null = null;
+  processFiles: File[] = [];
+  readonly processFileError = signal<string | null>(null);
   description = '';
   analysisStrategy: AnalysisStrategy = 'auto';
 
@@ -308,7 +310,7 @@ export class ProcessPageComponent {
     this.language.set(language);
 
     if (this.store.analysis()) {
-      this.service.analyze(this.description, this.analysisStrategy, language, this.selectedDomain());
+      this.service.analyze(this.description, this.analysisStrategy, language, this.selectedDomain(), this.processFiles);
     }
     if (this.dataResult() && this.selectedDataFile && !this.dataProcessing()) {
       this.uploadDataFile();
@@ -344,6 +346,40 @@ export class ProcessPageComponent {
     this.dataError.set(null);
   }
 
+  onProcessFilesSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const selected = Array.from(input.files ?? []);
+    const allowed = /\.(pdf|docx|pptx|xlsx|csv|txt|md|png|jpe?g|webp)$/i;
+    const combined = [...this.processFiles, ...selected];
+
+    if (combined.length > 8) {
+      this.processFileError.set(this.language() === 'de'
+        ? 'Es sind maximal 8 Dateien pro Analyse erlaubt.'
+        : 'A maximum of 8 files can be added to one analysis.');
+    } else if (combined.some(file => !allowed.test(file.name))) {
+      this.processFileError.set(this.language() === 'de'
+        ? 'Ein Dateiformat wird nicht unterstützt.'
+        : 'One of the selected file types is not supported.');
+    } else if (combined.some(file => file.size > 10 * 1024 * 1024)) {
+      this.processFileError.set(this.language() === 'de'
+        ? 'Jede Datei darf höchstens 10 MB groß sein.'
+        : 'Each file must be 10 MB or smaller.');
+    } else if (combined.reduce((sum, file) => sum + file.size, 0) > 25 * 1024 * 1024) {
+      this.processFileError.set(this.language() === 'de'
+        ? 'Die Gesamtgröße darf 25 MB nicht überschreiten.'
+        : 'The combined upload size must not exceed 25 MB.');
+    } else {
+      this.processFiles = combined;
+      this.processFileError.set(null);
+    }
+    input.value = '';
+  }
+
+  removeProcessFile(index: number) {
+    this.processFiles = this.processFiles.filter((_, current) => current !== index);
+    this.processFileError.set(null);
+  }
+
   uploadDataFile() {
     const file = this.selectedDataFile;
     if (!file || this.dataProcessing()) return;
@@ -365,7 +401,7 @@ export class ProcessPageComponent {
 
   analyze() {
     this.store.setDescription(this.description);
-    this.service.analyze(this.description, this.analysisStrategy, this.language(), this.selectedDomain());
+    this.service.analyze(this.description, this.analysisStrategy, this.language(), this.selectedDomain(), this.processFiles);
   }
 
   formatNumber(value: number): string {
