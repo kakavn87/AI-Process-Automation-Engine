@@ -336,3 +336,190 @@ def test_pull_request_settings_always_disable_live_webhooks():
     assert preview.WORKFLOW_WEBHOOK_URL == ""
     assert preview.WORKFLOW_WEBHOOK_BEARER_TOKEN == ""
     assert preview.WORKFLOW_LIVE_EXECUTION_TOKEN == ""
+
+
+
+class FakeOptimizationAI:
+    is_configured = True
+    model = "optimization-test-model"
+
+    def __init__(self):
+        self.calls = 0
+        self.last_call_telemetry = None
+        self.received_answers = None
+
+    def optimize_process(self, description, analysis, questions, answers, language="de"):
+        self.calls += 1
+        self.received_answers = answers
+        self.last_call_telemetry = {
+            "provider": "openai",
+            "model": self.model,
+            "task": "process_optimization",
+            "status": "success",
+            "inputTokens": 1200,
+            "outputTokens": 600,
+            "totalTokens": 1800,
+            "durationMs": 900,
+        }
+        return {
+            "process_specification": {
+                "business_domain": "finance",
+                "business_domain_label": "Finanzen",
+                "process_goal": "Rechnungen schneller und fehlerfrei prüfen.",
+                "actors": ["Finanzteam", "Manager"],
+                "inputs": ["PDF-Rechnungen", "Bestellungen"],
+                "systems": ["ERP"],
+                "business_rules": ["Betragsabweichungen manuell prüfen."],
+                "exception_paths": ["Fehlende Bestellnummer zur Klärung weiterleiten."],
+                "outputs": ["Geprüfte Rechnung"],
+                "success_metrics": ["Bearbeitungszeit"],
+            },
+            "optimization_summary": "Die bestätigten Angaben ermöglichen eine automatische Datenerfassung und einen regelbasierten Abgleich.",
+            "design_principles": ["Standardfälle automatisch verarbeiten.", "Ausnahmen gezielt an Mitarbeitende geben."],
+            "recommended_changes": [{
+                "title": "Rechnungsdaten automatisch auslesen",
+                "current_state": "Mitarbeitende übertragen Daten manuell.",
+                "proposed_change": "PDF-Daten automatisch extrahieren und validieren.",
+                "expected_effect": "Weniger manuelle Erfassung.",
+                "priority": "high",
+            }],
+            "expected_benefits": [{
+                "metric": "Bearbeitungszeit",
+                "description": "Kürzere manuelle Bearbeitung.",
+                "baseline_value": 20,
+                "target_value": 10,
+                "unit": "Minuten",
+                "direction": "lower_is_better",
+                "confidence": "medium",
+                "basis": "Die Ausgangsdauer wurde vom Benutzer bestätigt; der Zielwert ist eine zu validierende Planungsannahme.",
+            }],
+            "automation_potential_score": 88,
+            "automation_potential_reason": "Die wiederkehrenden Erfassungs- und Prüfhandlungen sind gut standardisierbar.",
+            "automation_opportunities": [{
+                "title": "Automatische Extraktion",
+                "description": "Rechnungsdaten strukturiert auslesen.",
+                "impact": "high",
+            }],
+            "integrations": [{"name": "ERP", "purpose": "Bestellabgleich und Statusübernahme."}],
+            "human_approval_required": True,
+            "human_approval_reason": "Abweichungen und zahlungsrelevante Entscheidungen benötigen eine Freigabe.",
+            "workflow_name": "Optimierte Rechnungsprüfung",
+            "workflow_trigger": "Neue Rechnung geht ein.",
+            "workflow_steps": [
+                {"type": "trigger", "name": "Rechnungseingang", "description": "Neue Rechnung erfassen.", "connector": "", "requires_approval": False},
+                {"type": "extract", "name": "Daten auslesen", "description": "Rechnungsdaten aus dem PDF extrahieren.", "connector": "", "requires_approval": False},
+                {"type": "validate", "name": "Bestellung abgleichen", "description": "Daten mit der Bestellung vergleichen.", "connector": "erp", "requires_approval": False},
+                {"type": "approval", "name": "Ausnahme freigeben", "description": "Abweichungen durch einen Menschen prüfen lassen.", "connector": "", "requires_approval": False},
+                {"type": "generate", "name": "Prüfergebnis erstellen", "description": "Prüfergebnis und Buchungsvorschlag vorbereiten.", "connector": "", "requires_approval": False},
+            ],
+            "risks": ["ERP-Stammdaten müssen aktuell sein."],
+            "assumptions": ["Die ERP-Schnittstelle wird später eingerichtet."],
+        }
+
+
+def test_answers_trigger_a_second_llm_optimization_and_usage_is_recorded():
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    ai_service = FakeOptimizationAI()
+
+    analysis = {
+        "llmUsed": True,
+        "llmModel": "analysis-test-model",
+        "questions": ["Which invoice system should be used?"],
+        "proposedWorkflow": {
+            "name": "Initial invoice workflow",
+            "trigger": "A new invoice arrives.",
+            "steps": [{
+                "id": "step-1",
+                "type": "trigger",
+                "name": "Receive invoice",
+                "description": "Receive an invoice.",
+                "config": {"requiresApproval": False},
+            }],
+        },
+    }
+
+    with Session(engine) as db:
+        service = WorkflowSessionService(db, ai_service=ai_service)
+        created = service.create(
+            description="Finance receives PDF invoices and checks them manually.",
+            analysis=analysis,
+            strategy="auto",
+            language="de",
+            business_domain="finance",
+        )
+        question = created["openQuestions"][0]
+        partial = service.submit_answers(created["id"], {})
+        assert partial["status"] == "needs_input"
+        assert ai_service.calls == 0
+
+        prepared = service.submit_answers(
+            created["id"],
+            {question["id"]: "SAP"},
+        )
+
+        assert prepared["status"] == "ready_for_approval"
+        assert ai_service.calls == 1
+        assert ai_service.received_answers == {question["id"]: "SAP"}
+        assert prepared["analysis"]["optimization"]["status"] == "completed"
+        assert prepared["analysis"]["optimization"]["engine"] == "llm"
+        assert prepared["analysis"]["originalWorkflow"]["name"] == "Initial invoice workflow"
+        assert prepared["analysis"]["proposedWorkflow"]["name"] == "Optimierte Rechnungsprüfung"
+        assert prepared["analysis"]["optimization"]["expectedBenefits"][0]["changePercent"] == 50.0
+        assert prepared["analysis"]["proposedWorkflow"]["executionPolicy"]["externalActionsEnabled"] is False
+
+        usage = db.query(AIUsageEvent).filter_by(session_id=created["id"]).all()
+        assert any(item.task == "process_optimization" and item.total_tokens == 1800 for item in usage)
+        assert any(event["event"] == "ai_optimization_completed" for event in prepared["events"])
+
+    Base.metadata.drop_all(bind=engine)
+    engine.dispose()
+
+
+def test_rules_strategy_keeps_the_python_path_without_a_second_llm_call():
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    ai_service = FakeOptimizationAI()
+    analysis = {
+        "llmUsed": False,
+        "questions": ["Which folder should be used?"],
+        "proposedWorkflow": {
+            "name": "Rules workflow",
+            "trigger": "Manual",
+            "steps": [{
+                "id": "step-1",
+                "type": "trigger",
+                "name": "Start",
+                "description": "Manual start.",
+                "config": {"requiresApproval": False},
+            }],
+        },
+    }
+
+    with Session(engine) as db:
+        service = WorkflowSessionService(db, ai_service=ai_service)
+        created = service.create(
+            description="Collect requests and prepare a report.",
+            analysis=analysis,
+            strategy="rules",
+            language="de",
+            business_domain="operations",
+        )
+        question = created["openQuestions"][0]
+        prepared = service.submit_answers(created["id"], {question["id"]: "Finance"})
+
+        assert prepared["status"] == "ready_for_approval"
+        assert ai_service.calls == 0
+        assert prepared["analysis"]["optimization"]["status"] == "rules_only"
+        assert prepared["analysis"]["proposedWorkflow"]["name"] == "Rules workflow"
+
+    Base.metadata.drop_all(bind=engine)
+    engine.dispose()
