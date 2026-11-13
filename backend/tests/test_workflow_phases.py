@@ -560,4 +560,6 @@ def test_optimization_metrics_are_calculated_by_python_only():
     assert result[0]["isEstimate"] is True
     assert result[1]["improvementPercent"] is None
     assert result[1]["absoluteChange"] is None
+    assert result[1]["currentValue"] is None
+    assert result[1]["proposedValue"] is None
 
