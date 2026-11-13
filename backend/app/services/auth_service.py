@@ -37,6 +37,8 @@ class AuthService:
             )
             self.db.add(tenant)
             self.db.flush()
+        elif settings.BOOTSTRAP_TENANT_NAME.strip():
+            tenant.name = settings.BOOTSTRAP_TENANT_NAME.strip()
 
         email = settings.BOOTSTRAP_ADMIN_EMAIL.strip().lower()
         raw_password = settings.BOOTSTRAP_ADMIN_PASSWORD
