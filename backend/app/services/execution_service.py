@@ -8,7 +8,7 @@ from app.models.execution import Execution
 from app.models.execution_step import ExecutionStep
 
 
-OUTBOUND_TYPES = {"notify", "email", "teams", "http"}
+OUTBOUND_TYPES = {"notify", "email", "teams"}
 
 
 class ExecutionService:
@@ -97,19 +97,31 @@ class ExecutionService:
 
     @staticmethod
     def _ensure_approval_gate(workflow: dict) -> dict:
-        # Copy the snapshot so approval insertion does not mutate the caller's object.
         definition = {
             **workflow,
             "steps": [dict(step, config=dict(step.get("config") or {})) for step in workflow.get("steps", [])],
         }
-        if not any(step.get("type") == "approval" for step in definition["steps"]):
-            definition["steps"].append({
-                "id": f"step-{len(definition['steps']) + 1}",
+        approval_index = next((i for i, step in enumerate(definition["steps"]) if step.get("type") == "approval"), -1)
+        first_outbound = next((i for i, step in enumerate(definition["steps"]) if step.get("type") in OUTBOUND_TYPES), len(definition["steps"]))
+
+        if approval_index < 0:
+            approval = {
+                "id": "approval-gate",
                 "type": "approval",
                 "name": "Human approval",
                 "description": "Review and approve this workflow before any execution begins.",
                 "config": {"requiresApproval": False},
-            })
+            }
+            definition["steps"].insert(first_outbound, approval)
+        elif approval_index > first_outbound:
+            approval = definition["steps"].pop(approval_index)
+            definition["steps"].insert(first_outbound, approval)
+
+        for step in definition["steps"]:
+            if step.get("type") in OUTBOUND_TYPES:
+                step.setdefault("config", {})["requiresApproval"] = True
+        for index, step in enumerate(definition["steps"], start=1):
+            step["id"] = f"step-{index}"
         return definition
 
     @staticmethod
@@ -134,8 +146,8 @@ class ExecutionService:
                 for step in execution.steps
             ],
             "executionNote": (
-                "Approval is recorded, but workflow actions are not executed in this release. "
-                "Connectors must be configured and tested before external side effects are enabled."
+                "Approval is recorded. Workflow actions have not been executed in this release; "
+                "connectors must be configured and tested before external side effects are enabled."
                 if execution.status == "approved_ready"
                 else "No workflow actions have been executed."
             ),
