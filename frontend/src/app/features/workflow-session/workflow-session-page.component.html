@@ -164,7 +164,6 @@
         <h2>{{ isGerman ? 'Das KI-Modell optimiert Ihren Prozess' : 'The AI model is optimizing your process' }}</h2>
         <p>{{ isGerman ? 'Ihre Antworten werden zusammen mit der ersten Analyse erneut an das KI-Modell gesendet. Anschließend prüft Python den optimierten Workflow und berechnet die Kennzahlen.' : 'Your answers are sent to the AI model together with the initial analysis. Python then validates the optimized workflow and calculates the metric deltas.' }}</p>
         <div class="optimization-progress"><span class="session-spinner"></span><strong>{{ isGerman ? 'Analyse und Zielprozess werden erstellt …' : 'Building the analysis and target process …' }}</strong></div>
-        <span class="session-spinner"></span>
       </section>
     }
 
@@ -256,7 +255,8 @@
                         : metric.evidenceBasis === 'not_available'
                           ? (isGerman ? 'Keine ausreichenden Ausgangsdaten' : 'Insufficient baseline data')
                           : (isGerman ? 'Ausgangsdaten aus Nutzerangaben oder Dokumenten' : 'Baseline from user input or documents') }}
-                      · {{ isGerman ? 'Vertrauen' : 'Confidence' }}: {{ metric.confidence }}
+                      · {{ isGerman ? 'Zielwert' : 'Target' }}: {{ metric.isEstimate ? (isGerman ? 'Modellschätzung' : 'Model estimate') : (isGerman ? 'Belegt' : 'Evidence-based') }}
+                      · {{ isGerman ? 'Vertrauen' : 'Confidence' }}: {{ isGerman ? (metric.confidence === 'high' ? 'Hoch' : metric.confidence === 'medium' ? 'Mittel' : 'Niedrig') : metric.confidence }}
                     </small>
                   </article>
                 }
@@ -270,9 +270,9 @@
               <div class="optimization-opportunities">
                 @for (opportunity of optimization.opportunities; track $index) {
                   <article>
-                    <div class="opportunity-title"><strong>{{ opportunity.title }}</strong><span [attr.data-priority]="opportunity.priority">{{ opportunity.priority }}</span></div>
+                    <div class="opportunity-title"><strong>{{ opportunity.title }}</strong><span [attr.data-priority]="opportunity.priority">{{ isGerman ? (opportunity.priority === 'high' ? 'Hoch' : opportunity.priority === 'medium' ? 'Mittel' : 'Niedrig') : opportunity.priority }}</span></div>
                     <p>{{ opportunity.description }}</p>
-                    <small>{{ isGerman ? 'Aufwand' : 'Effort' }}: {{ opportunity.implementationEffort }} · {{ opportunity.expectedBenefit }}</small>
+                    <small>{{ isGerman ? 'Aufwand' : 'Effort' }}: {{ isGerman ? (opportunity.implementationEffort === 'high' ? 'Hoch' : opportunity.implementationEffort === 'medium' ? 'Mittel' : 'Niedrig') : opportunity.implementationEffort }} · {{ opportunity.expectedBenefit }}</small>
                   </article>
                 }
               </div>
@@ -342,7 +342,7 @@
       </section>
     }
 
-    @if (current.status === 'ready_for_approval') {'ready_for_approval') {
+    @if (current.status === 'ready_for_approval') {
       <section [attr.id]="embedded ? 'workflow-step-4' : null" class="session-card approval-card">
         <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 4 · FREIGABE' : 'STEP 4 · APPROVAL' }}</div>
         <h2>{{ isGerman ? 'Menschliche Freigabe erforderlich' : 'Human approval required' }}</h2>
