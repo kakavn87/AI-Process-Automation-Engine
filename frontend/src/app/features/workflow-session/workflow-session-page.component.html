@@ -318,7 +318,7 @@
     </section>
   }
 
-  @if (current.status === 'completed' || current.status === 'rejected') {
+  @if (session()?.status === 'completed' || session()?.status === 'rejected') {
     <section class="session-card usage-card">
     <div class="session-card-header">
       <div>
