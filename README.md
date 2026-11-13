@@ -7,7 +7,7 @@ AI Process Optimierung is a portfolio MVP that turns natural-language business p
 - **Python / FastAPI** backend organized by API routes, application services, a process-analysis engine, connector boundaries, schemas, and SQLAlchemy persistence models.
 - **Angular 19** standalone frontend using Angular Signals for process and execution state.
 - **OpenAI Responses API or an OpenAI-compatible gateway** (including LiteLLM Proxy) with Pydantic Structured Outputs for LLM-based process understanding and workflow proposal generation.
-- **Document intake** for PDF, DOCX, PPTX, XLSX, CSV, TXT, Markdown and common images. Text is extracted in memory; diagrams and scanned PDF pages can be passed to a vision-capable model.
+- **Document intake** for PDF, DOCX, PPTX, XLSX, CSV, TXT, Markdown and common images. Text is extracted in memory; TIFF images, diagrams and scanned PDF pages can be passed to a vision-capable model.
 - **Optional AI platform companion** using LiteLLM Proxy and OpenWebUI through a local Docker Compose profile.
 - **Rules-based fallback** so the demo remains available when an OpenAI API key is not configured or the API is temporarily unavailable.
 - **Human-in-the-loop approval lifecycle**: create an execution request, inspect workflow steps, approve or reject, and retain a decision note.
@@ -51,7 +51,7 @@ Save the environment changes to trigger a redeploy. The frontend never receives 
 ## API
 
 - `POST /api/processes/analyze` — analyze a text business-process description.
-- `POST /api/processes/analyze-with-documents` — analyze a description plus up to 8 PDF, DOCX, PPTX, XLSX, CSV, TXT, Markdown, PNG, JPG, WEBP, Draw.io, BPMN, SVG and XML files (10 MB per file, 25 MB combined).
+- `POST /api/processes/analyze-with-documents` — analyze a description plus up to 8 PDF, DOCX, PPTX, XLSX, CSV, TXT, Markdown, PNG, JPG, WEBP, TIFF, Draw.io, BPMN, SVG and XML files (10 MB per file, 25 MB combined).
 - `GET /api/integrations/readiness` — return non-secret readiness for the AI gateway, optional OpenWebUI portal and business connector catalog.
 - `POST /api/data-processing/upload` — upload a CSV or XLSX file (max 10 MB) for in-memory data profiling and a cleaned preview.
 - `POST /api/executions/` — create an execution record and pause at human approval.
@@ -119,7 +119,7 @@ Render service previews initially copy their base service settings, including en
 
 ## Step 1: document and diagram intake
 
-The process builder accepts optional source files alongside a short description. Text is extracted from PDF, DOCX, PPTX, XLSX, CSV, TXT and Markdown files. PNG/JPG/WEBP images, SVG, Draw.io and BPMN/XML diagram labels and edges, slide pictures, and PDF pages containing scanned or visual content are extracted or normalized and sent to a configured vision-capable model. Original uploaded files are processed in memory and are not persisted. When optional RAG is enabled, extracted text chunks and source metadata are stored in Qdrant under the generated process-session ID; this is session-scoped, not a reusable cross-workspace knowledge base. A scanned image-only submission requires a configured vision-capable model. The app displays source filenames and extraction warnings with the analysis.
+The process builder accepts optional source files alongside a short description. Text is extracted from PDF, DOCX, PPTX, XLSX, CSV, TXT and Markdown files. PNG/JPG/WEBP/TIFF images, SVG, Draw.io and BPMN/XML diagram labels and edges, slide pictures, and PDF pages containing scanned or visual content are extracted or normalized and sent to a configured vision-capable model. Original uploaded files are processed in memory and are not persisted. When optional RAG is enabled, extracted text chunks and source metadata are stored in Qdrant under the generated process-session ID; this is session-scoped, not a reusable cross-workspace knowledge base. A scanned image-only submission requires a configured vision-capable model. The app displays source filenames and extraction warnings with the analysis.
 
 The upload limit is 8 files, 10 MB per file and 25 MB combined. Office archives are checked for expanded-size limits. All supplied document content is treated as untrusted input by the analysis prompt.
 
