@@ -29,6 +29,7 @@ class ProcessService:
         strategy: str = "auto",
         language: str = "en",
         business_domain: str | None = None,
+        image_data_urls: list[str] | None = None,
     ) -> dict:
         analysis = self.analyzer.analyze(description, language=language)
         if business_domain and business_domain != "general":
@@ -49,7 +50,15 @@ class ProcessService:
 
         if routing["selectedEngine"] == "llm":
             try:
-                ai_result = self.ai_service.analyze_process(description, analysis["signals"], language=language)
+                if image_data_urls:
+                    ai_result = self.ai_service.analyze_process(
+                        description, analysis["signals"], language=language,
+                        image_data_urls=image_data_urls,
+                    )
+                else:
+                    ai_result = self.ai_service.analyze_process(
+                        description, analysis["signals"], language=language
+                    )
                 self._apply_ai_result(analysis, ai_result, business_domain=business_domain)
                 analysis["llmUsed"] = True
                 analysis["llmModel"] = self.ai_service.model
