@@ -1,7 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { ProcessAnalysis } from '../models/api.models';
+import {
+  ExecutionRecord,
+  ProcessAnalysis,
+  ProposedWorkflow,
+} from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -10,5 +14,17 @@ export class ApiService {
 
   analyzeProcess(description: string) {
     return this.http.post<ProcessAnalysis>(`${this.baseUrl}/processes/analyze`, { description });
+  }
+
+  createExecution(workflow: ProposedWorkflow) {
+    return this.http.post<ExecutionRecord>(`${this.baseUrl}/executions/`, { workflow });
+  }
+
+  approveExecution(id: number, note: string) {
+    return this.http.post<ExecutionRecord>(`${this.baseUrl}/executions/${id}/approve`, { note });
+  }
+
+  rejectExecution(id: number, note: string) {
+    return this.http.post<ExecutionRecord>(`${this.baseUrl}/executions/${id}/reject`, { note });
   }
 }
