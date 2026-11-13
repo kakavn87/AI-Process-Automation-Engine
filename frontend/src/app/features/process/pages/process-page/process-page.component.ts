@@ -338,7 +338,7 @@ export class ProcessPageComponent {
         this.dataProcessing.set(false);
       },
       error: error => {
-        this.dataError.set(error?.error?.detail ?? this.i18n.errorUpload);
+        this.dataError.set(error?.status === 413 ? (this.language() === 'de' ? 'Die Datei ist größer als das Limit von 10 MB.' : 'The file exceeds the 10 MB size limit.') : this.i18n.errorUpload);
         this.dataProcessing.set(false);
       }
     });
@@ -363,7 +363,7 @@ export class ProcessPageComponent {
         this.executionLoading.set(false);
       },
       error: error => {
-        this.executionError.set(error?.error?.detail ?? this.i18n.errorRequest);
+        this.executionError.set(this.i18n.errorRequest);
         this.executionLoading.set(false);
       }
     });
@@ -382,7 +382,7 @@ export class ProcessPageComponent {
         this.executionLoading.set(false);
       },
       error: error => {
-        this.executionError.set(error?.error?.detail ?? this.i18n.errorApprove);
+        this.executionError.set(this.i18n.errorApprove);
         this.executionLoading.set(false);
       }
     });
@@ -401,7 +401,7 @@ export class ProcessPageComponent {
         this.executionLoading.set(false);
       },
       error: error => {
-        this.executionError.set(error?.error?.detail ?? this.i18n.errorReject);
+        this.executionError.set(this.i18n.errorReject);
         this.executionLoading.set(false);
       }
     });
