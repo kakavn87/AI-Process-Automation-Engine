@@ -52,6 +52,24 @@ export class ApiService {
     }));
   }
 
+  analyzeProcessWithDocuments(
+    description: string,
+    files: File[],
+    analysisStrategy: 'auto' | 'rules' | 'llm' = 'auto',
+    language: 'de' | 'en' = 'de',
+    businessDomain = 'general'
+  ) {
+    const formData = new FormData();
+    if (description.trim()) formData.append('description', description.trim());
+    formData.append('analysis_strategy', analysisStrategy);
+    formData.append('analysis_language', language);
+    formData.append('business_domain', businessDomain);
+    files.forEach(file => formData.append('files', file, file.name));
+    return this.request('/processes/analyze-with-documents', url =>
+      this.http.post<ProcessAnalysis>(url, formData)
+    );
+  }
+
   getWorkflowSession(id: string) {
     return this.request('/processes/sessions/' + encodeURIComponent(id), url =>
       this.http.get<WorkflowSession>(url)
