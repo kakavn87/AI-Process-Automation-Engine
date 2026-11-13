@@ -69,7 +69,7 @@ class ProcessService:
                     f"Mit der OpenAI Responses API ({(telemetry or {}).get('model') or getattr(self.ai_service, 'analysis_model', self.ai_service.model)}) analysiert. "
                     "Integrationen sind nicht verbunden; die Workflow-Ausführung wird nur simuliert."
                     if language == "de"
-                    else f"Analyzed with OpenAI Responses API ({self.ai_service.model}). "
+                    else f"Analyzed with OpenAI Responses API ({(telemetry or {}).get('model') or getattr(self.ai_service, 'analysis_model', self.ai_service.model)}). "
                     "The workflow is a proposal; integrations are not connected and execution is simulated."
                 )
                 localized = localize_process_analysis(analysis, language)
