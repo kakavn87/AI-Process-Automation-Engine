@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { ApprovalExecution, ProcessAnalysis, ProposedWorkflow } from '../models/api.models';
+import { ApprovalExecution, ProcessAnalysis, ProposedWorkflow, TabularDataResult } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -13,6 +13,12 @@ export class ApiService {
       description,
       analysis_strategy: analysisStrategy
     });
+  }
+
+  uploadDataFile(file: File) {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http.post<TabularDataResult>(`${this.baseUrl}/data-processing/upload`, formData);
   }
 
   startExecution(workflow: ProposedWorkflow) {
