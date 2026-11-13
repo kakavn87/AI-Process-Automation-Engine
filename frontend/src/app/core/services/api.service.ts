@@ -83,6 +83,22 @@ export class ApiService {
     );
   }
 
+  searchSessionKnowledge(id: string, query: string, topK = 8) {
+    return this.request('/processes/sessions/' + encodeURIComponent(id) + '/knowledge/search', url =>
+      this.http.post<{
+        sessionId: string;
+        query: string;
+        matches: Array<{
+          sourceFile: string;
+          page: number | null;
+          chunkIndex: number;
+          score: number;
+          content: string;
+        }>;
+      }>(url, { query, top_k: topK })
+    );
+  }
+
   createSessionExecution(id: string) {
     return this.request('/processes/sessions/' + encodeURIComponent(id) + '/execute', url =>
       this.http.post<{ session: WorkflowSession; execution: ApprovalExecution }>(url, {})
