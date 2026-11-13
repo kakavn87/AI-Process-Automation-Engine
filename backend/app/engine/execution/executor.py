@@ -1,8 +1,12 @@
+from app.engine.execution.action_executor import ActionExecutor
 from app.engine.workflow.validator import validate
 
 
 class WorkflowExecutor:
-    """Safe MVP executor: records simulated steps but performs no external side effects."""
+    """Safe MVP executor: approved steps are dispatched in simulation mode only."""
+
+    def __init__(self, action_executor: ActionExecutor | None = None):
+        self.action_executor = action_executor or ActionExecutor()
 
     def execute(self, workflow: dict, approved: bool = False) -> dict:
         validate(workflow)
@@ -13,29 +17,10 @@ class WorkflowExecutor:
                 "events": [],
             }
 
-        events = []
-        for step in workflow.get("steps", []):
-            step_type = step.get("type")
-            if step_type == "approval":
-                events.append({
-                    "stepId": step.get("id"),
-                    "step": step.get("name"),
-                    "status": "approved",
-                    "message": "Human approval was recorded.",
-                })
-                continue
-
-            events.append({
-                "stepId": step.get("id"),
-                "step": step.get("name"),
-                "status": "simulated",
-                "message": (
-                    "External action simulated; no email, Teams message, or external system was contacted."
-                    if step_type in {"notify", "email", "teams", "http"}
-                    else "Workflow step simulated successfully."
-                ),
-            })
-
+        events = [
+            self.action_executor.execute_step(step, context={})
+            for step in workflow.get("steps", [])
+        ]
         return {
             "status": "completed",
             "executionMode": "simulation",
