@@ -1,4 +1,5 @@
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../../core/services/api.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -24,7 +25,7 @@ interface Industry {
 @Component({
   selector: 'app-process-page',
   standalone: true,
-  imports: [FormsModule, WorkflowSessionPageComponent],
+  imports: [FormsModule, WorkflowSessionPageComponent, DatePipe],
   templateUrl: './process-page.component.html'
 })
 export class ProcessPageComponent implements OnInit {
