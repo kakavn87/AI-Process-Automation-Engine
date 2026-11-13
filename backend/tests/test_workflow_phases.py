@@ -244,7 +244,7 @@ def test_live_webhook_is_disabled_by_default(monkeypatch):
     with Session(engine) as db:
         completed = _approved_execution(db)
         with pytest.raises(ValueError, match="disabled"):
-            ExecutionService(db).run_live(completed["id"], confirmed=True)
+            ExecutionService(db).run_live(completed["id"], confirmed=True, confirmation_token="")
 
     Base.metadata.drop_all(bind=engine)
     engine.dispose()
