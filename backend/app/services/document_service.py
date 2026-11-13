@@ -3,7 +3,6 @@ from __future__ import annotations
 import base64
 import io
 import zipfile
-import base64
 import re
 import zlib
 from html import unescape
@@ -228,6 +227,103 @@ class DocumentProcessingService:
 
         return "\n\n".join(sections), page_count
 
+
+    @staticmethod
+    def _extract_xml_diagram(filename: str, content: bytes, suffix: str) -> str:
+        """Extract labels and flow edges from Draw.io, BPMN, SVG and XML diagrams."""
+        try:
+            xml_text = content.decode("utf-8-sig")
+        except UnicodeDecodeError as error:
+            raise ValueError(f"{filename}: the XML diagram must be UTF-8 encoded.") from error
+
+        try:
+            root = SafeET.fromstring(xml_text)
+        except Exception as first_error:
+            root = None
+            if suffix == ".drawio":
+                match = re.search(r"<diagram(?:\s[^>]*)?>(.*?)</diagram>", xml_text, re.DOTALL)
+                if match:
+                    try:
+                        compressed = base64.b64decode(match.group(1).strip(), validate=True)
+                        expanded = zlib.decompress(compressed, -15)
+                        decoded_xml = unquote(expanded.decode("utf-8"))
+                        root = SafeET.fromstring(decoded_xml)
+                    except Exception as error:
+                        raise ValueError(f"{filename}: the compressed Draw.io diagram could not be decoded.") from error
+            if root is None:
+                raise ValueError(f"{filename}: the XML diagram is invalid.") from first_error
+
+        if suffix == ".drawio":
+            cells = [
+                element for element in root.iter()
+                if element.tag.rsplit("}", 1)[-1] == "mxCell"
+            ]
+            # Draw.io compressed files are valid outer XML, but hold the actual
+            # diagram in base64/raw-DEFLATE text inside the diagram element.
+            if not cells:
+                diagram = next(
+                    (element for element in root.iter()
+                     if element.tag.rsplit("}", 1)[-1] == "diagram" and element.text),
+                    None,
+                )
+                if diagram is not None:
+                    try:
+                        compressed = base64.b64decode(diagram.text.strip(), validate=True)
+                        expanded = zlib.decompress(compressed, -15)
+                        decoded_xml = unquote(expanded.decode("utf-8"))
+                        root = SafeET.fromstring(decoded_xml)
+                        cells = [
+                            element for element in root.iter()
+                            if element.tag.rsplit("}", 1)[-1] == "mxCell"
+                        ]
+                    except Exception as error:
+                        raise ValueError(f"{filename}: the compressed Draw.io diagram could not be decoded.") from error
+
+            labels: dict[str, str] = {}
+            edges: list[str] = []
+            for cell in cells:
+                cell_id = cell.attrib.get("id", "")
+                value = unescape(re.sub(r"<[^>]+>", " ", cell.attrib.get("value", ""))).strip()
+                if cell_id and value:
+                    labels[cell_id] = " ".join(value.split())
+            for cell in cells:
+                source = cell.attrib.get("source")
+                target = cell.attrib.get("target")
+                if source and target:
+                    left = labels.get(source, source)
+                    right = labels.get(target, target)
+                    edges.append(f"{left} -> {right}")
+            node_labels = list(dict.fromkeys(labels.values()))
+            sections = ["[Draw.io diagram nodes]", *node_labels]
+            if edges:
+                sections.extend(["[Draw.io diagram connections]", *edges])
+            if not node_labels and not edges:
+                raise ValueError(f"{filename}: no readable Draw.io nodes or connections were found.")
+            return "\n".join(sections)
+
+        sections: list[str] = []
+        edges: list[str] = []
+        for element in root.iter():
+            tag = element.tag.rsplit("}", 1)[-1]
+            attributes = element.attrib
+            name = attributes.get("name") or attributes.get("label")
+            identifier = attributes.get("id")
+            if name:
+                sections.append(f"{tag}: {name}")
+            elif identifier and tag not in {"definitions", "process"}:
+                sections.append(f"{tag}: {identifier}")
+            if tag in {"sequenceFlow", "messageFlow", "association"}:
+                source = attributes.get("sourceRef", "")
+                target = attributes.get("targetRef", "")
+                if source or target:
+                    edges.append(f"{source} -> {target}")
+            if element.text and element.text.strip() and len(element) == 0:
+                sections.append(element.text.strip())
+        if edges:
+            sections.extend(["[Diagram connections]", *edges])
+        if not sections:
+            raise ValueError(f"{filename}: no readable diagram labels or XML elements were found.")
+        return "\n".join(dict.fromkeys(sections))
 
     @staticmethod
     def _extract_docx(content: bytes) -> str:
