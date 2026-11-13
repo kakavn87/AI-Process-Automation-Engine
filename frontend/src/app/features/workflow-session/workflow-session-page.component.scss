@@ -41,6 +41,11 @@
 .workflow-step p { margin: 5px 0; color: #68748b; font-size: 12px; line-height: 1.55; }
 .workflow-step small { color: #929bb0; font-size: 10px; text-transform: uppercase; }
 .ready-indicator { border-radius: 999px; padding: 8px 12px; color: #13815e; background: #eaf8f3; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.confirmed-answers { margin-top: 20px; padding: 15px 16px; border: 1px solid #e8ebf2; border-radius: 10px; background: #fbfcfe; }
+.confirmed-answers h3 { margin: 0 0 12px; color: #43506a; font: 800 12px Manrope, sans-serif; }
+.confirmed-answer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, .7fr); gap: 12px; padding: 9px 0; border-top: 1px solid #edf0f5; }
+.confirmed-answer strong { color: #68748b; font-size: 11px; line-height: 1.5; }
+.confirmed-answer span { color: #34415a; font-size: 12px; overflow-wrap: anywhere; }
 .safety-note { margin-top: 17px; padding: 14px 16px; border: 1px solid #f0e5ce; border-radius: 10px; background: #fffaf1; }
 .safety-note strong { color: #926227; font-size: 12px; }
 .safety-note p { margin: 5px 0 0; color: #79694e; font-size: 12px; line-height: 1.6; }
