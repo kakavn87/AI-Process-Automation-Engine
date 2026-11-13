@@ -109,7 +109,8 @@ class ProcessAnalyzer:
         )
         activity_evidence = min(len(activities), 6) * 10
         context_score = min(context_evidence, 5) * 5
-        inferred_score = min(85, 15 + activity_evidence + context_score)
+        minimum_evidence_score = 15 if len(description.strip()) >= 20 else 0
+        inferred_score = min(85, minimum_evidence_score + activity_evidence + context_score)
         automation_score = max(min(score, 100), inferred_score)
 
         result = {
