@@ -70,18 +70,28 @@ def test_second_stage_optimization_uses_json_mode_and_validates_schema():
             return response
 
     fake_responses = FakeResponses()
-    service = AIService(api_key="test-key", model="test-optimization-model")
+    service = AIService(api_key="test-key", model="shared-model", optimization_model="test-optimization-model")
     service._client = SimpleNamespace(responses=fake_responses)
 
     result = service.optimize_process(
-        description="Eingangsrechnungen prüfen.",
-        analysis={"summary": "Manuelle Rechnungsprüfung"},
+        description="Eingangsrechnungen prüfen. " + ("Dokumentinhalt " * 1500),
+        analysis={
+            "summary": "Manuelle Rechnungsprüfung",
+            "sourceEvidence": [
+                {"filename": f"Beleg-{index}.pdf", "page": index + 1, "excerpt": "Belegtext " * 1000}
+                for index in range(9)
+            ],
+        },
         questions=[{"id": "q-1", "prompt": "Welches ERP wird verwendet?"}],
         answers={"q-1": "SAP S/4HANA"},
         language="de",
     )
 
     assert result["workflow_name"] == "Rechnungsprüfung"
+    assert fake_responses.kwargs["model"] == "test-optimization-model"
+    request_context = json.loads(fake_responses.kwargs["input"][1]["content"].split("context:\n", 1)[1])
+    assert len(request_context["original_process_description"]) <= 12000
+    assert len(request_context["first_stage_analysis"]["source_evidence"]) == 5
     assert fake_responses.kwargs["text"] == {"format": {"type": "json_object"}}
     assert "text_format" not in fake_responses.kwargs
     assert "JSON" in fake_responses.kwargs["input"][0]["content"]
@@ -162,3 +172,55 @@ def test_workflow_mapping_failure_is_not_reported_as_an_openai_request_failure()
     assert "nicht in einen gültigen Workflow" in result["optimization"]["summary"]
     assert "OpenAI-Anfrage fehlgeschlagen" not in result["optimization"]["summary"]
     assert result["_optimizationUsageTelemetry"]["status"] == "success"
+
+
+
+def test_process_analysis_uses_its_dedicated_model_and_smaller_output_budget():
+    response = SimpleNamespace(
+        output_parsed=SimpleNamespace(model_dump=lambda: {"summary": "ok"}),
+        usage=SimpleNamespace(input_tokens=50, output_tokens=100, total_tokens=150),
+    )
+
+    class FakeResponses:
+        def __init__(self):
+            self.kwargs = None
+
+        def parse(self, **kwargs):
+            self.kwargs = kwargs
+            return response
+
+    fake_responses = FakeResponses()
+    service = AIService(
+        api_key="test-key",
+        model="shared-model",
+        analysis_model="fast-analysis-model",
+    )
+    service._client = SimpleNamespace(responses=fake_responses)
+
+    result = service.analyze_process("Eingangsrechnungen prüfen.", [], language="de")
+
+    assert result["summary"] == "ok"
+    assert fake_responses.kwargs["model"] == "fast-analysis-model"
+    assert fake_responses.kwargs["max_output_tokens"] == 4500
+    assert service.last_call_telemetry["model"] == "fast-analysis-model"
+
+
+def test_ai_service_supports_separate_analysis_and_optimization_models():
+    service = AIService(
+        api_key="test-key",
+        model="shared-default-model",
+        analysis_model="fast-analysis-model",
+        optimization_model="reasoning-optimization-model",
+    )
+
+    assert service.analysis_model == "fast-analysis-model"
+    assert service.optimization_model == "reasoning-optimization-model"
+    assert service.vision_model == "fast-analysis-model"
+
+
+def test_ai_service_falls_back_to_shared_model_when_task_models_are_not_set():
+    service = AIService(api_key="test-key", model="shared-default-model")
+
+    assert service.analysis_model == "shared-default-model"
+    assert service.optimization_model == "shared-default-model"
+    assert service.vision_model == "shared-default-model"

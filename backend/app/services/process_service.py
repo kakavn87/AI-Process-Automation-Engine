@@ -63,13 +63,13 @@ class ProcessService:
                 self._apply_ai_result(analysis, ai_result, business_domain=business_domain)
                 analysis["llmUsed"] = True
                 telemetry = getattr(self.ai_service, "last_call_telemetry", None)
-                analysis["llmModel"] = (telemetry or {}).get("model") or self.ai_service.model
+                analysis["llmModel"] = (telemetry or {}).get("model") or getattr(self.ai_service, "analysis_model", self.ai_service.model)
                 analysis["analysisMode"] = "openai_responses"
                 analysis["analysisNote"] = (
-                    f"Mit der OpenAI Responses API ({self.ai_service.model}) analysiert. "
+                    f"Mit der OpenAI Responses API ({(telemetry or {}).get('model') or getattr(self.ai_service, 'analysis_model', self.ai_service.model)}) analysiert. "
                     "Integrationen sind nicht verbunden; die Workflow-Ausführung wird nur simuliert."
                     if language == "de"
-                    else f"Analyzed with OpenAI Responses API ({self.ai_service.model}). "
+                    else f"Analyzed with OpenAI Responses API ({(telemetry or {}).get('model') or getattr(self.ai_service, 'analysis_model', self.ai_service.model)}). "
                     "The workflow is a proposal; integrations are not connected and execution is simulated."
                 )
                 localized = localize_process_analysis(analysis, language)
@@ -188,7 +188,7 @@ class ProcessService:
                 "designPrinciples": [],
                 "recommendedChanges": [],
                 "expectedBenefits": [],
-                "model": getattr(self.ai_service, "model", None),
+                "model": getattr(self.ai_service, "optimization_model", getattr(self.ai_service, "model", None)),
             }
             telemetry = getattr(self.ai_service, "last_call_telemetry", None)
             if telemetry:

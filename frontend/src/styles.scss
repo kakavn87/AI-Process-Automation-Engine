@@ -2311,3 +2311,55 @@ body { background: #f3f5f9; color: #111827; }
 @media (max-width: 640px) {
   .settings-setup-grid { grid-template-columns: 1fr; }
 }
+
+
+/* Long-running AI requests: clear, accessible feedback without blocking the page. */
+.ai-loading-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 16px 18px;
+  border: 1px solid #c7d2fe;
+  border-radius: 13px;
+  background: #f5f6ff;
+  color: #312e81;
+}
+.ai-loading-panel > div { min-width: 0; }
+.ai-loading-panel strong {
+  display: block;
+  color: #312e81;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+.ai-loading-panel p {
+  margin: 4px 0 0;
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.ai-loading-spinner,
+.ai-inline-spinner {
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border: 3px solid #c7d2fe;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: ai-request-spin .8s linear infinite;
+}
+.ai-inline-spinner {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+  border-color: #ffffff70;
+  border-top-color: #fff;
+  vertical-align: -2px;
+}
+@keyframes ai-request-spin { to { transform: rotate(360deg); } }
+.session-submission-loading { margin-top: 14px; }
+@media (prefers-reduced-motion: reduce) {
+  .ai-loading-spinner, .ai-inline-spinner { animation: none; }
+}

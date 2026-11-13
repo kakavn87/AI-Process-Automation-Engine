@@ -14,7 +14,9 @@ The backend is organized by responsibility:
 The process analyzer uses the OpenAI Responses API with Structured Outputs. Configure these environment variables on the backend only:
 
 - `OPENAI_API_KEY`: an API key from the OpenAI Platform
-- `OPENAI_MODEL`: model identifier; defaults to `gpt-6-luna`
+- `OPENAI_MODEL`: shared model identifier; defaults to `gpt-6-luna`
+- `OPENAI_ANALYSIS_MODEL`: optional faster model for the initial process analysis; defaults to `OPENAI_MODEL`
+- `OPENAI_OPTIMIZATION_MODEL`: optional model for redesigning the process after clarification; defaults to `OPENAI_MODEL`
 
 For local development, copy `.env.example` to `.env` and add your key. Never commit `.env` or place the API key in the Angular frontend.
 
