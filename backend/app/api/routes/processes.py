@@ -74,8 +74,11 @@ async def analyze_process_with_documents(
         image_data_urls=extracted["image_data_urls"],
     )
     usage_telemetry = analysis.pop("_aiUsageTelemetry", None)
+    # Do not persist extracted document text in a workflow session.
+    # Keep the original short user description and derived process analysis only.
+    analysis["description"] = description.strip() or "Uploaded process documents"
     session = WorkflowSessionService(db).create(
-        description=analysis_description,
+        description=description.strip() or "Uploaded process documents",
         analysis=analysis,
         strategy=analysis_strategy,
         language=analysis_language,
@@ -88,7 +91,6 @@ async def analyze_process_with_documents(
         extracted["warnings"].append(
             "Visual content was not interpreted by a vision model. The fallback analysis used extracted text only."
         )
-    analysis["description"] = description.strip() or "Uploaded process documents"
     analysis["sourceDocuments"] = extracted["documents"]
     analysis["documentWarnings"] = extracted["warnings"]
     return {
