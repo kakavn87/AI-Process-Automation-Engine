@@ -74,8 +74,14 @@ def test_second_stage_optimization_uses_json_mode_and_validates_schema():
     service._client = SimpleNamespace(responses=fake_responses)
 
     result = service.optimize_process(
-        description="Eingangsrechnungen prüfen.",
-        analysis={"summary": "Manuelle Rechnungsprüfung"},
+        description="Eingangsrechnungen prüfen. " + ("Dokumentinhalt " * 1500),
+        analysis={
+            "summary": "Manuelle Rechnungsprüfung",
+            "sourceEvidence": [
+                {"filename": f"Beleg-{index}.pdf", "page": index + 1, "excerpt": "Belegtext " * 1000}
+                for index in range(9)
+            ],
+        },
         questions=[{"id": "q-1", "prompt": "Welches ERP wird verwendet?"}],
         answers={"q-1": "SAP S/4HANA"},
         language="de",
@@ -83,6 +89,9 @@ def test_second_stage_optimization_uses_json_mode_and_validates_schema():
 
     assert result["workflow_name"] == "Rechnungsprüfung"
     assert fake_responses.kwargs["model"] == "test-optimization-model"
+    request_context = json.loads(fake_responses.kwargs["input"][1]["content"].split("context:\\n", 1)[1])
+    assert len(request_context["original_process_description"]) <= 12000
+    assert len(request_context["first_stage_analysis"]["source_evidence"]) == 5
     assert fake_responses.kwargs["text"] == {"format": {"type": "json_object"}}
     assert "text_format" not in fake_responses.kwargs
     assert "JSON" in fake_responses.kwargs["input"][0]["content"]
