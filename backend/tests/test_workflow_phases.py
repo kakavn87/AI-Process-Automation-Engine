@@ -26,6 +26,15 @@ def test_question_service_builds_stable_typed_questions():
     assert questions[0]["type"] == "text"
     assert questions[1]["type"] == "boolean"
     assert questions[1]["id"] == service.build(["Is manager approval required?"])[0]["id"]
+    assert questions[0]["placeholder"] == "Please enter a short answer."
+    assert questions[1]["placeholder"] == "Choose yes or no."
+
+    german_questions = service.build([
+        "Welche Angaben werden benötigt?",
+        "Ist eine Freigabe erforderlich?",
+    ], language="de")
+    assert german_questions[0]["placeholder"] == "Bitte kurz antworten …"
+    assert german_questions[1]["placeholder"] == "Bitte Ja oder Nein auswählen."
 
 
 def test_german_customer_support_questions_are_renderable_and_typed():
