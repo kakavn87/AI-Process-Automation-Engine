@@ -1,5 +1,7 @@
 import logging
 
+from typing import Literal
+
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.services.tabular_data_service import MAX_UPLOAD_BYTES, TabularDataService
@@ -11,7 +13,7 @@ service = TabularDataService()
 
 
 @router.post("/upload")
-async def upload_tabular_file(file: UploadFile = File(...)):
+async def upload_tabular_file(file: UploadFile = File(...), language: Literal["de", "en"] = "de"):
     filename = file.filename or ""
     try:
         if not filename:
@@ -22,7 +24,7 @@ async def upload_tabular_file(file: UploadFile = File(...)):
             raise HTTPException(status_code=413, detail="File is larger than the 10 MB upload limit.")
 
         try:
-            return service.process(filename, content)
+            return service.process(filename, content, language=language)
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         except Exception as exc:
