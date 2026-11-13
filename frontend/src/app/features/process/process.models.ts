@@ -1,5 +1,7 @@
-export interface ProcessAnalysis {
-  automationScore: number;
-  signals: string[];
-  description: string;
-}
+export type {
+  AutomationOpportunity,
+  ProcessAnalysis,
+  ProcessIntegration,
+  ProposedWorkflow,
+  WorkflowStepAnalysis,
+} from '../../core/models/api.models';
