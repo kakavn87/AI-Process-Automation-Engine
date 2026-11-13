@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "AI Engine"
+    APP_NAME: str = "AI Process Optimierung"
     DATABASE_URL: str = "sqlite:///./process_automation.db"
     PREVIEW_DATABASE_URL: str = ""
     OPENAI_API_KEY: str = ""

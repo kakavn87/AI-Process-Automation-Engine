@@ -580,7 +580,7 @@ body { font-size: 15px; line-height: 1.55; }
 }
 
 
-/* FlowPilot task-first workspace refresh — November 2026 */
+/* Process-workspace layout refresh — November 2026 */
 :root {
   --muted: #5f6c82;
   --line: #e3e8f0;
@@ -1872,4 +1872,17 @@ body { background: #f3f5f9; color: #111827; }
 @media (max-width: 390px) {
   .workspace-welcome h1 { font-size: 27px; }
   .industry-grid { grid-template-columns: 1fr; }
+}
+
+
+/* Product name fit: keep the longer German wordmark clean in the dark rail. */
+.brand-copy strong {
+  max-width: 178px;
+  font-size: 14px !important;
+  line-height: 1.25;
+  letter-spacing: -.025em;
+}
+.brand-copy small {
+  font-size: 9px !important;
+  letter-spacing: .015em;
 }

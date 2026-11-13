@@ -1,8 +1,8 @@
 <main class="session-shell">
   <header class="session-topbar">
     <a class="session-brand" routerLink="/">
-      <span class="session-brand-mark">F</span>
-      <span><strong>FlowPilot</strong><small>Process automation workspace</small></span>
+      <span class="session-brand-mark">AI</span>
+      <span><strong>AI Process Optimierung</strong><small>KI-gestützte Prozessoptimierung</small></span>
     </a>
     <button class="session-back" type="button" (click)="backToBuilder()">
       ← {{ isGerman ? 'Zurück zum Prozess-Designer' : 'Back to process builder' }}
@@ -58,8 +58,8 @@
             <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 2 · KLÄRUNG' : 'STEP 2 · CLARIFICATION' }}</div>
             <h2>{{ isGerman ? 'Offene Fragen' : 'Open questions' }}</h2>
             <p>{{ isGerman
-              ? 'Bitte ergänzen Sie die fehlenden Angaben. FlowPilot speichert die Antworten und setzt die Verarbeitung automatisch fort.'
-              : 'Please provide the missing details. FlowPilot will save your answers and continue processing automatically.' }}</p>
+              ? 'Bitte ergänzen Sie die fehlenden Angaben. AI Process Optimierung speichert die Antworten und setzt die Verarbeitung automatisch fort.'
+              : 'Please provide the missing details. AI Process Optimierung will save your answers and continue processing automatically.' }}</p>
           </div>
           <span class="question-count">{{ current.openQuestions.length }}</span>
         </div>
@@ -272,7 +272,7 @@
   </section>
 
   <footer class="session-footer">
-    <span>FlowPilot · AI Process Automation</span>
+    <span>AI Process Optimierung · KI-gestützte Prozessautomatisierung</span>
     <span>{{ isGerman ? 'Portfolio-Prototyp · externe Integrationen deaktiviert' : 'Portfolio prototype · external integrations disabled' }}</span>
   </footer>
 </main>
