@@ -86,6 +86,20 @@ class Settings(BaseSettings):
         )
 
     @property
+    def sqlalchemy_database_url(self) -> str:
+        """Return a SQLAlchemy URL with the installed PostgreSQL driver explicit.
+
+        Render and other providers commonly expose postgres:// or postgresql://
+        URLs. This project installs psycopg v3, so use its SQLAlchemy dialect.
+        """
+        url = self.effective_database_url.strip()
+        if url.startswith("postgres://"):
+            return "postgresql+psycopg://" + url[len("postgres://"):]
+        if url.startswith("postgresql://"):
+            return "postgresql+psycopg://" + url[len("postgresql://"):]
+        return url
+
+    @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
