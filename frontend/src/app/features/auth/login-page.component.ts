@@ -20,6 +20,15 @@ import { AuthService } from '../../core/services/auth.service';
           <label for="login-email">E-Mail-Adresse</label>
           <input id="login-email" name="email" type="email" autocomplete="username"
             [(ngModel)]="email" required email placeholder="name@unternehmen.de" />
+          @if (auth.workspaces().length > 0) {
+            <label for="login-workspace">Arbeitsbereich</label>
+            <select id="login-workspace" name="tenantId" [(ngModel)]="tenantId" required>
+              <option value="">Arbeitsbereich auswählen</option>
+              @for (workspace of auth.workspaces(); track workspace.id) {
+                <option [value]="workspace.id">{{ workspace.name }} · {{ workspace.role }}</option>
+              }
+            </select>
+          }
           <label for="login-password">Passwort</label>
           <input id="login-password" name="password" type="password" autocomplete="current-password"
             [(ngModel)]="password" required placeholder="Passwort eingeben" />
@@ -53,6 +62,8 @@ import { AuthService } from '../../core/services/auth.service';
     button { display: flex; align-items: center; justify-content: space-between; margin-top: 13px; min-height: 46px; padding: 0 15px; border: 0; border-radius: 9px; color: #fff; background: #575fce; font-weight: 700; cursor: pointer; }
     button:disabled { cursor: not-allowed; opacity: .55; }
     .login-error { padding: 10px 12px; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b; background: #fff5f5; font-size: 12px; }
+    select { width: 100%; min-height: 45px; border: 1px solid #dfe4ed; border-radius: 9px; padding: 0 12px; color: #17213a; background: #fff; font: inherit; font-size: 13px; }
+    select:focus { outline: 2px solid #777bf0; outline-offset: 2px; }
     .login-footnote { display: block; margin-top: 24px; line-height: 1.5; }
     @media (max-width: 520px) { .login-card { padding: 26px 22px; } }
   `]
@@ -63,12 +74,13 @@ export class LoginPageComponent {
   readonly error = signal<string | null>(null);
   email = '';
   password = '';
+  tenantId = '';
 
   submit(): void {
     if (!this.email.trim() || !this.password) return;
     this.loading.set(true);
     this.error.set(null);
-    this.auth.login(this.email, this.password).subscribe({
+    this.auth.login(this.email, this.password, this.tenantId || undefined).subscribe({
       next: () => this.loading.set(false),
       error: response => {
         this.loading.set(false);
