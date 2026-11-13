@@ -160,9 +160,10 @@
 
     @if (current.status === 'processing') {
       <section [attr.id]="embedded ? 'workflow-step-3' : null" class="session-card">
-        <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 3 · VERARBEITUNG' : 'STEP 3 · PROCESSING' }}</div>
-        <h2>{{ isGerman ? 'Antworten werden verarbeitet' : 'Processing answers' }}</h2>
-        <p>{{ isGerman ? 'Python validiert die Eingaben und aktualisiert den Workflow-Kontext.' : 'Python is validating the answers and updating the workflow context.' }}</p>
+        <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 3 · KI-OPTIMIERUNG' : 'STEP 3 · AI OPTIMIZATION' }}</div>
+        <h2>{{ isGerman ? 'Das KI-Modell optimiert Ihren Prozess' : 'The AI model is optimizing your process' }}</h2>
+        <p>{{ isGerman ? 'Ihre Antworten werden zusammen mit der ersten Analyse erneut an das KI-Modell gesendet. Anschließend prüft Python den optimierten Workflow und berechnet die Kennzahlen.' : 'Your answers are sent to the AI model together with the initial analysis. Python then validates the optimized workflow and calculates the metric deltas.' }}</p>
+        <div class="optimization-progress"><span class="session-spinner"></span><strong>{{ isGerman ? 'Analyse und Zielprozess werden erstellt …' : 'Building the analysis and target process …' }}</strong></div>
         <span class="session-spinner"></span>
       </section>
     }
@@ -171,26 +172,147 @@
       <section [attr.id]="embedded ? 'workflow-step-3' : null" class="session-card workflow-card">
         <div class="session-card-header">
           <div>
-            <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 3 · AUTOMATISCHE VERARBEITUNG' : 'STEP 3 · AUTOMATED PROCESSING' }}</div>
-            <h2>{{ isGerman ? 'Workflow vorbereitet' : 'Workflow prepared' }}</h2>
+            <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 3 · KI-GESTÜTZTE PROZESSOPTIMIERUNG' : 'STEP 3 · AI-POWERED PROCESS OPTIMIZATION' }}</div>
+            <h2>{{ isGerman ? 'Optimierter Prozessvorschlag' : 'Optimized process proposal' }}</h2>
             <p>{{ isGerman
-              ? 'Die Antworten wurden in den Prozesskontext übernommen. Die Validierung erfolgte mit Python, ohne einen weiteren LLM-Aufruf.'
-              : 'Your answers were added to the process context. Python completed validation without another LLM call.' }}</p>
+              ? 'Das KI-Modell hat Ihre Antworten mit der ersten Analyse zusammengeführt. Python hat die Workflow-Struktur, Freigaben und berechenbaren Kennzahlen überprüft.'
+              : 'The AI model combined your answers with the initial analysis. Python validated the workflow structure, approval gates and calculable metrics.' }}</p>
           </div>
-          <span class="ready-indicator">✓ {{ isGerman ? 'Bereit' : 'Ready' }}</span>
+          <span class="ready-indicator">✓ {{ isGerman ? 'KI-Entwurf bereit' : 'AI proposal ready' }}</span>
         </div>
 
-        <div class="workflow-timeline">
-          @for (step of current.analysis.proposedWorkflow.steps; track step.id; let index = $index) {
-            <article class="workflow-step">
-              <span class="workflow-step-index">{{ (index + 1).toString().padStart(2, '0') }}</span>
-              <div>
-                <strong>{{ step.name }}</strong>
-                <p>{{ step.description }}</p>
-                <small>{{ step.type }}</small>
+        @if (current.analysis.processOptimization; as optimization) {
+          <div class="optimization-summary">
+            <div class="optimization-summary-title">
+              <strong>{{ isGerman ? 'Optimierungsstrategie' : 'Optimization strategy' }}</strong>
+              <span>{{ optimization.model || current.analysis.llmModel || 'LLM' }}</span>
+            </div>
+            <p>{{ optimization.summary }}</p>
+            <div class="optimization-score">
+              <span>{{ isGerman ? 'Automatisierungspotenzial nach Optimierung' : 'Automation potential after optimization' }}</span>
+              <strong>{{ optimization.automationPotentialScore }}%</strong>
+            </div>
+          </div>
+
+          <div class="optimization-grid">
+            <article class="optimization-column">
+              <div class="optimization-column-heading">
+                <span>01</span>
+                <h3>{{ isGerman ? 'Heutiger Ablauf' : 'Current process' }}</h3>
               </div>
+              <ol>
+                @for (step of current.analysis.currentProcess; track $index) {
+                  <li>{{ step }}</li>
+                }
+              </ol>
             </article>
+            <article class="optimization-column optimization-column-target">
+              <div class="optimization-column-heading">
+                <span>02</span>
+                <h3>{{ isGerman ? 'Optimierter Ablauf' : 'Optimized process' }}</h3>
+              </div>
+              <ol>
+                @for (step of current.analysis.optimizedProcess || []; track $index) {
+                  <li>{{ step }}</li>
+                }
+              </ol>
+            </article>
+          </div>
+
+          @if (optimization.changes.length > 0) {
+            <div class="optimization-subsection">
+              <h3>{{ isGerman ? 'Was wird konkret verbessert?' : 'What changes in practice?' }}</h3>
+              <div class="optimization-change-list">
+                @for (change of optimization.changes; track $index) {
+                  <article class="optimization-change">
+                    <div><small>{{ isGerman ? 'Bisher' : 'Before' }}</small><strong>{{ change.currentStep }}</strong></div>
+                    <div><small>{{ isGerman ? 'Neu' : 'After' }}</small><strong>{{ change.optimizedStep }}</strong></div>
+                    <p>{{ change.reason }} {{ change.expectedBenefit }}</p>
+                  </article>
+                }
+              </div>
+            </div>
           }
+
+          @if (optimization.metrics.length > 0) {
+            <div class="optimization-subsection">
+              <h3>{{ isGerman ? 'Kennzahlen und erwartete Wirkung' : 'Metrics and expected impact' }}</h3>
+              <div class="optimization-metrics">
+                @for (metric of optimization.metrics; track $index) {
+                  <article class="optimization-metric">
+                    <strong>{{ metric.name }}</strong>
+                    <div class="optimization-metric-values">
+                      <div><small>{{ isGerman ? 'Aktuell' : 'Current' }}</small><b>{{ formatMetric(metric.currentValue, metric.unit) }}</b></div>
+                      <div><small>{{ isGerman ? 'Vorgeschlagen' : 'Proposed' }}</small><b>{{ formatMetric(metric.proposedValue, metric.unit) }}</b></div>
+                    </div>
+                    <div class="optimization-metric-delta">
+                      <span>{{ isGerman ? 'Verbesserung' : 'Improvement' }}</span>
+                      <b>{{ formatImprovement(metric.improvementPercent) }}</b>
+                    </div>
+                    <p>{{ metric.rationale }}</p>
+                    <small class="metric-evidence">
+                      {{ metric.isEstimate
+                        ? (isGerman ? 'Modellschätzung – nicht gemessen' : 'Model estimate – not measured')
+                        : metric.evidenceBasis === 'not_available'
+                          ? (isGerman ? 'Keine ausreichenden Ausgangsdaten' : 'Insufficient baseline data')
+                          : (isGerman ? 'Ausgangsdaten aus Nutzerangaben oder Dokumenten' : 'Baseline from user input or documents') }}
+                      · {{ isGerman ? 'Vertrauen' : 'Confidence' }}: {{ metric.confidence }}
+                    </small>
+                  </article>
+                }
+              </div>
+            </div>
+          }
+
+          @if (optimization.opportunities.length > 0) {
+            <div class="optimization-subsection">
+              <h3>{{ isGerman ? 'Umsetzungsmöglichkeiten' : 'Implementation opportunities' }}</h3>
+              <div class="optimization-opportunities">
+                @for (opportunity of optimization.opportunities; track $index) {
+                  <article>
+                    <div class="opportunity-title"><strong>{{ opportunity.title }}</strong><span [attr.data-priority]="opportunity.priority">{{ opportunity.priority }}</span></div>
+                    <p>{{ opportunity.description }}</p>
+                    <small>{{ isGerman ? 'Aufwand' : 'Effort' }}: {{ opportunity.implementationEffort }} · {{ opportunity.expectedBenefit }}</small>
+                  </article>
+                }
+              </div>
+            </div>
+          }
+
+          @if (optimization.assumptions.length > 0 || optimization.risks.length > 0 || optimization.implementationNotes.length > 0 || optimization.remainingQuestions.length > 0) {
+            <div class="optimization-notes-grid">
+              @if (optimization.assumptions.length > 0) {
+                <article><h3>{{ isGerman ? 'Annahmen' : 'Assumptions' }}</h3><ul>@for (item of optimization.assumptions; track $index) { <li>{{ item }}</li> }</ul></article>
+              }
+              @if (optimization.risks.length > 0) {
+                <article><h3>{{ isGerman ? 'Risiken' : 'Risks' }}</h3><ul>@for (item of optimization.risks; track $index) { <li>{{ item }}</li> }</ul></article>
+              }
+              @if (optimization.implementationNotes.length > 0) {
+                <article><h3>{{ isGerman ? 'Voraussetzungen' : 'Prerequisites' }}</h3><ul>@for (item of optimization.implementationNotes; track $index) { <li>{{ item }}</li> }</ul></article>
+              }
+              @if (optimization.remainingQuestions.length > 0) {
+                <article><h3>{{ isGerman ? 'Noch zu klären' : 'Still to clarify' }}</h3><ul>@for (item of optimization.remainingQuestions; track $index) { <li>{{ item }}</li> }</ul></article>
+              }
+            </div>
+          }
+        } @else {
+          <p>{{ isGerman ? 'Für diese bestehende Sitzung liegt noch kein zweiter Optimierungslauf vor.' : 'This existing session does not have a second optimization pass yet.' }}</p>
+        }
+
+        <div class="optimization-subsection">
+          <h3>{{ isGerman ? 'Vorgeschlagener Ziel-Workflow' : 'Proposed target workflow' }}</h3>
+          <div class="workflow-timeline">
+            @for (step of current.analysis.proposedWorkflow.steps; track step.id; let index = $index) {
+              <article class="workflow-step">
+                <span class="workflow-step-index">{{ (index + 1).toString().padStart(2, '0') }}</span>
+                <div>
+                  <strong>{{ step.name }}</strong>
+                  <p>{{ step.description }}</p>
+                  <small>{{ step.type }}</small>
+                </div>
+              </article>
+            }
+          </div>
         </div>
 
         @if (current.questions.length > 0) {
@@ -214,13 +336,13 @@
         <div class="safety-note">
           <strong>{{ isGerman ? 'Sicherheitsmodus' : 'Safety mode' }}</strong>
           <p>{{ isGerman
-            ? 'Externe Aktionen sind weiterhin deaktiviert. Die Freigabe führt nur eine Simulation aus; es werden keine E-Mails versendet und keine externen Systeme kontaktiert.'
-            : 'External actions remain disabled. Approval runs a simulation only; no emails are sent and no external systems are contacted.' }}</p>
+            ? 'Der Ziel-Workflow ist ein Vorschlag. Externe Aktionen sind deaktiviert; die Freigabe simuliert die Ausführung und versendet keine E-Mails oder Teams-Nachrichten.'
+            : 'The target workflow is a proposal. External actions are disabled; approval simulates execution and does not send emails or Teams messages.' }}</p>
         </div>
       </section>
     }
 
-    @if (current.status === 'ready_for_approval') {
+    @if (current.status === 'ready_for_approval') {'ready_for_approval') {
       <section [attr.id]="embedded ? 'workflow-step-4' : null" class="session-card approval-card">
         <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 4 · FREIGABE' : 'STEP 4 · APPROVAL' }}</div>
         <h2>{{ isGerman ? 'Menschliche Freigabe erforderlich' : 'Human approval required' }}</h2>
@@ -271,8 +393,13 @@
 
     @if (current.status === 'failed') {
       <section [attr.id]="embedded ? 'workflow-step-3' : null" class="session-card failed-card">
-        <h2>{{ isGerman ? 'Verarbeitung fehlgeschlagen' : 'Processing failed' }}</h2>
-        <p>{{ isGerman ? 'Die letzte Verarbeitung konnte nicht abgeschlossen werden. Prüfen Sie das Ereignisprotokoll.' : 'The last processing step could not be completed. Review the event log.' }}</p>
+        <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 3 · KI-OPTIMIERUNG' : 'STEP 3 · AI OPTIMIZATION' }}</div>
+        <h2>{{ isGerman ? 'KI-Optimierung fehlgeschlagen' : 'AI optimization failed' }}</h2>
+        <p>{{ current.analysis.optimizationFailure?.message || (isGerman ? 'Die Optimierung konnte nicht abgeschlossen werden. Prüfen Sie API-Guthaben, Modellzugriff und Backend-Protokolle.' : 'The optimization could not be completed. Check API credits, model access and backend logs.') }}</p>
+        <button class="session-primary" type="button" (click)="retryOptimization()" [disabled]="submitting()">
+          {{ submitting() ? (isGerman ? 'Wird erneut versucht …' : 'Retrying …') : (isGerman ? 'KI-Optimierung erneut versuchen' : 'Retry AI optimization') }}
+          <span>↻</span>
+        </button>
       </section>
     }
 
