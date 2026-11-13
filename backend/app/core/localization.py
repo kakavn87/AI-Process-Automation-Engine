@@ -126,6 +126,22 @@ def translate_text(value: str, language: str = "de") -> str:
         return "Der Prozess umfasst " + ", ".join(translated) + "."
     if value.startswith("Collect inputs from "):
         return "Eingaben aus " + value[len("Collect inputs from "):] + " erfassen"
+    if value.startswith("Read supported ") and " files and map the required fields" in value:
+        formats = value[len("Read supported "):].split(" files and map the required fields", 1)[0]
+        return f"Unterstützte {formats}-Dateien auslesen und die erforderlichen Felder strukturierten Datensätzen zuordnen."
+    if value.startswith("Retrieve new process inputs from the configured "):
+        source = value[len("Retrieve new process inputs from the configured "):-len(" source.")]
+        return f"Neue Prozesseingaben aus der konfigurierten Quelle {source} abrufen."
+    if value.startswith("Weekly ") and value.endswith(" Reporting"):
+        area = value[len("Weekly "):-len(" Reporting")]
+        area_de = {"Finance": "Finanz", "HR": "Personal", "Sales": "Vertriebs", "Procurement": "Einkaufs", "Customer Support": "Kundenservice", "Logistics": "Logistik", "Manufacturing": "Produktions", "IT Operations": "IT-Betriebs", "Marketing": "Marketing", "Legal & Compliance": "Compliance", "Project Management": "Projekt", "Facilities": "Facility"}.get(area, area)
+        return f"Wöchentlicher {area_de}bericht"
+    if value.endswith(" Process Workflow"):
+        area = value[:-len(" Process Workflow")]
+        area_de = {"Finance": "Finanz", "HR": "Personal", "Sales": "Vertriebs", "Procurement": "Einkaufs", "Customer Support": "Kundenservice", "Logistics": "Logistik", "Manufacturing": "Produktions", "IT Operations": "IT-Betriebs", "Marketing": "Marketing", "Legal & Compliance": "Compliance", "Project Management": "Projekt", "Facilities": "Facility"}.get(area, area)
+        return f"{area_de}-Workflow"
+    if value == "Proposed Process Workflow":
+        return "Vorgeschlagener Prozess-Workflow"
     if value.startswith("Extract supported ") and value.endswith(" files."):
         return "Unterstützte " + value[len("Extract supported "):-len(" files.")] + "-Dateien auslesen."
     if value.startswith("Run every week"):
@@ -180,3 +196,25 @@ def localize_workflow(workflow: dict, language: str = "de") -> dict:
     if language != "de":
         return workflow
     return localize_tree(workflow, language)
+
+
+def localize_upload_result(result: dict, language: str = "de") -> dict:
+    if language != "de":
+        return result
+    localized = dict(result)
+    localized["processingSteps"] = [
+        "Hochgeladene Datei im Arbeitsspeicher einlesen.",
+        "Leere Zellen und Spaltennamen normalisieren.",
+        "Spaltentypen und fehlende Werte erkennen.",
+        f"{result.get('duplicateRows', 0)} doppelte Zeile(n) in der Vorschau erkannt und entfernt.",
+        "Vorschau mit bis zu 10 bereinigten Zeilen erstellen.",
+    ]
+    localized["notice"] = (
+        "Es wurden nur die ersten 20.000 nicht leeren Datenzeilen verarbeitet."
+        if result.get("truncated")
+        else "Die Datei wurde nur im Arbeitsspeicher verarbeitet und nicht gespeichert."
+    )
+    for column in localized.get("columns", []):
+        types = {"number": "Zahl", "text": "Text", "boolean": "Boolesch", "mixed": "Gemischt", "empty": "Leer"}
+        column["detectedType"] = types.get(column.get("detectedType"), column.get("detectedType"))
+    return localized
