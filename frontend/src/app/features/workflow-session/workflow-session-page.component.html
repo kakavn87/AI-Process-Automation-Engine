@@ -43,7 +43,7 @@
       </article>
       <article class="session-stat">
         <small>{{ isGerman ? 'Analysestatus' : 'Analysis engine' }}</small>
-        <strong>{{ current.analysis.llmUsed ? 'OpenAI' : 'Python' }}</strong>
+        <strong>{{ current.analysis.llmUsed || current.analysis.processOptimization?.llmUsed ? 'OpenAI' : 'Python' }}</strong>
       </article>
       <article class="session-stat">
         <small>{{ isGerman ? 'Workflow-Schritte' : 'Workflow steps' }}</small>
@@ -245,14 +245,14 @@
                       <div><small>{{ isGerman ? 'Vorgeschlagen' : 'Proposed' }}</small><b>{{ formatMetric(metric.proposedValue, metric.unit) }}</b></div>
                     </div>
                     <div class="optimization-metric-delta">
-                      <span>{{ isGerman ? 'Verbesserung' : 'Improvement' }}</span>
+                      <span>{{ isGerman ? 'Berechnete Veränderung' : 'Calculated change' }}</span>
                       <b>{{ formatImprovement(metric.improvementPercent) }}</b>
                     </div>
                     <p>{{ metric.rationale }}</p>
                     <small class="metric-evidence">
                       {{ metric.isEstimate
                         ? (isGerman ? 'Modellschätzung – nicht gemessen' : 'Model estimate – not measured')
-                        : metric.evidenceBasis === 'not_available'
+                        : metric.currentValueSource === 'not_available'
                           ? (isGerman ? 'Keine ausreichenden Ausgangsdaten' : 'Insufficient baseline data')
                           : (isGerman ? 'Ausgangsdaten aus Nutzerangaben oder Dokumenten' : 'Baseline from user input or documents') }}
                       · {{ isGerman ? 'Zielwert' : 'Target' }}: {{ metric.isEstimate ? (isGerman ? 'Modellschätzung' : 'Model estimate') : (isGerman ? 'Belegt' : 'Evidence-based') }}
