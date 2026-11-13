@@ -82,6 +82,7 @@ def test_second_stage_optimization_uses_json_mode_and_validates_schema():
     )
 
     assert result["workflow_name"] == "Rechnungsprüfung"
+    assert fake_responses.kwargs["model"] == "test-optimization-model"
     assert fake_responses.kwargs["text"] == {"format": {"type": "json_object"}}
     assert "text_format" not in fake_responses.kwargs
     assert "JSON" in fake_responses.kwargs["input"][0]["content"]
