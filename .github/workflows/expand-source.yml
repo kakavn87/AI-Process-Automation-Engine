@@ -1,0 +1,29 @@
+name: Expand initial source archive
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".upload/project-source.tar.gz"
+permissions:
+  contents: write
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Expand source into repository
+        run: |
+          if [ ! -f .upload/project-source.tar.gz ]; then
+            echo "No source archive to expand."
+            exit 0
+          fi
+          mkdir -p /tmp/project-source
+          tar -xzf .upload/project-source.tar.gz -C /tmp/project-source
+          cp -a /tmp/project-source/. .
+          rm -f .upload/project-source.tar.gz
+          rm -f .github/workflows/expand-source.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Add AI Process Automation Engine source"
+          git push
