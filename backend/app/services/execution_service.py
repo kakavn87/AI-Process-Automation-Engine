@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
+from sqlalchemy import inspect as sqlalchemy_inspect
 from sqlalchemy.orm import Session
 
 from app.engine.execution.executor import WorkflowExecutor
@@ -106,6 +107,11 @@ class ExecutionService:
         return self._serialize(execution)
 
     def _sync_workflow_session(self, execution_id: str, status: str, message: str) -> None:
+        # Older tests and pre-upgrade databases may not have the new session table yet.
+        # Main application startup creates it; skip the optional sync if it is absent.
+        if not sqlalchemy_inspect(self.db.get_bind()).has_table(WorkflowSession.__tablename__):
+            return
+
         session = (
             self.db.query(WorkflowSession)
             .filter(WorkflowSession.related_execution_id == execution_id)
