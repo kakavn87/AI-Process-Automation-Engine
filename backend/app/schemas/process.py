@@ -1,27 +1,9 @@
-from typing import Literal
-
 from pydantic import BaseModel, Field
-
-
-BusinessDomain = Literal[
-    "general",
-    "finance",
-    "human_resources",
-    "sales",
-    "procurement",
-    "customer_support",
-    "logistics",
-    "manufacturing",
-    "it_operations",
-    "marketing",
-    "legal_compliance",
-    "project_management",
-    "operations",
-]
 
 
 class ProcessAnalyzeRequest(BaseModel):
     description: str = Field(min_length=3, max_length=8000)
-    analysis_strategy: Literal["auto", "rules", "llm"] = "auto"
-    analysis_language: Literal["de", "en"] = "de"
-    business_domain: BusinessDomain = "general"
+    analysis_strategy: str = Field(default="auto", pattern="^(auto|rules|llm)$")
+    analysis_language: str = Field(default="de", pattern="^(de|en)$")
+    # Open-ended on purpose: the AI engine must support domains that are not in a predefined list.
+    business_domain: str = Field(default="general", min_length=1, max_length=80)
