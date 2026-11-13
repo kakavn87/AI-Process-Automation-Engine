@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from ipaddress import ip_address
 from uuid import uuid4
 from urllib.parse import urlparse
 
@@ -152,7 +153,11 @@ class ExecutionService:
             raise ValueError("The webhook endpoint must be an HTTPS URL without embedded credentials or fragments.")
         if host in {"localhost"} or host.endswith((".localhost", ".local", ".internal")):
             raise ValueError("Local and internal webhook hosts are not allowed.")
-        if ":" in host:
+        try:
+            ip_address(host)
+        except ValueError:
+            pass
+        else:
             raise ValueError("Use a public DNS hostname for the webhook endpoint, not an IP address.")
         return endpoint
 
