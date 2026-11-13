@@ -88,6 +88,38 @@ export interface ProcessDocumentSource {
   visualAssets: number;
 }
 
+export interface OptimizationRecommendation {
+  title: string;
+  currentState: string;
+  proposedChange: string;
+  expectedEffect: string;
+  priority: 'high' | 'medium' | 'low' | string;
+}
+
+export interface ExpectedOptimizationBenefit {
+  metric: string;
+  description: string;
+  baselineValue: number | null;
+  targetValue: number | null;
+  unit: string;
+  direction: 'higher_is_better' | 'lower_is_better' | 'not_applicable' | string;
+  confidence: 'high' | 'medium' | 'low' | string;
+  basis: string;
+  changePercent: number | null;
+}
+
+export interface ProcessOptimization {
+  status: 'completed' | 'fallback' | 'rules_only' | 'unavailable' | string;
+  engine: 'llm' | 'python' | string;
+  model: string | null;
+  summary: string;
+  designPrinciples: string[];
+  recommendedChanges: OptimizationRecommendation[];
+  expectedBenefits: ExpectedOptimizationBenefit[];
+  automationPotentialScore?: number;
+  automationPotentialReason?: string;
+}
+
 export interface ProcessAnalysis {
   automationScore: number;
   automationScoreNote?: string;
@@ -113,6 +145,8 @@ export interface ProcessAnalysis {
   assumptions: string[];
   questions: string[];
   proposedWorkflow: ProposedWorkflow;
+  originalWorkflow?: ProposedWorkflow;
+  optimization?: ProcessOptimization;
   processSessionId?: string;
   workflowStatus?: string;
   openQuestions?: OpenQuestion[];
