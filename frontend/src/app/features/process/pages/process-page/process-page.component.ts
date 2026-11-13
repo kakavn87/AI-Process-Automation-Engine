@@ -375,7 +375,7 @@ export class ProcessPageComponent implements OnInit {
   onProcessFilesSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const selected = Array.from(input.files ?? []);
-    const allowed = /\.(pdf|docx|pptx|xlsx|csv|txt|md|png|jpe?g|webp)$/i;
+    const allowed = /\.(pdf|docx|pptx|xlsx|csv|txt|md|png|jpe?g|webp|drawio|bpmn|xml|svg)$/i;
     const combined = [...this.processFiles, ...selected];
 
     if (combined.length > 8) {
