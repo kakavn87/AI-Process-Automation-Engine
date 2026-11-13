@@ -36,3 +36,24 @@ jobs:
         run: |
           npm install
           npm run build
+      - name: Verify pull-request preview never targets Production
+        working-directory: frontend
+        env:
+          IS_PULL_REQUEST: "true"
+          RENDER_EXTERNAL_HOSTNAME: "ai-process-automation-frontend-4bsh-pr-5.onrender.com"
+        run: |
+          npm run build
+          node --input-type=module -e '
+            import { readFileSync } from "node:fs";
+            const runtimeConfig = readFileSync("src/runtime-config.js", "utf8");
+            const previewApi = "https://ai-process-automation-backend-4bsh-pr-5.onrender.com";
+            const productionApi = "https://ai-process-automation-backend-4bsh.onrender.com";
+            if (!runtimeConfig.includes(previewApi)) {
+              console.error("Expected Preview API URL was not generated:", runtimeConfig);
+              process.exit(1);
+            }
+            if (runtimeConfig.includes(productionApi)) {
+              console.error("PR Preview must never target the Production API:", runtimeConfig);
+              process.exit(1);
+            }
+          '
