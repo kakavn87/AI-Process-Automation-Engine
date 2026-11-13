@@ -283,7 +283,16 @@ class ProcessService:
             "model": telemetry.get("model") or getattr(self.ai_service, "model", None),
             "summary": result.get("optimization_summary", ""),
             "designPrinciples": result.get("design_principles") or [],
-            "recommendedChanges": result.get("recommended_changes") or [],
+            "recommendedChanges": [
+                {
+                    "title": item.get("title", ""),
+                    "currentState": item.get("current_state", ""),
+                    "proposedChange": item.get("proposed_change", ""),
+                    "expectedEffect": item.get("expected_effect", ""),
+                    "priority": item.get("priority", "medium"),
+                }
+                for item in (result.get("recommended_changes") or [])
+            ],
             "expectedBenefits": benefits,
             "automationPotentialScore": max(0, min(100, int(result.get("automation_potential_score") or 0))),
             "automationPotentialReason": result.get("automation_potential_reason", ""),
