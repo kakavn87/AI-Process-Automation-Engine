@@ -412,3 +412,35 @@
 .session-shell.is-embedded .session-card {
   margin-top: 12px;
 }
+
+
+/* STEP 6 integration center */
+.integration-platform-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 22px 0; }
+.integration-tile { min-width: 0; border: 1px solid #e5e7eb; border-radius: 13px; padding: 16px; background: #fbfcff; }
+.integration-tile-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.integration-tile-top > strong { color: #27334b; font-size: 12px; }
+.integration-tile h3 { margin: 14px 0 6px; color: #182235; font: 800 17px Manrope, sans-serif; }
+.integration-tile p { margin: 6px 0; color: #4b5563; font-size: 12px; line-height: 1.55; }
+.integration-tile small { display: block; margin-top: 8px; color: #6b7280; font-size: 10px; line-height: 1.6; }
+.integration-status { display: inline-flex; align-items: center; border-radius: 999px; padding: 5px 8px; color: #475569; background: #eef2f7; font-size: 9px; font-weight: 800; white-space: nowrap; }
+.integration-status[data-status="ready"] { color: #087653; background: #e8f7f0; }
+.integration-status[data-status="setup_required"], .integration-status[data-status="not_configured"] { color: #9a5b13; background: #fff4df; }
+.integration-status[data-status="planned"] { color: #5963a7; background: #eff0ff; }
+.integration-open-link { display: inline-flex; margin-top: 9px; color: #4f46e5; font-size: 12px; font-weight: 800; text-decoration: none; }
+.integration-open-link:hover { text-decoration: underline; }
+.integration-connectors { grid-column: 1 / -1; }
+.integration-connector-list { display: grid; gap: 0; margin-top: 10px; }
+.integration-connector-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid #e7ebf1; }
+.integration-connector-row > div { min-width: 0; display: grid; gap: 3px; }
+.integration-connector-row strong { color: #334155; font-size: 11px; }
+.integration-connector-row small { margin: 0; }
+.integration-safety-tile { background: #f8fafc; }
+.integration-webhook-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0 12px; padding-top: 18px; border-top: 1px solid #e5e7eb; }
+.integration-webhook-heading strong { color: #27334b; font-size: 13px; }
+.integration-webhook-heading span { color: #6b7280; font-size: 10px; font-weight: 800; }
+@media (max-width: 760px) {
+  .integration-platform-grid { grid-template-columns: 1fr; }
+  .integration-connectors { grid-column: auto; }
+  .integration-connector-row { align-items: flex-start; flex-direction: column; }
+  .integration-webhook-heading { align-items: flex-start; flex-direction: column; }
+}
