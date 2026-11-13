@@ -22,7 +22,7 @@ jobs:
         working-directory: backend
         env:
           OPENAI_API_KEY: ""
-        run: pytest -q
+        run: python -m pytest -q
 
   frontend-build:
     runs-on: ubuntu-latest
