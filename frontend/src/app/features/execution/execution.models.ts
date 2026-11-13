@@ -1,3 +1,5 @@
-import { ExecutionRecord, ExecutionStatus, ExecutionStepRecord } from '../../core/models/api.models';
+export type { ApprovalExecution, ExecutionEvent } from '../../core/models/api.models';
 
-export type { ExecutionRecord, ExecutionStatus, ExecutionStepRecord };
+export interface ExecutionState {
+  status: 'idle' | 'loading' | 'awaiting_approval' | 'completed' | 'rejected' | 'failed';
+}
