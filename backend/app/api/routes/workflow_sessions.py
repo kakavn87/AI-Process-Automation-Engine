@@ -27,13 +27,15 @@ def delete_workflow_session(session_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Workflow session was not found.")
 
     indexed_chunks = int(((session.analysis or {}).get("knowledgeBase") or {}).get("indexedChunks", 0))
-    try:
-        vectors_deleted = KnowledgeBaseService().delete_session(session_id)
-    except Exception as error:
-        raise HTTPException(
-            status_code=503,
-            detail="The session knowledge store could not delete its data. The workflow session was not deleted.",
-        ) from error
+    vectors_deleted = indexed_chunks == 0
+    if indexed_chunks > 0:
+        try:
+            vectors_deleted = KnowledgeBaseService().delete_session(session_id)
+        except Exception as error:
+            raise HTTPException(
+                status_code=503,
+                detail="The session knowledge store could not delete its data. The workflow session was not deleted.",
+            ) from error
 
     if indexed_chunks > 0 and not vectors_deleted:
         raise HTTPException(
