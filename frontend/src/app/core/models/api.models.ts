@@ -211,6 +211,7 @@ export interface LiveExecutionReadiness {
   status: 'ready' | 'disabled' | 'missing_endpoint' | 'invalid_endpoint' | string;
   message: string;
   secretConfigured: boolean;
+  operatorTokenConfigured: boolean;
 }
 
 export interface ApprovalExecution {
