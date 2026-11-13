@@ -7,5 +7,5 @@ class CreateExecutionRequest(BaseModel):
     workflow: dict[str, Any]
 
 
-class ApprovalDecisionRequest(BaseModel):
-    note: str = Field(default="", max_length=2000)
+class ExecutionDecisionRequest(BaseModel):
+    note: str | None = Field(default=None, max_length=500)
