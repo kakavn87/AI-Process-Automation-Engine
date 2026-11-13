@@ -293,6 +293,24 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
     return 'pending';
   }
 
+  workflowStepTypeLabel(type: string): string {
+    if (!this.isGerman) return type.replaceAll('_', ' ');
+    const labels: Record<string, string> = {
+      trigger: 'Auslöser',
+      collect: 'Daten erfassen',
+      extract: 'Daten extrahieren',
+      transform: 'Daten umwandeln',
+      validate: 'Daten prüfen',
+      generate: 'Ergebnis erstellen',
+      approval: 'Freigabe',
+      notify: 'Benachrichtigung',
+      email: 'E-Mail versenden',
+      teams: 'Teams-Nachricht',
+      http: 'HTTP-Anfrage'
+    };
+    return labels[type] ?? type.replaceAll('_', ' ');
+  }
+
   stepDescription(step: number, status: string): string {
     if (step === 2) {
       return this.isGerman
