@@ -1963,3 +1963,7 @@ body { background: #f3f5f9; color: #111827; }
   .industry-picker-bar { align-items: flex-start; flex-direction: column; }
   .industry-toggle { width: 100%; justify-content: center; }
 }
+
+
+/* Keep the analysis summary clear of the sticky top navigation when brought into view. */
+#results { scroll-margin-top: 84px; }
