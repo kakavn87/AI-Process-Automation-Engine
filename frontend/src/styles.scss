@@ -2279,3 +2279,102 @@ body { background: #f3f5f9; color: #111827; }
   .workspace-create-form { grid-template-columns: 1fr; }
   .workspace-create-form .button-primary { width: 100%; }
 }
+
+/* Horizontale Hauptnavigation und eigenständiger Bereich für die KI-Plattform */
+.main-column { margin-left: 0; }
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2vw, 28px);
+  min-height: 82px;
+  padding: 10px clamp(18px, 3.2vw, 48px);
+  border-bottom: 1px solid #e9ecf3;
+  background: rgba(255, 255, 255, .94);
+  backdrop-filter: blur(18px);
+}
+.app-topbar .brand { flex: 0 0 auto; padding: 0; }
+.app-topbar .brand-copy strong { font-size: 15px; }
+.app-topbar .brand-copy small { font-size: 9px; }
+.main-nav {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+.main-nav::-webkit-scrollbar { display: none; }
+.main-nav-link {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  color: #68738b;
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color .18s ease, background .18s ease;
+}
+.main-nav-link .nav-icon { width: auto; font-size: 14px; }
+.main-nav-link:hover { color: #4149ae; background: #f3f4ff; }
+.main-nav-link.active { color: #4f56c3; background: #eff0ff; }
+.main-nav-link-featured { color: #4149ae; background: #f5f5ff; }
+.app-topbar .topbar-actions { flex: 0 0 auto; gap: 8px; }
+.app-topbar .account-summary { display: flex; align-items: center; gap: 12px; }
+.app-topbar .account-summary-copy { display: grid; gap: 3px; max-width: 170px; }
+.app-topbar .account-summary-copy strong,
+.app-topbar .account-summary-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-topbar .account-summary-copy strong { color: #3d4860; font-size: 10px; }
+.app-topbar .account-summary-copy small { color: #929bad; font-size: 9px; }
+.app-topbar .logout-button { white-space: nowrap; }
+.workflow-stepper { top: 82px; }
+.section-block { scroll-margin-top: 106px; }
+.ai-platform-section { padding-top: 7px; }
+.settings-setup-panel { margin-top: 14px; }
+.settings-setup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 13px;
+}
+.settings-setup-grid > div { min-width: 0; }
+.settings-setup-grid > div > strong { display: block; margin-bottom: 8px; color: #46516a; font-size: 10px; }
+.config-code {
+  display: block;
+  overflow-x: auto;
+  margin: 0;
+  padding: 13px 14px;
+  border: 1px solid #e7eaf2;
+  border-radius: 10px;
+  background: #f8f9fc;
+  color: #45516a;
+  font: 10px/1.8 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre;
+}
+.settings-setup-grid .muted-note { margin-top: 9px; }
+.settings-setup-grid .text-link { margin-top: 8px; }
+@media (max-width: 1120px) {
+  .app-topbar { flex-wrap: wrap; gap: 8px 18px; padding-top: 11px; padding-bottom: 8px; }
+  .app-topbar .brand { flex: 1 1 auto; }
+  .app-topbar .topbar-actions { margin-left: auto; }
+  .main-nav { order: 3; flex-basis: 100%; justify-content: flex-start; }
+}
+@media (max-width: 640px) {
+  .app-topbar { gap: 8px; padding: 10px 14px 7px; }
+  .app-topbar .brand-mark { width: 34px; height: 34px; font-size: 18px; }
+  .app-topbar .brand-copy strong { font-size: 13px; }
+  .app-topbar .brand-copy small { font-size: 8px; }
+  .app-topbar .account-summary-copy { display: none; }
+  .app-topbar .environment-label { display: none; }
+  .main-nav { gap: 2px; }
+  .main-nav-link { padding: 9px 10px; font-size: 9px; }
+  .settings-setup-grid { grid-template-columns: 1fr; }
+}
