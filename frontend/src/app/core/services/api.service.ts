@@ -1,11 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import {
-  ExecutionRecord,
-  ProcessAnalysis,
-  ProposedWorkflow,
-} from '../models/api.models';
+import { ApprovalExecution, ProcessAnalysis, ProposedWorkflow } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -16,15 +12,27 @@ export class ApiService {
     return this.http.post<ProcessAnalysis>(`${this.baseUrl}/processes/analyze`, { description });
   }
 
-  createExecution(workflow: ProposedWorkflow) {
-    return this.http.post<ExecutionRecord>(`${this.baseUrl}/executions/`, { workflow });
+  startExecution(workflow: ProposedWorkflow) {
+    return this.http.post<ApprovalExecution>(`${this.baseUrl}/executions/`, { workflow });
   }
 
-  approveExecution(id: number, note: string) {
-    return this.http.post<ExecutionRecord>(`${this.baseUrl}/executions/${id}/approve`, { note });
+  approveExecution(id: string, note = '') {
+    return this.http.post<ApprovalExecution>(
+      `${this.baseUrl}/executions/${encodeURIComponent(id)}/approve`,
+      { note }
+    );
   }
 
-  rejectExecution(id: number, note: string) {
-    return this.http.post<ExecutionRecord>(`${this.baseUrl}/executions/${id}/reject`, { note });
+  rejectExecution(id: string, note = '') {
+    return this.http.post<ApprovalExecution>(
+      `${this.baseUrl}/executions/${encodeURIComponent(id)}/reject`,
+      { note }
+    );
+  }
+
+  getExecution(id: string) {
+    return this.http.get<ApprovalExecution>(
+      `${this.baseUrl}/executions/${encodeURIComponent(id)}`
+    );
   }
 }
