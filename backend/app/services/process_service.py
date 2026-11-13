@@ -9,7 +9,7 @@ from app.engine.workflow.validator import validate
 from app.services.ai_service import AIService
 
 logger = logging.getLogger(__name__)
-OUTBOUND_STEP_TYPES = {"notify", "email", "teams"}
+OUTBOUND_STEP_TYPES = {"notify", "email", "teams", "http"}
 
 
 class ProcessService:
