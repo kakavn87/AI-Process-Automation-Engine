@@ -211,7 +211,7 @@
             <article class="result-panel detected-panel">
               <div class="result-panel-heading"><div><div class="section-kicker">{{ i18n.ruleExtraction }}</div><h3>{{ i18n.detectedData }}</h3></div><span class="engine-badge">Python</span></div>
               <div class="detected-grid">
-                <div><small>{{ i18n.selectedArea }}</small><strong>{{ details.businessDomain.replace('_', ' ') }}</strong></div>
+                <div><small>{{ i18n.selectedArea }}</small><strong>{{ details.businessDomainLabel || details.businessDomain.replace('_', ' ') }}</strong></div>
                 <div><small>{{ i18n.frequency }}</small><strong>{{ details.cadence.frequency }}{{ details.cadence.day ? ' · ' + details.cadence.day : '' }}</strong></div>
                 <div><small>{{ i18n.sources }}</small><strong>{{ details.sourceChannels.length ? details.sourceChannels.join(', ') : i18n.notDetected }}</strong></div>
                 <div><small>{{ i18n.delivery }}</small><strong>{{ details.deliveryChannels.length ? details.deliveryChannels.join(', ') : i18n.notDetected }}</strong></div>
