@@ -75,7 +75,8 @@
       <article id="workflow-step-3" class="session-progress-step"
         [class.is-active]="stepState(3, current.status) === 'active'"
         [class.is-complete]="stepState(3, current.status) === 'complete'"
-        [class.is-pending]="stepState(3, current.status) === 'pending'">
+        [class.is-pending]="stepState(3, current.status) === 'pending'"
+        [class.is-error]="stepState(3, current.status) === 'error'">
         <span class="session-progress-number">03</span>
         <div><strong>{{ isGerman ? 'Python-Verarbeitung' : 'Python processing' }}</strong><small>{{ stepDescription(3, current.status) }}</small></div>
         <span class="session-progress-mark">{{ stepState(3, current.status) === 'complete' ? '✓' : '3' }}</span>
