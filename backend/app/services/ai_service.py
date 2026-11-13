@@ -320,7 +320,7 @@ workflow configuration. Connector should be an empty string when no connector is
         if len(description_context) > 12000:
             description_context = (
                 description_context[:8500]
-                + "\\n\\n[Weitere Dokumentdetails wurden in der ersten Analyse zusammengefasst.]\\n\\n"
+                + "\n\n[Weitere Dokumentdetails wurden in der ersten Analyse zusammengefasst.]\n\n"
                 + description_context[-3000:]
             )
         context = {
