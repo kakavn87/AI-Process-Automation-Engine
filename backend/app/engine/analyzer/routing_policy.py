@@ -19,7 +19,7 @@ SUPPORTED_SYSTEMS = {
 
 
 class ProcessRoutingPolicy:
-    """Choose a deterministic Python path or an LLM path using explainable rules."""
+    """Route semantic understanding to the LLM; keep deterministic work in Python."""
 
     def decide(
         self,
@@ -78,23 +78,21 @@ class ProcessRoutingPolicy:
                     "AI analysis was requested, but OPENAI_API_KEY is not configured. "
                     "Python rules were used instead."
                 )
-        elif rules_suitable:
-            selected_engine = "rules"
-            reason = (
-                "The process matches supported activities and has enough context for deterministic analysis. "
-                "Python rules were selected to avoid an unnecessary LLM call."
-            )
         elif llm_available:
             selected_engine = "llm"
             reason = (
-                "The process is ambiguous or outside the current rules coverage. "
-                "The configured LLM was selected for semantic analysis."
+                "Automatic mode uses the configured LLM to understand any business process. "
+                "Python remains responsible for deterministic validation, calculations, safety checks, and fallback."
+            )
+        elif rules_suitable:
+            selected_engine = "rules"
+            reason = (
+                "No OpenAI API key is configured. Python rules provide the deterministic analysis path without API cost."
             )
         else:
             selected_engine = "rules"
             reason = (
-                "The process is outside the current rules coverage, but no LLM API key is configured. "
-                "The deterministic fallback will provide a best-effort proposal."
+                "No OpenAI API key is configured. Python provides a best-effort fallback; semantic AI analysis is unavailable."
             )
 
         return {
