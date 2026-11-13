@@ -98,8 +98,22 @@ class ProcessAnalyzer:
         if "teams" in signals:
             questions.append("Which Microsoft Teams channel should receive the approved report?")
 
+        # The legacy signal score remains unchanged when it has evidence. For new
+        # German or niche processes, use detected activities and context instead
+        # of incorrectly displaying 0% just because fixed keywords did not match.
+        context_evidence = (
+            len(details["sourceChannels"])
+            + len(details["fileTypes"])
+            + len(details["systems"])
+            + len(details["outputTypes"])
+        )
+        activity_evidence = min(len(activities), 6) * 10
+        context_score = min(context_evidence, 5) * 5
+        inferred_score = min(85, 15 + activity_evidence + context_score)
+        automation_score = max(min(score, 100), inferred_score)
+
         result = {
-            "automationScore": min(score, 100),
+            "automationScore": automation_score,
             "signals": signals,
             "description": description,
             "analysisMode": "deterministic_rules_v1",
