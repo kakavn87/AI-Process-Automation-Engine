@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     OPENAI_BASE_URL: str = ""
     PREVIEW_OPENAI_BASE_URL: str = ""
     OPENAI_MODEL: str = "gpt-6-luna"
+    OPENAI_ANALYSIS_MODEL: str = ""
+    OPENAI_OPTIMIZATION_MODEL: str = ""
     OPENWEBUI_URL: str = ""
     PREVIEW_OPENWEBUI_URL: str = ""
     AI_GATEWAY_PROVIDER: str = "auto"
