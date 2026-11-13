@@ -21,10 +21,7 @@ export interface AutomationOpportunity {
 export interface DetectedProcessDetails {
   businessDomain: string;
   businessDomainLabel?: string;
-  cadence: {
-    frequency: string;
-    day: string | null;
-  };
+  cadence: { frequency: string; day: string | null };
   sourceChannels: string[];
   fileTypes: string[];
   activities: string[];
@@ -40,6 +37,12 @@ export interface ProposedWorkflow {
   name: string;
   trigger: string;
   steps: WorkflowStepAnalysis[];
+  confirmedContext?: Array<{ questionId: string; answer: string | boolean }>;
+  executionPolicy?: {
+    mode: string;
+    externalActionsRequireApproval: boolean;
+    externalActionsEnabled: boolean;
+  };
 }
 
 export interface RoutingDecision {
@@ -64,6 +67,17 @@ export interface ProcessSpecification {
   exceptionPaths: string[];
   outputs: string[];
   successMetrics: string[];
+  confirmedDetails?: Array<{ questionId: string; answer: string | boolean }>;
+}
+
+export interface OpenQuestion {
+  id: string;
+  prompt: string;
+  type: 'text' | 'boolean' | string;
+  required: boolean;
+  options: string[];
+  placeholder?: string;
+  answered?: boolean;
 }
 
 export interface ProcessAnalysis {
@@ -82,15 +96,74 @@ export interface ProcessAnalysis {
   currentProcess: string[];
   automationOpportunities: AutomationOpportunity[];
   integrations: ProcessIntegration[];
-  humanApproval: {
-    required: boolean;
-    reason: string;
-    gateBefore: string;
-  };
+  humanApproval: { required: boolean; reason: string; gateBefore: string };
   risks: string[];
   assumptions: string[];
   questions: string[];
   proposedWorkflow: ProposedWorkflow;
+  processSessionId?: string;
+  workflowStatus?: string;
+  openQuestions?: OpenQuestion[];
+  processingResult?: {
+    engine: string;
+    status: string;
+    preparedAt: string;
+    externalActionsExecuted: boolean;
+  };
+}
+
+export interface WorkflowSessionEvent {
+  event: string;
+  status: string;
+  message: string;
+  executionId?: string;
+  recordedAt?: string;
+}
+
+export interface WorkflowSession {
+  id: string;
+  description: string;
+  analysisStrategy: string;
+  language: 'de' | 'en';
+  businessDomain: string;
+  status: string;
+  analysis: ProcessAnalysis;
+  answers: Record<string, string | boolean>;
+  questions: OpenQuestion[];
+  openQuestions: OpenQuestion[];
+  relatedExecutionId: string | null;
+  events: WorkflowSessionEvent[];
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface AIUsageEvent {
+  id: string;
+  sessionId: string | null;
+  provider: string;
+  model: string;
+  task: string;
+  status: string;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  totalTokens: number | null;
+  estimatedCostUsd: number | null;
+  durationMs: number | null;
+  errorType: string | null;
+  createdAt: string | null;
+}
+
+export interface AIUsageSummary {
+  totalCalls: number;
+  successfulCalls: number;
+  fallbackCalls: number;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  estimatedCostUsd: number | null;
+  pricedCalls: number;
+  pricingConfigured: boolean;
+  events: AIUsageEvent[];
 }
 
 export interface TabularDataColumn {
@@ -126,6 +199,8 @@ export interface ExecutionEvent {
   step?: string;
   status: string;
   message: string;
+  recordedAt?: string;
+  externalSideEffect?: boolean;
 }
 
 export interface ApprovalExecution {

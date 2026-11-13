@@ -1,0 +1,88 @@
+.session-shell { max-width: 1120px; min-height: 100vh; margin: 0 auto; padding: 28px 28px 48px; color: #182235; }
+.session-topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 26px; border-bottom: 1px solid #e8ebf2; }
+.session-brand { display: flex; align-items: center; gap: 11px; color: inherit; text-decoration: none; }
+.session-brand > span:last-child { display: grid; gap: 2px; }
+.session-brand strong { font: 800 18px Manrope, sans-serif; }
+.session-brand small { color: #8490a5; font-size: 11px; }
+.session-brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: white; background: linear-gradient(145deg, #777af0, #4b51c7); font: 800 21px Manrope, sans-serif; }
+.session-back, .session-secondary { border: 1px solid #e2e6f0; border-radius: 9px; padding: 10px 14px; color: #4f5c73; background: white; font-size: 12px; font-weight: 700; }
+.session-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 38px 0 22px; }
+.session-eyebrow { color: #777ed4; font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+.session-heading h1 { margin: 8px 0; font: 800 clamp(25px, 3vw, 34px) Manrope, sans-serif; letter-spacing: -.045em; }
+.session-heading p, .session-card > p, .session-card-header p { max-width: 760px; color: #68748b; font-size: 13px; line-height: 1.65; }
+.session-status { flex-shrink: 0; border-radius: 999px; padding: 8px 12px; background: #f0f1ff; color: #5259bd; font-size: 11px; font-weight: 800; text-transform: capitalize; }
+.session-status[data-status="needs_input"], .session-status[data-status="awaiting_approval"] { background: #fff4e7; color: #a7651b; }
+.session-status[data-status="completed"], .session-status[data-status="ready_for_approval"] { background: #eaf8f3; color: #128361; }
+.session-status[data-status="rejected"], .session-status[data-status="failed"] { background: #fff0f0; color: #bd4545; }
+.session-overview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 0 0 18px; }
+.session-stat, .usage-grid article { display: grid; gap: 8px; border: 1px solid #e8ebf2; border-radius: 12px; padding: 17px; background: white; }
+.session-stat small, .usage-grid small { color: #79849a; font-size: 11px; font-weight: 700; }
+.session-stat strong, .usage-grid strong { color: #27334b; font: 800 23px Manrope, sans-serif; overflow-wrap: anywhere; }
+.session-card { margin-top: 14px; border: 1px solid #e8ebf2; border-radius: 14px; padding: 24px; background: white; box-shadow: 0 10px 28px rgba(22, 32, 64, .035); }
+.session-card h2 { margin: 7px 0 8px; font: 800 20px Manrope, sans-serif; letter-spacing: -.025em; }
+.session-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.question-count { display: grid; place-items: center; min-width: 36px; height: 36px; border-radius: 50%; background: #f0f1ff; color: #565dc3; font-weight: 800; }
+.question-list { display: grid; gap: 18px; margin-top: 22px; }
+.question-field { display: grid; gap: 9px; }
+.question-field label { display: flex; align-items: flex-start; gap: 10px; color: #35415a; font-size: 13px; font-weight: 700; line-height: 1.55; }
+.question-field label span { color: #929bb0; font-size: 11px; font-weight: 800; }
+.question-field label i { color: #d35e5e; font-style: normal; }
+.question-field textarea, .question-field select { width: 100%; border: 1px solid #dfe4ef; border-radius: 9px; padding: 12px 13px; color: #34415a; background: #fbfcfe; outline: none; resize: vertical; }
+.question-field textarea:focus, .question-field select:focus { border-color: #777be0; box-shadow: 0 0 0 3px #777be01b; }
+.session-action-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 22px; }
+.session-action-row > span { color: #7c879b; font-size: 11px; }
+.session-primary { display: inline-flex; align-items: center; justify-content: center; gap: 12px; border: 0; border-radius: 9px; padding: 12px 17px; color: white; background: #575fce; font-size: 12px; font-weight: 800; }
+.session-primary:hover { background: #464eb9; }
+.session-primary:disabled, .session-secondary:disabled { cursor: not-allowed; opacity: .55; }
+.workflow-timeline { display: grid; gap: 0; margin-top: 22px; }
+.workflow-step { display: grid; grid-template-columns: 39px 1fr; gap: 12px; padding: 16px 0; border-top: 1px solid #edf0f5; }
+.workflow-step-index { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; color: #5960c6; background: #eff0ff; font-size: 11px; font-weight: 800; }
+.workflow-step strong { color: #34405a; font-size: 13px; }
+.workflow-step p { margin: 5px 0; color: #68748b; font-size: 12px; line-height: 1.55; }
+.workflow-step small { color: #929bb0; font-size: 10px; text-transform: uppercase; }
+.ready-indicator { border-radius: 999px; padding: 8px 12px; color: #13815e; background: #eaf8f3; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.confirmed-answers { margin-top: 20px; padding: 15px 16px; border: 1px solid #e8ebf2; border-radius: 10px; background: #fbfcfe; }
+.confirmed-answers h3 { margin: 0 0 12px; color: #43506a; font: 800 12px Manrope, sans-serif; }
+.confirmed-answer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, .7fr); gap: 12px; padding: 9px 0; border-top: 1px solid #edf0f5; }
+.confirmed-answer strong { color: #68748b; font-size: 11px; line-height: 1.5; }
+.confirmed-answer span { color: #34415a; font-size: 12px; overflow-wrap: anywhere; }
+.safety-note { margin-top: 17px; padding: 14px 16px; border: 1px solid #f0e5ce; border-radius: 10px; background: #fffaf1; }
+.safety-note strong { color: #926227; font-size: 12px; }
+.safety-note p { margin: 5px 0 0; color: #79694e; font-size: 12px; line-height: 1.6; }
+.approval-card .session-primary { margin-top: 16px; }
+.execution-reference { display: grid; gap: 6px; margin: 18px 0; }
+.execution-reference small { color: #8590a4; font-size: 10px; font-weight: 800; }
+.execution-reference code { color: #5960c6; font-size: 12px; overflow-wrap: anywhere; }
+.session-secondary { cursor: pointer; }
+.final-card { border-color: #dcefe7; }
+.final-card h2 { color: #167c5e; }
+.failed-card { border-color: #f0dada; }
+.failed-card h2 { color: #bb4747; }
+.session-events { display: grid; gap: 16px; margin-top: 18px; }
+.session-event { display: grid; grid-template-columns: 11px 1fr; gap: 12px; }
+.event-dot { width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: #7379d9; }
+.session-event strong { color: #39455e; font-size: 12px; text-transform: capitalize; }
+.session-event p { margin: 4px 0; color: #6f7b90; font-size: 12px; line-height: 1.55; }
+.session-event small { color: #9aa3b4; font-size: 10px; }
+.usage-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 18px; }
+.usage-grid article { padding: 13px; }
+.usage-grid strong { font-size: 19px; }
+.session-muted { color: #7d889c; font-size: 11px; line-height: 1.6; }
+.usage-events { display: grid; gap: 8px; margin-top: 15px; }
+.usage-events > div { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #eef0f5; }
+.usage-events strong { color: #3b4760; font-size: 11px; }
+.usage-events span, .usage-events small { color: #7d889c; font-size: 10px; }
+.session-error { margin: 18px 0; border: 1px solid #f0d6d6; border-radius: 10px; padding: 13px 15px; color: #a34242; background: #fff5f5; font-size: 12px; }
+.session-loading { display: flex; align-items: center; gap: 12px; padding: 35px 0; color: #69758a; font-size: 13px; }
+.session-spinner { display: inline-block; width: 19px; height: 19px; border: 2px solid #e3e5fa; border-top-color: #6269d5; border-radius: 50%; animation: session-spin .8s linear infinite; }
+@keyframes session-spin { to { transform: rotate(360deg); } }
+.session-footer { display: flex; justify-content: space-between; gap: 16px; padding: 24px 2px; color: #9aa3b4; font-size: 10px; }
+@media (max-width: 760px) {
+  .session-shell { padding: 18px 15px 32px; }
+  .session-heading { display: grid; padding-top: 28px; }
+  .session-overview, .usage-grid { grid-template-columns: repeat(2, 1fr); }
+  .session-action-row, .session-card-header, .session-footer { align-items: stretch; flex-direction: column; }
+  .session-action-row > * { width: 100%; }
+  .usage-events > div { grid-template-columns: 1fr auto; }
+  .usage-events small { grid-column: 1 / -1; }
+}

@@ -61,7 +61,11 @@ class ProcessService:
                     else f"Analyzed with OpenAI Responses API ({self.ai_service.model}). "
                     "The workflow is a proposal; integrations are not connected and execution is simulated."
                 )
-                return localize_process_analysis(analysis, language)
+                localized = localize_process_analysis(analysis, language)
+                telemetry = getattr(self.ai_service, "last_call_telemetry", None)
+                if telemetry:
+                    localized["_aiUsageTelemetry"] = telemetry
+                return localized
             except Exception as error:
                 logger.exception("OpenAI process analysis failed; using the deterministic fallback.")
                 fallback_reason = self._llm_fallback_reason(error, language)
@@ -81,6 +85,9 @@ class ProcessService:
                     if language == "de"
                     else "Fallback estimate based on detected process steps and data context."
                 )
+                telemetry = getattr(self.ai_service, "last_call_telemetry", None)
+                if telemetry:
+                    analysis["_aiUsageTelemetry"] = telemetry
         else:
             analysis["analysisNote"] = (
                 routing["reason"]
@@ -98,7 +105,11 @@ class ProcessService:
         self._ensure_approval_gate(workflow)
         validate(workflow)
         analysis["proposedWorkflow"] = workflow
-        return localize_process_analysis(analysis, language)
+        localized = localize_process_analysis(analysis, language)
+        telemetry = analysis.get("_aiUsageTelemetry")
+        if telemetry:
+            localized["_aiUsageTelemetry"] = telemetry
+        return localized
 
     @staticmethod
     def _llm_fallback_reason(error: Exception, language: str) -> str:
@@ -213,8 +224,6 @@ class ProcessService:
         ]
         opportunities = ai_result.get("automation_opportunities") or []
         if score == 0 and (meaningful_steps or opportunities):
-            # A described process with concrete work must not be displayed as 0%
-            # merely because the model omitted its numeric estimate.
             score = min(85, max(20, 15 + len(meaningful_steps) * 8 + len(opportunities) * 5))
 
         analysis.update({
@@ -269,8 +278,6 @@ class ProcessService:
         ]
         must_approve = force_approval or bool(outbound_positions)
         if must_approve:
-            # Place exactly one approval step after the last output-preparation step
-            # and before the first external notification.
             first_outbound = outbound_positions[0] if outbound_positions else len(steps)
             prior_steps = steps[:first_outbound]
             last_preparation = max(

@@ -1,0 +1,278 @@
+<main class="session-shell">
+  <header class="session-topbar">
+    <a class="session-brand" routerLink="/">
+      <span class="session-brand-mark">F</span>
+      <span><strong>FlowPilot</strong><small>Process automation workspace</small></span>
+    </a>
+    <button class="session-back" type="button" (click)="backToBuilder()">
+      ← {{ isGerman ? 'Zurück zum Prozess-Designer' : 'Back to process builder' }}
+    </button>
+  </header>
+
+  @if (loading()) {
+    <section class="session-loading">
+      <span class="session-spinner"></span>
+      {{ isGerman ? 'Workflow wird geladen …' : 'Loading workflow …' }}
+    </section>
+  }
+
+  @if (error()) {
+    <div class="session-error" role="alert">{{ error() }}</div>
+  }
+
+  @if (session(); as current) {
+    <section class="session-heading">
+      <div>
+        <div class="session-eyebrow">WORKFLOW SESSION</div>
+        <h1>{{ current.analysis.proposedWorkflow.name }}</h1>
+        <p>{{ current.analysis.summary }}</p>
+      </div>
+      <span class="session-status" [attr.data-status]="current.status">
+        {{ current.status.replaceAll('_', ' ') }}
+      </span>
+    </section>
+
+    <section class="session-overview">
+      <article class="session-stat">
+        <small>{{ isGerman ? 'Automatisierungspotenzial' : 'Automation potential' }}</small>
+        <strong>{{ current.analysis.automationScore }}%</strong>
+      </article>
+      <article class="session-stat">
+        <small>{{ isGerman ? 'Analysestatus' : 'Analysis engine' }}</small>
+        <strong>{{ current.analysis.llmUsed ? 'OpenAI' : 'Python' }}</strong>
+      </article>
+      <article class="session-stat">
+        <small>{{ isGerman ? 'Workflow-Schritte' : 'Workflow steps' }}</small>
+        <strong>{{ current.analysis.proposedWorkflow.steps.length }}</strong>
+      </article>
+      <article class="session-stat">
+        <small>{{ isGerman ? 'Offene Fragen' : 'Open questions' }}</small>
+        <strong>{{ current.openQuestions.length }}</strong>
+      </article>
+    </section>
+
+    @if (current.status === 'needs_input') {
+      <section class="session-card question-card">
+        <div class="session-card-header">
+          <div>
+            <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 2 · KLÄRUNG' : 'STEP 2 · CLARIFICATION' }}</div>
+            <h2>{{ isGerman ? 'Offene Fragen' : 'Open questions' }}</h2>
+            <p>{{ isGerman
+              ? 'Bitte ergänzen Sie die fehlenden Angaben. FlowPilot speichert die Antworten und setzt die Verarbeitung automatisch fort.'
+              : 'Please provide the missing details. FlowPilot will save your answers and continue processing automatically.' }}</p>
+          </div>
+          <span class="question-count">{{ current.openQuestions.length }}</span>
+        </div>
+
+        <div class="question-list">
+          @for (question of current.openQuestions; track question.id; let index = $index) {
+            <div class="question-field">
+              <label [for]="question.id">
+                <span>{{ (index + 1).toString().padStart(2, '0') }}</span>
+                {{ question.prompt }}
+                @if (question.required) { <i>*</i> }
+              </label>
+              @if (question.type === 'boolean') {
+                <select
+                  [id]="question.id"
+                  [ngModel]="answerValues()[question.id] ?? ''"
+                  (ngModelChange)="setAnswer(question.id, $event)"
+                  [name]="question.id">
+                  <option value="">{{ isGerman ? 'Bitte auswählen' : 'Please choose' }}</option>
+                  <option value="yes">{{ isGerman ? 'Ja' : 'Yes' }}</option>
+                  <option value="no">{{ isGerman ? 'Nein' : 'No' }}</option>
+                </select>
+              } @else {
+                <textarea
+                  [id]="question.id"
+                  [ngModel]="answerValues()[question.id] ?? ''"
+                  (ngModelChange)="setAnswer(question.id, $event)"
+                  [name]="question.id"
+                  rows="3"
+                  [placeholder]="question.placeholder || (isGerman ? 'Antwort eingeben …' : 'Enter your answer …')">
+                </textarea>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="session-action-row">
+          <span>{{ isGerman ? 'Sie können die Fragen auch in mehreren Schritten beantworten.' : 'You can answer the questions in multiple submissions.' }}</span>
+          <button class="session-primary" type="button" (click)="submitAnswers()" [disabled]="submitting()">
+            {{ submitting() ? (isGerman ? 'Wird gespeichert …' : 'Saving …') : (isGerman ? 'Antworten speichern & fortfahren' : 'Save answers & continue') }}
+            <span>→</span>
+          </button>
+        </div>
+      </section>
+    }
+
+    @if (current.status === 'processing') {
+      <section class="session-card">
+        <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 3 · VERARBEITUNG' : 'STEP 3 · PROCESSING' }}</div>
+        <h2>{{ isGerman ? 'Antworten werden verarbeitet' : 'Processing answers' }}</h2>
+        <p>{{ isGerman ? 'Python validiert die Eingaben und aktualisiert den Workflow-Kontext.' : 'Python is validating the answers and updating the workflow context.' }}</p>
+        <span class="session-spinner"></span>
+      </section>
+    }
+
+    @if (current.status === 'ready_for_approval' || current.status === 'awaiting_approval' || current.status === 'completed' || current.status === 'rejected') {
+      <section class="session-card workflow-card">
+        <div class="session-card-header">
+          <div>
+            <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 3 · AUTOMATISCHE VERARBEITUNG' : 'STEP 3 · AUTOMATED PROCESSING' }}</div>
+            <h2>{{ isGerman ? 'Workflow vorbereitet' : 'Workflow prepared' }}</h2>
+            <p>{{ isGerman
+              ? 'Die Antworten wurden in den Prozesskontext übernommen. Die Validierung erfolgte mit Python, ohne einen weiteren LLM-Aufruf.'
+              : 'Your answers were added to the process context. Python completed validation without another LLM call.' }}</p>
+          </div>
+          <span class="ready-indicator">✓ {{ isGerman ? 'Bereit' : 'Ready' }}</span>
+        </div>
+
+        <div class="workflow-timeline">
+          @for (step of current.analysis.proposedWorkflow.steps; track step.id; let index = $index) {
+            <article class="workflow-step">
+              <span class="workflow-step-index">{{ (index + 1).toString().padStart(2, '0') }}</span>
+              <div>
+                <strong>{{ step.name }}</strong>
+                <p>{{ step.description }}</p>
+                <small>{{ step.type }}</small>
+              </div>
+            </article>
+          }
+        </div>
+
+        @if (current.questions.length > 0) {
+          <div class="confirmed-answers">
+            <h3>{{ isGerman ? 'Bestätigte Angaben' : 'Confirmed details' }}</h3>
+            @for (question of current.questions; track question.id) {
+              @if (current.answers[question.id] !== undefined) {
+                <div class="confirmed-answer">
+                  <strong>{{ question.prompt }}</strong>
+                  <span>{{ current.answers[question.id] === true
+                    ? (isGerman ? 'Ja' : 'Yes')
+                    : current.answers[question.id] === false
+                      ? (isGerman ? 'Nein' : 'No')
+                      : current.answers[question.id] }}</span>
+                </div>
+              }
+            }
+          </div>
+        }
+
+        <div class="safety-note">
+          <strong>{{ isGerman ? 'Sicherheitsmodus' : 'Safety mode' }}</strong>
+          <p>{{ isGerman
+            ? 'Externe Aktionen sind weiterhin deaktiviert. Die Freigabe führt nur eine Simulation aus; es werden keine E-Mails versendet und keine externen Systeme kontaktiert.'
+            : 'External actions remain disabled. Approval runs a simulation only; no emails are sent and no external systems are contacted.' }}</p>
+        </div>
+      </section>
+    }
+
+    @if (current.status === 'ready_for_approval') {
+      <section class="session-card approval-card">
+        <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 4 · FREIGABE' : 'STEP 4 · APPROVAL' }}</div>
+        <h2>{{ isGerman ? 'Menschliche Freigabe erforderlich' : 'Human approval required' }}</h2>
+        <p>{{ isGerman
+          ? 'Prüfen Sie den Workflow. Erst nach Ihrer Freigabe wird die simulierte Ausführung gestartet.'
+          : 'Review the workflow. The simulated execution starts only after your approval.' }}</p>
+        <button class="session-primary" type="button" (click)="createExecution()" [disabled]="executionLoading()">
+          {{ executionLoading() ? (isGerman ? 'Freigabe wird erstellt …' : 'Creating approval …') : (isGerman ? 'Freigabeanfrage erstellen' : 'Create approval request') }}
+          <span>→</span>
+        </button>
+      </section>
+    }
+
+    @if (current.status === 'awaiting_approval') {
+      <section class="session-card approval-card">
+        <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 4 · FREIGABE' : 'STEP 4 · APPROVAL' }}</div>
+        <h2>{{ isGerman ? 'Wartet auf Ihre Entscheidung' : 'Waiting for your decision' }}</h2>
+        @if (execution(); as approval) {
+          <div class="execution-reference">
+            <small>{{ isGerman ? 'Ausführungs-ID' : 'Execution ID' }}</small>
+            <code>{{ approval.id }}</code>
+          </div>
+          <div class="session-action-row">
+            <button class="session-primary" type="button" (click)="decide(true)" [disabled]="executionLoading()">
+              {{ isGerman ? 'Freigeben & simulieren' : 'Approve & simulate' }}
+            </button>
+            <button class="session-secondary" type="button" (click)="decide(false)" [disabled]="executionLoading()">
+              {{ isGerman ? 'Ablehnen' : 'Reject' }}
+            </button>
+          </div>
+        } @else {
+          <p>{{ isGerman ? 'Freigabedaten werden geladen …' : 'Loading approval details …' }}</p>
+        }
+      </section>
+    }
+
+    @if (current.status === 'completed' || current.status === 'rejected') {
+      <section class="session-card final-card">
+        <div class="session-eyebrow">{{ isGerman ? 'WORKFLOW-ERGEBNIS' : 'WORKFLOW RESULT' }}</div>
+        <h2>{{ current.status === 'completed'
+          ? (isGerman ? 'Simulation abgeschlossen' : 'Simulation completed')
+          : (isGerman ? 'Workflow abgelehnt' : 'Workflow rejected') }}</h2>
+        <p>{{ current.status === 'completed'
+          ? (isGerman ? 'Die Freigabe wurde gespeichert. Alle Schritte wurden simuliert; externe Aktionen wurden nicht ausgeführt.' : 'Approval was saved. All steps were simulated; no external actions were performed.')
+          : (isGerman ? 'Die Anfrage wurde abgelehnt. Es wurden keine Workflow-Schritte ausgeführt.' : 'The request was rejected. No workflow steps were executed.') }}</p>
+      </section>
+    }
+
+    @if (current.status === 'failed') {
+      <section class="session-card failed-card">
+        <h2>{{ isGerman ? 'Verarbeitung fehlgeschlagen' : 'Processing failed' }}</h2>
+        <p>{{ isGerman ? 'Die letzte Verarbeitung konnte nicht abgeschlossen werden. Prüfen Sie das Ereignisprotokoll.' : 'The last processing step could not be completed. Review the event log.' }}</p>
+      </section>
+    }
+
+    <section class="session-card">
+      <div class="session-eyebrow">{{ isGerman ? 'AUDIT-TRAIL' : 'AUDIT TRAIL' }}</div>
+      <h2>{{ isGerman ? 'Verarbeitungsverlauf' : 'Processing history' }}</h2>
+      <div class="session-events">
+        @for (event of current.events; track $index) {
+          <article class="session-event">
+            <span class="event-dot"></span>
+            <div><strong>{{ event.event.replaceAll('_', ' ') }}</strong><p>{{ event.message }}</p><small>{{ event.status }}</small></div>
+          </article>
+        }
+      </div>
+    </section>
+  }
+
+  <section class="session-card usage-card">
+    <div class="session-card-header">
+      <div>
+        <div class="session-eyebrow">STEP 5 · AI MONITORING</div>
+        <h2>{{ isGerman ? 'AI-Nutzung & Kosten' : 'AI usage & cost' }}</h2>
+        <p>{{ isGerman ? 'Erfasste Provider-Aufrufe und Token-Verbrauch.' : 'Recorded provider calls and token usage.' }}</p>
+      </div>
+      <button class="session-secondary" type="button" (click)="loadUsage()">{{ isGerman ? 'Aktualisieren' : 'Refresh' }}</button>
+    </div>
+    @if (usage(); as metrics) {
+      <div class="usage-grid">
+        <article><small>{{ isGerman ? 'API-Aufrufe' : 'API calls' }}</small><strong>{{ formatNumber(metrics.totalCalls) }}</strong></article>
+        <article><small>Tokens</small><strong>{{ formatNumber(metrics.totalTokens) }}</strong></article>
+        <article><small>{{ isGerman ? 'Fallbacks' : 'Fallbacks' }}</small><strong>{{ formatNumber(metrics.fallbackCalls) }}</strong></article>
+        <article><small>{{ isGerman ? 'Geschätzte Kosten' : 'Estimated cost' }}</small><strong>{{ metrics.pricingConfigured ? formatCost(metrics.estimatedCostUsd) : (isGerman ? 'Nicht konfiguriert' : 'Not configured') }}</strong></article>
+      </div>
+      <p class="session-muted">
+        {{ isGerman
+          ? 'Die Kosten werden nur berechnet, wenn die Modellpreise im Backend konfiguriert sind. Fehlgeschlagene Aufrufe ohne Provider-Verbrauchsdaten werden nicht geschätzt.'
+          : 'Costs are calculated only when model rates are configured in the backend. Failed calls without provider usage data are not estimated.' }}
+      </p>
+      @if (metrics.events.length > 0) {
+        <div class="usage-events">
+          @for (event of metrics.events.slice(0, 5); track event.id) {
+            <div><strong>{{ event.model }}</strong><span>{{ event.status }}</span><small>{{ formatNumber(event.totalTokens) }} tokens</small></div>
+          }
+        </div>
+      }
+    } @else {
+      <p class="session-muted">{{ isGerman ? 'Noch keine AI-Nutzungsdaten vorhanden.' : 'No AI usage data is available yet.' }}</p>
+    }
+  </section>
+
+  <footer class="session-footer">
+    <span>FlowPilot · AI Process Automation</span>
+    <span>{{ isGerman ? 'Portfolio-Prototyp · externe Integrationen deaktiviert' : 'Portfolio prototype · external integrations disabled' }}</span>
+  </footer>
+</main>

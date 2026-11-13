@@ -1,3 +1,4 @@
+import time
 from typing import Literal
 
 from openai import OpenAI
@@ -61,7 +62,7 @@ class AIProcessAnalysisOutput(BaseModel):
 
 
 class AIService:
-    """OpenAI Responses API adapter for structured business-process analysis."""
+    """OpenAI Responses API adapter with best-effort usage telemetry."""
 
     def __init__(self, api_key: str | None = None, model: str | None = None):
         configured_key = settings.OPENAI_API_KEY if api_key is None else api_key
@@ -71,6 +72,7 @@ class AIService:
             if configured_key and configured_key.strip()
             else None
         )
+        self.last_call_telemetry: dict | None = None
 
     @property
     def is_configured(self) -> bool:
@@ -80,6 +82,7 @@ class AIService:
         if self._client is None:
             raise RuntimeError("OPENAI_API_KEY is not configured.")
 
+        started = time.perf_counter()
         output_language = "German" if language == "de" else "English"
         system_prompt = f"""
 You are the process analysis engine for an enterprise workflow automation product.
@@ -118,23 +121,56 @@ outputs, require human approval before distribution. A missing detail belongs in
 workflow configuration. Connector should be an empty string when no connector is clearly implied.
 """
 
-        response = self._client.responses.parse(
-            model=self.model,
-            input=[
-                {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": (
-                        "Canonical signals detected by deterministic rules: "
-                        f"{signals}\n\nBusiness-process description:\n{description}"
-                    ),
-                },
-            ],
-            text_format=AIProcessAnalysisOutput,
-            max_output_tokens=7500,
-        )
+        response = None
+        try:
+            response = self._client.responses.parse(
+                model=self.model,
+                input=[
+                    {"role": "system", "content": system_prompt},
+                    {
+                        "role": "user",
+                        "content": (
+                            "Canonical signals detected by deterministic rules: "
+                            f"{signals}\n\nBusiness-process description:\n{description}"
+                        ),
+                    },
+                ],
+                text_format=AIProcessAnalysisOutput,
+                max_output_tokens=7500,
+            )
 
-        parsed = response.output_parsed
-        if parsed is None:
-            raise ValueError("The model did not return a structured process analysis.")
-        return parsed.model_dump()
+            parsed = response.output_parsed
+            if parsed is None:
+                raise ValueError("The model did not return a structured process analysis.")
+
+            usage = getattr(response, "usage", None)
+            input_tokens = getattr(usage, "input_tokens", None) if usage else None
+            output_tokens = getattr(usage, "output_tokens", None) if usage else None
+            total_tokens = getattr(usage, "total_tokens", None) if usage else None
+            self.last_call_telemetry = {
+                "provider": "openai",
+                "model": self.model,
+                "task": "process_analysis",
+                "status": "success",
+                "inputTokens": input_tokens,
+                "outputTokens": output_tokens,
+                "totalTokens": total_tokens,
+                "durationMs": round((time.perf_counter() - started) * 1000),
+            }
+            return parsed.model_dump()
+        except Exception as error:
+            # A structured-output parse failure can happen after the provider has
+            # billed the request. Preserve usage whenever the response is available.
+            usage = getattr(response, "usage", None) if response is not None else None
+            self.last_call_telemetry = {
+                "provider": "openai",
+                "model": self.model,
+                "task": "process_analysis",
+                "status": "fallback",
+                "inputTokens": getattr(usage, "input_tokens", None) if usage else None,
+                "outputTokens": getattr(usage, "output_tokens", None) if usage else None,
+                "totalTokens": getattr(usage, "total_tokens", None) if usage else None,
+                "durationMs": round((time.perf_counter() - started) * 1000),
+                "errorType": type(error).__name__,
+            }
+            raise

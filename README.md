@@ -61,6 +61,58 @@ Execution states:
 
 No real email or Teams message is sent after approval.
 
+## Interactive workflow lifecycle
+
+`POST /api/processes/analyze` now persists the analysis as a workflow session and returns `processSessionId`, `workflowStatus`, and `openQuestions`. The Angular app opens the session page automatically.
+
+Session lifecycle:
+- `needs_input` — the user can answer the generated open questions. Partial answers are saved.
+- `processing` — the server validates answers and updates the workflow context with deterministic Python logic.
+- `ready_for_approval` — the updated workflow is ready for a human review.
+- `awaiting_approval` — an approval request exists and execution is paused.
+- `completed` / `rejected` / `failed` — terminal results.
+
+Additional endpoints:
+- `GET /api/processes/sessions/{id}` — retrieve the persisted session, answers, questions, status, and audit events.
+- `POST /api/processes/sessions/{id}/answers` — submit answers as `{"answers": {"q-id": "value"}}`. The server validates only known question IDs and allows partial submissions.
+- `POST /api/processes/sessions/{id}/execute` — create the approval request after preparation is complete.
+- `GET /api/monitoring/usage` — retrieve aggregate AI token usage and recent provider events.
+
+When the required answers are complete, Python updates the process specification and proposed workflow context without making another LLM call. The user then explicitly creates an approval request. Approving it continues the existing simulation lifecycle; rejecting it records the decision and runs no steps.
+
+## AI usage and estimated costs
+
+Each OpenAI process-analysis attempt records provider, model, status, duration, and token usage when the provider returns usage metadata. Failed calls are marked as fallback events. If a provider response exists but structured-output parsing fails, its usage metadata is retained.
+
+Estimated USD cost is calculated only when both of these backend environment variables are configured:
+- `OPENAI_INPUT_USD_PER_1M` — input-token price per million tokens.
+- `OPENAI_OUTPUT_USD_PER_1M` — output-token price per million tokens.
+
+Both values default to unset. Until valid prices are configured, the monitoring endpoint shows token totals but leaves estimated cost unavailable. This avoids inventing a model price or presenting a token estimate as an invoice amount.
+
+## Safe Render pull request previews
+
+The Frontend and Backend services use Render's automatic pull request service previews. The Angular build generates `runtime-config.js` before each deploy:
+
+- Production builds use `API_BASE_URL` (or the configured Production backend URL).
+- PR builds detect Render's `IS_PULL_REQUEST` and `RENDER_EXTERNAL_HOSTNAME` values and derive the matching Backend Preview URL from the PR suffix.
+- If the matching Backend Preview URL cannot be identified, the Frontend fails closed and does not fall back to the Production API.
+
+The Backend also detects `IS_PULL_REQUEST`:
+
+- Preview CORS allows only the Frontend Preview for the same PR, not the Production frontend or arbitrary websites.
+- If Production currently uses SQLite, the Preview uses a different SQLite file on its own temporary service filesystem.
+- If Production is later moved to a remote database, the Preview refuses to start unless `PREVIEW_DATABASE_URL` is explicitly set to a separate test database.
+- PR previews ignore the Production `OPENAI_API_KEY`; set `PREVIEW_OPENAI_API_KEY` on a Preview instance to use a separate test key. Otherwise, deterministic fallback is used.
+
+Render service previews initially copy their base service settings, including environment variables. Do not add a persistent disk or shared Production datastore to a Preview service. These previews are temporary and are deleted when their PR is merged or closed. This application still has no authentication; do not enter real customer or confidential business data in a public Preview.
+
+## Safety and production boundaries
+
+The action dispatcher remains simulation-only. Approval records authorization for the demo workflow, but it does not send email, post to Teams, invoke HTTP endpoints, or modify an external business system. Live connectors must be implemented and separately configured before those actions can be enabled.
+
+The new session and usage endpoints are currently intended for this single-user portfolio MVP. Authentication, tenant isolation, role-based approval permissions, durable migrations, retention controls, and production-grade audit/security reviews are still required before exposing business data to multiple users.
+
 ## Run locally
 
 ### Backend

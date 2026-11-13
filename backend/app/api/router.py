@@ -4,6 +4,8 @@ from app.api.routes.processes import router as processes_router
 from app.api.routes.workflows import router as workflows_router
 from app.api.routes.executions import router as executions_router
 from app.api.routes.data_processing import router as data_processing_router
+from app.api.routes.workflow_sessions import router as workflow_sessions_router
+from app.api.routes.monitoring import router as monitoring_router
 
 api_router = APIRouter()
 api_router.include_router(health_router)
@@ -11,3 +13,5 @@ api_router.include_router(processes_router)
 api_router.include_router(workflows_router)
 api_router.include_router(executions_router)
 api_router.include_router(data_processing_router)
+api_router.include_router(workflow_sessions_router)
+api_router.include_router(monitoring_router)
