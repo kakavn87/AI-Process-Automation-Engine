@@ -12,14 +12,15 @@ export class ProcessService {
     analysisStrategy: 'auto' | 'rules' | 'llm' = 'auto',
     language: 'de' | 'en' = 'de',
     businessDomain = 'general',
-    files: File[] = []
+    files: File[] = [],
+    documentIds: string[] = []
   ): void {
     this.store.setLoading(true);
     this.store.setError(null);
 
     const request = files.length
-      ? this.api.analyzeProcessWithDocuments(description, files, analysisStrategy, language, businessDomain)
-      : this.api.analyzeProcess(description, analysisStrategy, language, businessDomain);
+      ? this.api.analyzeProcessWithDocuments(description, files, analysisStrategy, language, businessDomain, documentIds)
+      : this.api.analyzeProcess(description, analysisStrategy, language, businessDomain, documentIds);
 
     request.subscribe({
       next: result => {

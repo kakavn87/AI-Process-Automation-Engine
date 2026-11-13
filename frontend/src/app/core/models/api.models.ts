@@ -88,7 +88,19 @@ export interface ProcessDocumentSource {
   visualAssets: number;
 }
 
+export interface KnowledgeDocumentUploadResult {
+  id: string; fileName: string; fileType: string; mimeType: string;
+  byteSize: number; status: string; chunksCount: number;
+  sourceMetadata?: Record<string, unknown>; createdAt: string | null;
+}
+export interface KnowledgeSource {
+  documentId: string; fileName: string;
+  locator: Record<string, string | number>;
+  score: number | null; retrieval: string;
+}
 export interface ProcessAnalysis {
+  knowledgeSources?: KnowledgeSource[];
+  knowledgeDocumentIds?: string[];
   automationScore: number;
   automationScoreNote?: string;
   signals: string[];

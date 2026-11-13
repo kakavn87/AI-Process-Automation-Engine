@@ -1,7 +1,7 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../../core/services/api.service';
-import { TabularDataResult } from '../../../../core/models/api.models';
+import { KnowledgeDocumentUploadResult, TabularDataResult } from '../../../../core/models/api.models';
 import { ProcessStore } from '../../process.store';
 import { ProcessService } from '../../process.service';
 import { WorkflowSessionPageComponent } from '../../../workflow-session/workflow-session-page.component';
@@ -42,13 +42,22 @@ export class ProcessPageComponent {
   selectedDataFile: File | null = null;
   processFiles: File[] = [];
   readonly processFileError = signal<string | null>(null);
+  readonly knowledgeDocuments = signal<KnowledgeDocumentUploadResult[]>([]);
+  readonly selectedKnowledgeDocumentIds = signal<string[]>([]);
   description = '';
   analysisStrategy: AnalysisStrategy = 'auto';
 
   constructor() {
+    this.api.listKnowledgeDocuments().subscribe({
+      next: response => this.knowledgeDocuments.set(response.enabled ? response.documents : []),
+      error: () => undefined
+    });
+
     effect(() => {
       const analysis = this.store.analysis();
-      if (!analysis || typeof document === 'undefined') return;
+      if (!analysis) return;
+      if (analysis.knowledgeDocumentIds?.length) this.api.listKnowledgeDocuments().subscribe({ next: response => this.knowledgeDocuments.set(response.enabled ? response.documents : []), error: () => undefined });
+      if (typeof document === 'undefined') return;
 
       setTimeout(() => {
         document.getElementById('results')?.scrollIntoView({
@@ -349,7 +358,7 @@ export class ProcessPageComponent {
   onProcessFilesSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const selected = Array.from(input.files ?? []);
-    const allowed = /\.(pdf|docx|pptx|xlsx|csv|txt|md|png|jpe?g|webp)$/i;
+    const allowed = /\.(pdf|docx|pptx|xlsx|csv|txt|md|png|jpe?g|webp|tif|tiff|drawio|bpmn|xml)$/i;
     const combined = [...this.processFiles, ...selected];
 
     if (combined.length > 8) {
@@ -373,6 +382,10 @@ export class ProcessPageComponent {
       this.processFileError.set(null);
     }
     input.value = '';
+  }
+
+  toggleKnowledgeDocument(documentId: string, checked: boolean) {
+    this.selectedKnowledgeDocumentIds.update(current => checked ? [...new Set([...current, documentId])] : current.filter(id => id !== documentId));
   }
 
   removeProcessFile(index: number) {
@@ -400,8 +413,15 @@ export class ProcessPageComponent {
   }
 
   analyze() {
-    this.store.setDescription(this.description);
-    this.service.analyze(this.description, this.analysisStrategy, this.language(), this.selectedDomain(), this.processFiles);
+    const effectiveDescription = this.description.trim().length >= 3 ? this.description :
+      (this.language() === 'de' ? 'Bitte analysiere die ausgewählten Geschäftsunterlagen und identifiziere den beschriebenen Prozess.' : 'Please analyze the selected business documents and identify the described process.');
+    this.store.setDescription(effectiveDescription);
+    this.service.analyze(effectiveDescription, this.analysisStrategy, this.language(), this.selectedDomain(), this.processFiles, this.selectedKnowledgeDocumentIds());
+  }
+
+  formatKnowledgeLocator(locator: Record<string, string | number>): string {
+    const labels: Record<string, string> = this.language() === 'de' ? { page: 'Seite', slide: 'Folie', sheet: 'Blatt', row: 'Zeile', paragraph: 'Absatz', table: 'Tabelle', diagram: 'Diagramm', image: 'Bild' } : { page: 'Page', slide: 'Slide', sheet: 'Sheet', row: 'Row', paragraph: 'Paragraph', table: 'Table', diagram: 'Diagram', image: 'Image' };
+    return Object.entries(locator).map(([key, value]) => (labels[key] || key) + ': ' + value).join(' · ') || 'Document source';
   }
 
   formatNumber(value: number): string {

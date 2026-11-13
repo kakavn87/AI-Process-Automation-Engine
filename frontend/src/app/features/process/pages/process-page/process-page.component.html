@@ -129,6 +129,16 @@
               </div>
             </div>
           }
+          @if (analysis.knowledgeSources?.length) {
+            <div class="source-document-results">
+              <strong>{{ language() === 'de' ? 'Wissensquellen für die Analyse' : 'Knowledge sources used' }}</strong>
+              <div class="tag-row">
+                @for (source of analysis.knowledgeSources; track $index) {
+                  <span>{{ source.fileName }} · {{ formatKnowledgeLocator(source.locator) }}</span>
+                }
+              </div>
+            </div>
+          }
           @if (analysis.documentWarnings?.length) {
             <div class="setup-hint">
               @for (warning of analysis.documentWarnings; track warning) { <p>{{ warning }}</p> }
@@ -264,13 +274,13 @@
                 <span class="document-upload-icon">⇧</span>
                 <div>
                   <strong>{{ language() === 'de' ? 'Prozessdokumente oder Diagramme hinzufügen' : 'Add process documents or diagrams' }}</strong>
-                  <p>{{ language() === 'de' ? 'PDF, Word, PowerPoint, Excel, CSV, Text oder Bilder. Die Inhalte werden für diese Analyse verarbeitet und nicht dauerhaft gespeichert.' : 'PDF, Word, PowerPoint, Excel, CSV, text or images. Content is processed for this analysis and is not stored permanently.' }}</p>
+                  <p>{{ language() === 'de' ? 'PDF, Word, PowerPoint, Excel, CSV, Text, Bilder und Prozessdiagramme. Je nach Instanz werden Dateien nur für diese Analyse oder in einer geschützten Wissensbasis verarbeitet.' : 'PDF, Word, PowerPoint, Excel, CSV, text, images and process diagrams. Depending on deployment, files are processed for this analysis or stored in a protected knowledge base.' }}</p>
                   <small>{{ language() === 'de' ? 'Bis zu 8 Dateien · 10 MB je Datei · 25 MB insgesamt' : 'Up to 8 files · 10 MB each · 25 MB combined' }}</small>
                   <small class="document-upload-warning">{{ language() === 'de' ? 'Bitte laden Sie in dieser öffentlichen Demo keine vertraulichen oder personenbezogenen Unternehmensdaten hoch.' : 'Please do not upload confidential or personal business data to this public demo.' }}</small>
                 </div>
               </div>
               <input id="process-files" type="file" multiple
-                accept=".pdf,.docx,.pptx,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                accept=".pdf,.docx,.pptx,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,.tif,.tiff,.drawio,.bpmn,.xml"
                 (change)="onProcessFilesSelected($event)" />
               <label for="process-files" class="button-secondary file-label">{{ language() === 'de' ? 'Dateien auswählen' : 'Choose files' }}</label>
               @if (processFiles.length > 0) {
@@ -281,6 +291,18 @@
                       <small>{{ (file.size / 1024 / 1024).toFixed(1) }} MB</small>
                       <button type="button" (click)="removeProcessFile(index)" [attr.aria-label]="language() === 'de' ? 'Datei entfernen' : 'Remove file'">×</button>
                     </div>
+                  }
+                </div>
+              }
+              @if (knowledgeDocuments().length) {
+                <div class="process-file-list knowledge-source-picker">
+                  <strong>{{ language() === 'de' ? 'Gespeicherte Wissensquellen auswählen' : 'Select saved knowledge sources' }}</strong>
+                  @for (source of knowledgeDocuments(); track source.id) {
+                    <label class="process-file-item">
+                      <input type="checkbox" [checked]="selectedKnowledgeDocumentIds().includes(source.id)" (change)="toggleKnowledgeDocument(source.id, $any($event.target).checked)" />
+                      <span class="process-file-name">{{ source.fileName }}</span>
+                      <small>{{ source.chunksCount }} {{ language() === 'de' ? 'Abschnitte' : 'chunks' }}</small>
+                    </label>
                   }
                 </div>
               }
@@ -303,7 +325,7 @@
 
             <div class="builder-submit-row">
               <span class="field-hint">{{ language() === 'de' ? 'Analyse dauert normalerweise nur wenige Sekunden.' : 'Analysis usually takes only a few seconds.' }}</span>
-              <button class="button-primary analyze-button" type="button" (click)="analyze()" [disabled]="store.loading() || (description.trim().length < 3 && processFiles.length === 0) || !!processFileError()">
+              <button class="button-primary analyze-button" type="button" (click)="analyze()" [disabled]="store.loading() || (description.trim().length < 3 && processFiles.length === 0 && selectedKnowledgeDocumentIds().length === 0) || !!processFileError()">
                 {{ store.loading() ? i18n.analyzing : i18n.analyze }} <span>→</span>
               </button>
             </div>

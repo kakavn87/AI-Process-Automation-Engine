@@ -24,7 +24,7 @@ MAX_IMAGES = 8
 MAX_ARCHIVE_UNCOMPRESSED_BYTES = 80 * 1024 * 1024
 SUPPORTED_EXTENSIONS = {
     ".pdf", ".docx", ".pptx", ".xlsx", ".csv", ".txt", ".md",
-    ".png", ".jpg", ".jpeg", ".webp",
+    ".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff", ".drawio", ".bpmn", ".xml",
 }
 
 
@@ -78,6 +78,10 @@ class DocumentProcessingService:
                 extracted_text = self._extract_xlsx(content)
             elif suffix in {".csv", ".txt", ".md"}:
                 extracted_text = self._decode_text(content)
+            elif suffix in {".drawio", ".bpmn", ".xml"}:
+                from app.services.document_parser import extract_document
+                segments, _ = extract_document(filename, content)
+                extracted_text = "\n".join(item["text"] for item in segments)
             else:
                 self._append_image(filename, content, image_data_urls)
 

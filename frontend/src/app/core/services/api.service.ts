@@ -7,6 +7,7 @@ import {
   ApprovalExecution,
   IntegrationReadiness,
   LiveExecutionReadiness,
+  KnowledgeDocumentUploadResult,
   ProcessAnalysis,
   ProposedWorkflow,
   TabularDataResult,
@@ -43,13 +44,15 @@ export class ApiService {
     description: string,
     analysisStrategy: 'auto' | 'rules' | 'llm' = 'auto',
     language: 'de' | 'en' = 'de',
-    businessDomain = 'general'
+    businessDomain = 'general',
+    documentIds: string[] = []
   ) {
     return this.request('/processes/analyze', url => this.http.post<ProcessAnalysis>(url, {
       description,
       analysis_strategy: analysisStrategy,
       analysis_language: language,
-      business_domain: businessDomain
+      business_domain: businessDomain,
+      document_ids: documentIds
     }));
   }
 
@@ -58,17 +61,23 @@ export class ApiService {
     files: File[],
     analysisStrategy: 'auto' | 'rules' | 'llm' = 'auto',
     language: 'de' | 'en' = 'de',
-    businessDomain = 'general'
+    businessDomain = 'general',
+    documentIds: string[] = []
   ) {
     const formData = new FormData();
     if (description.trim()) formData.append('description', description.trim());
     formData.append('analysis_strategy', analysisStrategy);
     formData.append('analysis_language', language);
     formData.append('business_domain', businessDomain);
+    formData.append('document_ids', JSON.stringify(documentIds));
     files.forEach(file => formData.append('files', file, file.name));
     return this.request('/processes/analyze-with-documents', url =>
       this.http.post<ProcessAnalysis>(url, formData)
     );
+  }
+
+  listKnowledgeDocuments() {
+    return this.request('/documents', url => this.http.get<{ enabled: boolean; documents: KnowledgeDocumentUploadResult[] }>(url));
   }
 
   getWorkflowSession(id: string) {
