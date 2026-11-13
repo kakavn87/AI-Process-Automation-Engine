@@ -80,6 +80,34 @@
         </article>
       </section>
 
+      <section class="section-block industries-section" id="industries">
+        <div class="industry-picker-bar">
+          <div>
+            <div class="section-kicker">{{ i18n.industriesEyebrow }}</div>
+            <h2>{{ i18n.industriesTitle }}</h2>
+          </div>
+          <button class="industry-toggle" type="button" [attr.aria-expanded]="examplesExpanded()" aria-controls="industry-options" (click)="toggleIndustryExamples()">
+            {{ examplesExpanded() ? (language() === 'de' ? 'Beispiele ausblenden' : 'Hide examples') : (language() === 'de' ? 'Beispiele anzeigen' : 'Show examples') }}
+            <span aria-hidden="true">{{ examplesExpanded() ? '−' : '+' }}</span>
+          </button>
+        </div>
+        <div id="industry-options">
+          @if (examplesExpanded()) {
+            <p class="industries-copy">{{ i18n.industriesCopy }}</p>
+            <div class="industry-grid">
+              @for (industry of industries; track industry.id) {
+                <button type="button" class="industry-card" [class.selected]="selectedDomain() === industry.id" (click)="selectIndustry(industry)">
+                  <span class="industry-card-top"><span class="industry-icon" [attr.data-domain]="industry.id">{{ industry.icon }}</span><span class="industry-arrow">↗</span></span>
+                  <strong>{{ language() === 'de' ? industry.nameDe : industry.nameEn }}</strong>
+                  <p>{{ language() === 'de' ? industry.descriptionDe : industry.descriptionEn }}</p>
+                  <span class="industry-card-footer">{{ selectedDomain() === industry.id ? i18n.selected : i18n.useExample }} <span>→</span></span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </section>
+
       <section class="section-block builder-section" id="builder">
         <div class="section-header">
           <div>
@@ -158,27 +186,7 @@
         </div>
       </section>
 
-      <section class="section-block" id="industries">
-        <div class="section-header">
-          <div>
-            <div class="section-kicker">{{ i18n.industriesEyebrow }}</div>
-            <h2>{{ i18n.industriesTitle }}</h2>
-            <p>{{ i18n.industriesCopy }}</p>
-          </div>
-          <a class="text-link" href="#builder">{{ i18n.allAreas }} <span>→</span></a>
-        </div>
-
-        <div class="industry-grid">
-          @for (industry of industries; track industry.id) {
-            <button type="button" class="industry-card" [class.selected]="selectedDomain() === industry.id" (click)="selectIndustry(industry)">
-              <span class="industry-card-top"><span class="industry-icon" [attr.data-domain]="industry.id">{{ industry.icon }}</span><span class="industry-arrow">↗</span></span>
-              <strong>{{ language() === 'de' ? industry.nameDe : industry.nameEn }}</strong>
-              <p>{{ language() === 'de' ? industry.descriptionDe : industry.descriptionEn }}</p>
-              <span class="industry-card-footer">{{ selectedDomain() === industry.id ? i18n.selected : i18n.useExample }} <span>→</span></span>
-            </button>
-          }
-        </div>
-      </section>
+      
       
 
       
