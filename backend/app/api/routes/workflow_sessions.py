@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.dependencies.auth import TenantContext, get_tenant_context
 from app.schemas.workflow_session import SubmitWorkflowAnswersRequest
 from app.services.workflow_session_service import WorkflowSessionService
 from app.services.ai_usage_service import AIUsageService
@@ -13,16 +14,31 @@ router = APIRouter(prefix="/processes/sessions", tags=["workflow-sessions"])
 
 
 @router.get("/{session_id}")
-def get_workflow_session(session_id: str, db: Session = Depends(get_db)):
-    result = WorkflowSessionService(db).get(session_id)
+def get_workflow_session(
+    session_id: str,
+    db: Session = Depends(get_db),
+    tenant_context: TenantContext = Depends(get_tenant_context),
+):
+    result = WorkflowSessionService(db, tenant_id=tenant_context.tenant_id).get(session_id)
     if result is None:
         raise HTTPException(status_code=404, detail="Workflow session was not found.")
     return result
 
 
 @router.delete("/{session_id}", status_code=204)
-def delete_workflow_session(session_id: str, db: Session = Depends(get_db)):
-    session = db.get(WorkflowSession, session_id)
+def delete_workflow_session(
+    session_id: str,
+    db: Session = Depends(get_db),
+    tenant_context: TenantContext = Depends(get_tenant_context),
+):
+    session = (
+        db.query(WorkflowSession)
+        .filter(
+            WorkflowSession.id == session_id,
+            WorkflowSession.tenant_id == tenant_context.tenant_id,
+        )
+        .one_or_none()
+    )
     if session is None:
         raise HTTPException(status_code=404, detail="Workflow session was not found.")
 
@@ -53,9 +69,10 @@ def submit_workflow_answers(
     session_id: str,
     request: SubmitWorkflowAnswersRequest,
     db: Session = Depends(get_db),
+    tenant_context: TenantContext = Depends(get_tenant_context),
 ):
     try:
-        return WorkflowSessionService(db).submit_answers(session_id, request.answers)
+        return WorkflowSessionService(db, tenant_id=tenant_context.tenant_id).submit_answers(session_id, request.answers)
     except KeyError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ValueError as error:
@@ -63,9 +80,13 @@ def submit_workflow_answers(
 
 
 @router.post("/{session_id}/execute", status_code=201)
-def create_session_execution(session_id: str, db: Session = Depends(get_db)):
+def create_session_execution(
+    session_id: str,
+    db: Session = Depends(get_db),
+    tenant_context: TenantContext = Depends(get_tenant_context),
+):
     try:
-        return WorkflowSessionService(db).create_execution(session_id)
+        return WorkflowSessionService(db, tenant_id=tenant_context.tenant_id).create_execution(session_id)
     except KeyError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ValueError as error:
@@ -82,8 +103,17 @@ def search_session_knowledge(
     session_id: str,
     request: SessionKnowledgeSearchRequest,
     db: Session = Depends(get_db),
+    tenant_context: TenantContext = Depends(get_tenant_context),
 ):
-    if db.get(WorkflowSession, session_id) is None:
+    if (
+        db.query(WorkflowSession)
+        .filter(
+            WorkflowSession.id == session_id,
+            WorkflowSession.tenant_id == tenant_context.tenant_id,
+        )
+        .one_or_none()
+        is None
+    ):
         raise HTTPException(status_code=404, detail="Workflow session was not found.")
 
     knowledge = KnowledgeBaseService()
@@ -98,7 +128,7 @@ def search_session_knowledge(
         matches = knowledge.search(session_id, request.query, request.top_k)
     except Exception as error:
         for telemetry in knowledge.telemetry_events:
-            AIUsageService(db).record(session_id, telemetry)
+            AIUsageService(db, tenant_id=tenant_context.tenant_id).record(session_id, telemetry)
         raise HTTPException(
             status_code=503,
             detail="The session knowledge store could not complete the search.",
