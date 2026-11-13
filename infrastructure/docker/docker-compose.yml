@@ -24,6 +24,15 @@ services:
       - ./litellm-config.yaml:/app/config.yaml:ro
     restart: unless-stopped
 
+  qdrant:
+    image: qdrant/qdrant:latest
+    profiles: ["ai-platform"]
+    ports:
+      - "127.0.0.1:6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     profiles: ["ai-platform"]
@@ -43,3 +52,4 @@ services:
 volumes:
   postgres_data:
   open_webui_data:
+  qdrant_data:
