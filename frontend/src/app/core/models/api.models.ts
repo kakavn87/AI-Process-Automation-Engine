@@ -20,6 +20,7 @@ export interface AutomationOpportunity {
 
 export interface DetectedProcessDetails {
   businessDomain: string;
+  businessDomainLabel?: string;
   cadence: {
     frequency: string;
     day: string | null;
