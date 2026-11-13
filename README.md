@@ -107,6 +107,25 @@ The Backend also detects `IS_PULL_REQUEST`:
 
 Render service previews initially copy their base service settings, including environment variables. Do not add a persistent disk or shared Production datastore to a Preview service. These previews are temporary and are deleted when their PR is merged or closed. This application still has no authentication; do not enter real customer or confidential business data in a public Preview.
 
+## Step 6: opt-in live webhook dispatch
+
+The approved workflow still completes in simulation mode first. A separate Step 6 can hand off the approved workflow structure to one administrator-configured HTTPS webhook. This is an integration boundary, not a built-in CRM, ticketing, email, or Teams connector.
+
+Live dispatch is disabled by default. To enable it on the Backend service, configure these environment variables:
+
+- `WEBHOOK_EXECUTION_ENABLED=true`
+- `WORKFLOW_WEBHOOK_URL=https://your-company.example/webhook`
+- `WORKFLOW_WEBHOOK_BEARER_TOKEN` (recommended for protected receivers)
+- `WORKFLOW_WEBHOOK_TIMEOUT_SECONDS=10` (optional)
+
+The endpoint is server-side configuration only; browser users cannot supply or change the destination. HTTPS is required, URL-embedded credentials and local/internal hostnames or IP addresses are rejected, and redirects are not followed. The frontend displays a separate confirmation checkbox before dispatch.
+
+The webhook receives an event name, execution ID/name, workflow name/trigger, and step metadata (IDs, types, names, descriptions, connector name, and approval requirement). The original process description, clarification answers, AI credentials, and bearer token are not included. Configure the receiver to validate the bearer token, deduplicate by `execution.id`, and apply its own authorization and business rules.
+
+Each execution permits only one recorded live dispatch attempt. A timeout is marked `unknown`, because the receiving system may have processed the request even when no response arrived; the app blocks automatic retries to avoid duplicate side effects. A non-2xx response is recorded as failed and must be investigated in the receiver's logs. A 2xx response is recorded as confirmed receipt, not proof that every downstream business action completed.
+
+The live webhook endpoint is exposed as `GET /api/executions/live-readiness` and `POST /api/executions/{id}/live`. The POST body requires `{"confirm_live_execution": true}`. Keep live execution disabled in public demos until a trusted receiving system, authentication, idempotency, and data-handling requirements have been reviewed.
+
 ## Safety and production boundaries
 
 The action dispatcher remains simulation-only. Approval records authorization for the demo workflow, but it does not send email, post to Teams, invoke HTTP endpoints, or modify an external business system. Live connectors must be implemented and separately configured before those actions can be enabled.
