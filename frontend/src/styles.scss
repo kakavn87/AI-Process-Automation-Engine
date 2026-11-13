@@ -1886,3 +1886,12 @@ body { background: #f3f5f9; color: #111827; }
   font-size: 9px !important;
   letter-spacing: .015em;
 }
+
+
+/* Keep the developer credit with the workspace identity in the left sidebar. */
+.sidebar-footer .sidebar-developer {
+  color: #c7d2fe;
+  font-size: 10px !important;
+  font-weight: 500;
+  line-height: 1.4;
+}
