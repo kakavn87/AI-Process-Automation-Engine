@@ -19,6 +19,9 @@
 
       <span class="nav-label nav-label-spaced">{{ language() === 'de' ? 'EINSTELLUNGEN' : 'SETTINGS' }}</span>
       <a class="nav-link" href="#integrations"><span class="nav-icon">⚙</span>{{ language() === 'de' ? 'KI-Plattform & Integrationen' : 'AI platform & integrations' }}</a>
+      @if (canManageWorkspace()) {
+        <a class="nav-link" href="#workspace-members"><span class="nav-icon">♙</span>{{ language() === 'de' ? 'Mitglieder' : 'Members' }}</a>
+      }
       <a class="nav-link" href="#governance"><span class="nav-icon">◇</span>{{ i18n.navSecurity }}</a>
     </nav>
 
@@ -516,6 +519,59 @@
           <div class="result-panel">{{ language() === 'de' ? 'Integrationsstatus wird geladen …' : 'Loading integration status …' }}</div>
         }
       </section>
+
+
+      @if (canManageWorkspace()) {
+        <section class="section-block workspace-members-section" id="workspace-members">
+          <div class="section-header">
+            <div>
+              <div class="section-kicker">{{ language() === 'de' ? 'ARBEITSBEREICH · ZUGRIFFSVERWALTUNG' : 'WORKSPACE · ACCESS MANAGEMENT' }}</div>
+              <h2>{{ language() === 'de' ? 'Mitglieder einladen' : 'Invite workspace members' }}</h2>
+              <p>{{ language() === 'de' ? 'Erstellen Sie einen einmaligen Einladungscode und teilen Sie ihn über einen sicheren Kanal mit dem neuen Mitglied.' : 'Create a one-time invitation code and share it with the new member through a secure channel.' }}</p>
+            </div>
+          </div>
+          <article class="result-panel workspace-invite-panel">
+            <form class="workspace-invite-form" (ngSubmit)="createWorkspaceInvitation()">
+              <div class="workspace-invite-field">
+                <label for="workspace-invite-email">{{ language() === 'de' ? 'E-Mail-Adresse' : 'Email address' }}</label>
+                <input id="workspace-invite-email" name="workspaceInviteEmail" type="email"
+                  [(ngModel)]="workspaceInviteEmail" required email
+                  placeholder="name@unternehmen.de" />
+              </div>
+              <div class="workspace-invite-field">
+                <label for="workspace-invite-role">{{ language() === 'de' ? 'Rolle im Arbeitsbereich' : 'Workspace role' }}</label>
+                <select id="workspace-invite-role" name="workspaceInviteRole" [(ngModel)]="workspaceInviteRole">
+                  <option value="member">{{ language() === 'de' ? 'Mitglied' : 'Member' }}</option>
+                  <option value="approver">{{ language() === 'de' ? 'Freigabeberechtigt' : 'Approver' }}</option>
+                  <option value="admin">{{ language() === 'de' ? 'Administrator' : 'Administrator' }}</option>
+                </select>
+              </div>
+              <button class="button-primary" type="submit" [disabled]="invitationLoading() || !workspaceInviteEmail.trim()">
+                {{ invitationLoading()
+                  ? (language() === 'de' ? 'Einladung wird erstellt …' : 'Creating invitation …')
+                  : (language() === 'de' ? 'Einladung erstellen' : 'Create invitation') }}
+                <span>→</span>
+              </button>
+            </form>
+            @if (invitationError(); as error) {
+              <div class="workspace-invite-error" role="alert">{{ error }}</div>
+            }
+            @if (invitationResult(); as invitation) {
+              <div class="workspace-invite-result">
+                <div>
+                  <strong>{{ language() === 'de' ? 'Einladung erstellt' : 'Invitation created' }}</strong>
+                  <p>{{ invitation.email }} · {{ invitation.role }} · {{ language() === 'de' ? 'Gültig bis' : 'Expires' }} {{ invitation.expires_at | date:'short' }}</p>
+                </div>
+                <label for="workspace-invite-token">{{ language() === 'de' ? 'Einmaliger Einladungscode' : 'One-time invitation code' }}</label>
+                <textarea id="workspace-invite-token" rows="2" readonly [value]="invitation.invitation_token"></textarea>
+                <small>{{ language() === 'de'
+                  ? 'Der Code wird nur jetzt angezeigt. Teilen Sie ihn über einen sicheren Kanal. Der Empfänger kann ihn auf der Anmeldeseite einlösen.'
+                  : 'The code is shown only now. Share it through a secure channel; the recipient can redeem it from the sign-in page.' }}</small>
+              </div>
+            }
+          </article>
+        </section>
+      }
 
       <footer class="page-footer">
         <span><strong>AI Process Optimierung</strong> · {{ i18n.product }}</span>
