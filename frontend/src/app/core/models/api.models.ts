@@ -76,6 +76,33 @@ export interface ProcessAnalysis {
   proposedWorkflow: ProposedWorkflow;
 }
 
+export interface TabularDataColumn {
+  name: string;
+  detectedType: string;
+  missingCount: number;
+  missingPercent: number;
+  uniqueCount: number;
+  sampleValues: Array<string | number | boolean>;
+  numericSummary: { min: number; max: number; mean: number } | null;
+}
+
+export interface TabularDataResult {
+  fileName: string;
+  fileType: string;
+  sheetName: string | null;
+  totalRows: number;
+  processedRows: number;
+  totalColumns: number;
+  duplicateRows: number;
+  emptyRowsRemoved: number;
+  truncated: boolean;
+  dataQualityScore: number;
+  columns: TabularDataColumn[];
+  preview: Array<Record<string, string | number | boolean | null>>;
+  processingSteps: string[];
+  notice: string;
+}
+
 export interface ExecutionEvent {
   event?: string;
   stepId?: string;
