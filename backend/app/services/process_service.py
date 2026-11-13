@@ -1,4 +1,5 @@
 import logging
+import re
 
 from sqlalchemy.orm import Session
 
@@ -99,7 +100,44 @@ class ProcessService:
         analysis["proposedWorkflow"] = workflow
         return localize_process_analysis(analysis, language)
 
-    def _apply_ai_result(self, analysis: dict, ai_result: dict) -> None:
+    def _apply_ai_result(
+        self,
+        analysis: dict,
+        ai_result: dict,
+        business_domain: str | None = None,
+    ) -> None:
+        raw_specification = ai_result.get("process_specification") or {}
+        detected_domain = (raw_specification.get("business_domain") or "general").strip().lower()
+        detected_domain = re.sub(r"[^a-z0-9]+", "_", detected_domain).strip("_")[:80] or "general"
+        detected_label = (
+            raw_specification.get("business_domain_label")
+            or detected_domain.replace("_", " ").title()
+        )
+
+        # A selected gallery card is only a hint; free descriptions allow any domain.
+        if business_domain and business_domain != "general":
+            detected_domain = business_domain
+            detected_label = analysis["detectedDetails"].get(
+                "businessDomainLabel",
+                business_domain.replace("_", " ").title(),
+            )
+
+        analysis["detectedDetails"]["businessDomain"] = detected_domain
+        analysis["detectedDetails"]["businessDomainLabel"] = detected_label
+        analysis["processSpecification"] = {
+            "schemaVersion": "1.0",
+            "businessDomain": detected_domain,
+            "businessDomainLabel": detected_label,
+            "goal": raw_specification.get("process_goal", ""),
+            "actors": raw_specification.get("actors", []),
+            "inputs": raw_specification.get("inputs", []),
+            "systems": raw_specification.get("systems", []),
+            "businessRules": raw_specification.get("business_rules", []),
+            "exceptionPaths": raw_specification.get("exception_paths", []),
+            "outputs": raw_specification.get("outputs", []),
+            "successMetrics": raw_specification.get("success_metrics", []),
+        }
+
         workflow_steps = []
         for index, item in enumerate(ai_result["workflow_steps"], start=1):
             config = {"requiresApproval": bool(item["requires_approval"])}
