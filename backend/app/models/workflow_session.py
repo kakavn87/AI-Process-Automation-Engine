@@ -12,6 +12,9 @@ class WorkflowSession(Base):
     __tablename__ = "workflow_sessions"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     description: Mapped[str] = mapped_column(Text, nullable=False)
     analysis_strategy: Mapped[str] = mapped_column(String(12), nullable=False, default="auto")
     language: Mapped[str] = mapped_column(String(2), nullable=False, default="de")
@@ -34,6 +37,9 @@ class AIUsageEvent(Base):
     __tablename__ = "ai_usage_events"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     session_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("workflow_sessions.id", ondelete="SET NULL"), nullable=True, index=True
     )
