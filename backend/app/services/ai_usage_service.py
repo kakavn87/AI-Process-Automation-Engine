@@ -12,7 +12,7 @@ class AIUsageService:
         self.db = db
         self.tenant_id = tenant_id
 
-    def record(self, session_id: str | None, telemetry: dict) -> AIUsageEvent:
+    def record(self, session_id: str | None, telemetry: dict, commit: bool = True) -> AIUsageEvent:
         input_tokens = telemetry.get("inputTokens")
         output_tokens = telemetry.get("outputTokens")
         total_tokens = telemetry.get("totalTokens")
@@ -48,8 +48,11 @@ class AIUsageService:
             error_type=telemetry.get("errorType"),
         )
         self.db.add(event)
-        self.db.commit()
-        self.db.refresh(event)
+        if commit:
+            self.db.commit()
+            self.db.refresh(event)
+        else:
+            self.db.flush()
         return event
 
     def summary(self, limit: int = 25) -> dict:
