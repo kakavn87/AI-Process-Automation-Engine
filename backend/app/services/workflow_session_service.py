@@ -12,14 +12,14 @@ class WorkflowSessionService:
     def __init__(self, db: Session, tenant_id: str | None = None):
         self.db = db
         self.tenant_id = tenant_id
+        self.question_service = QuestionService()
+        self.automation_engine = WorkflowAutomationEngine()
 
     def _get_session(self, session_id: str):
         query = self.db.query(WorkflowSession).filter(WorkflowSession.id == session_id)
         if self.tenant_id is not None:
             query = query.filter(WorkflowSession.tenant_id == self.tenant_id)
         return query.one_or_none()
-        self.question_service = QuestionService()
-        self.automation_engine = WorkflowAutomationEngine()
 
     def create(
         self,
@@ -111,7 +111,7 @@ class WorkflowSessionService:
         return self.serialize(session)
 
     def create_execution(self, session_id: str) -> dict:
-        session = self.db.get(WorkflowSession, session_id)
+        session = self._get_session(session_id)
         if session is None:
             raise KeyError("Workflow session was not found.")
         if session.status != "ready_for_approval":
