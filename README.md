@@ -82,6 +82,8 @@ Session lifecycle:
 
 Additional endpoints:
 - `GET /api/processes/sessions/{id}` — retrieve the persisted session, answers, questions, status, and audit events.
+- `POST /api/processes/sessions/{id}/knowledge/search` — search only the current process session's indexed document chunks (RAG must be enabled).
+- `DELETE /api/processes/sessions/{id}` — delete the session and its Qdrant vectors, when indexed.
 - `POST /api/processes/sessions/{id}/answers` — submit answers as `{"answers": {"q-id": "value"}}`. The server validates only known question IDs and allows partial submissions.
 - `POST /api/processes/sessions/{id}/execute` — create the approval request after preparation is complete.
 - `GET /api/monitoring/usage` — retrieve aggregate AI token usage and recent provider events.
@@ -117,7 +119,7 @@ Render service previews initially copy their base service settings, including en
 
 ## Step 1: document and diagram intake
 
-The process builder accepts optional source files alongside a short description. Text is extracted from PDF, DOCX, PPTX, XLSX, CSV, TXT and Markdown files. PNG/JPG/WEBP images, SVG, Draw.io and BPMN/XML diagram labels and edges, slide pictures, and PDF pages containing scanned or visual content are extracted or normalized and sent to a configured vision-capable model. Uploads are processed in memory; this MVP does not persist originals or expose a reusable per-workspace knowledge base. A scanned image-only submission requires a configured vision-capable model. The app displays source filenames and extraction warnings with the analysis.
+The process builder accepts optional source files alongside a short description. Text is extracted from PDF, DOCX, PPTX, XLSX, CSV, TXT and Markdown files. PNG/JPG/WEBP images, SVG, Draw.io and BPMN/XML diagram labels and edges, slide pictures, and PDF pages containing scanned or visual content are extracted or normalized and sent to a configured vision-capable model. Original uploaded files are processed in memory and are not persisted. When optional RAG is enabled, extracted text chunks and source metadata are stored in Qdrant under the generated process-session ID; this is session-scoped, not a reusable cross-workspace knowledge base. A scanned image-only submission requires a configured vision-capable model. The app displays source filenames and extraction warnings with the analysis.
 
 The upload limit is 8 files, 10 MB per file and 25 MB combined. Office archives are checked for expanded-size limits. All supplied document content is treated as untrusted input by the analysis prompt.
 
@@ -138,8 +140,12 @@ With the included LiteLLM profile, set `OPENAI_BASE_URL=http://localhost:4000/v1
 The backend can call LiteLLM Proxy through the same OpenAI-compatible Responses API client. OpenWebUI can use the same gateway for employee chat and assistant experiments. These are optional companion services and are not deployed automatically to the public Render demo.
 
 1. Copy `infrastructure/docker/.env.ai-platform.example` to `infrastructure/docker/.env.ai-platform` and set a provider API key plus a long random LiteLLM master key.
-2. Start LiteLLM:
+   The example starts with local-only PostgreSQL, LiteLLM, Qdrant and Open WebUI ports. Change the example database password and all secrets before using anything beyond a local development machine.
+2. Start LiteLLM and the local key database:
    `docker compose --env-file infrastructure/docker/.env.ai-platform -f infrastructure/docker/docker-compose.yml --profile ai-platform up -d litellm`
+   Generate a separate backend virtual key as well. Set the backend key in `backend/.env` as `OPENAI_API_KEY`; do not use the LiteLLM master key in either client. For RAG, start Qdrant with:
+   `docker compose --env-file infrastructure/docker/.env.ai-platform -f infrastructure/docker/docker-compose.yml --profile ai-platform up -d qdrant`
+   Then set `RAG_ENABLED=true`, `QDRANT_URL=http://localhost:6333`, `AI_GATEWAY_PROVIDER=litellm`, `OPENAI_BASE_URL=http://localhost:4000/v1`, `OPENAI_MODEL=process-analysis`, `OPENAI_VISION_MODEL=process-vision`, and `RAG_EMBEDDING_MODEL=process-embeddings` in `backend/.env`.
 3. Generate a least-privilege LiteLLM virtual key for OpenWebUI, then set it as `LITELLM_WEBUI_KEY` in the env file and start OpenWebUI:
    `docker compose --env-file infrastructure/docker/.env.ai-platform -f infrastructure/docker/docker-compose.yml --profile ai-platform up -d open-webui`
 4. For a backend running on the host, set `OPENAI_BASE_URL=http://localhost:4000/v1`, `OPENAI_MODEL=process-analysis`, and `OPENAI_API_KEY` to a separate LiteLLM virtual key. Set `OPENWEBUI_URL=http://localhost:3000` to show the portal link in Step 6.
