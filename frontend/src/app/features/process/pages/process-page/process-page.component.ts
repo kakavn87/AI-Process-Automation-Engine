@@ -183,7 +183,10 @@ export class ProcessPageComponent implements OnInit {
   navigateToWorkflowStep(step: number) {
     if (!this.workflowStepAvailable(step) || typeof document === 'undefined') return;
     const targetId = step === 1 ? 'builder' : `workflow-step-${step}`;
-    document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const target = document.getElementById(targetId)
+      ?? document.getElementById('workflow-session')
+      ?? document.getElementById('results');
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   readonly industries: Industry[] = [
