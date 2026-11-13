@@ -56,79 +56,46 @@
     </section>
 
     <section class="session-progress" [attr.aria-label]="isGerman ? 'Workflow-Fortschritt' : 'Workflow progress'">
-      <article class="session-progress-step"
-        [class.is-complete]="stepState(1, current.status) === 'complete'">
+      <article id="workflow-step-1" class="session-progress-step"
+        [class.is-active]="stepState(1, current.status) === 'active'"
+        [class.is-complete]="stepState(1, current.status) === 'complete'"
+        [class.is-pending]="stepState(1, current.status) === 'pending'">
         <span class="session-progress-number">01</span>
-        <div>
-          <strong>{{ isGerman ? 'Prozessanalyse' : 'Process analysis' }}</strong>
-          <small>{{ isGerman ? 'Analyse gespeichert' : 'Analysis saved' }}</small>
-        </div>
-        <span class="session-progress-mark">✓</span>
+        <div><strong>{{ isGerman ? 'Prozessanalyse' : 'Process analysis' }}</strong><small>{{ isGerman ? 'Analyse gespeichert' : 'Analysis saved' }}</small></div>
+        <span class="session-progress-mark">{{ stepState(1, current.status) === 'complete' ? '✓' : '1' }}</span>
       </article>
-      <article class="session-progress-step"
+      <article id="workflow-step-2" class="session-progress-step"
         [class.is-active]="stepState(2, current.status) === 'active'"
-        [class.is-complete]="stepState(2, current.status) === 'complete'">
+        [class.is-complete]="stepState(2, current.status) === 'complete'"
+        [class.is-pending]="stepState(2, current.status) === 'pending'">
         <span class="session-progress-number">02</span>
-        <div>
-          <strong>{{ isGerman ? 'Offene Fragen' : 'Clarification' }}</strong>
-          <small>{{ stepDescription(2, current.status) }}</small>
-        </div>
+        <div><strong>{{ isGerman ? 'Offene Fragen' : 'Clarification' }}</strong><small>{{ stepDescription(2, current.status) }}</small></div>
         <span class="session-progress-mark">{{ stepState(2, current.status) === 'complete' ? '✓' : '2' }}</span>
       </article>
-            @if (current.status !== 'needs_input') {
-<article class="session-progress-step"
+      <article id="workflow-step-3" class="session-progress-step"
         [class.is-active]="stepState(3, current.status) === 'active'"
         [class.is-complete]="stepState(3, current.status) === 'complete'"
         [class.is-pending]="stepState(3, current.status) === 'pending'">
         <span class="session-progress-number">03</span>
-        <div>
-          <strong>{{ isGerman ? 'Python-Verarbeitung' : 'Python processing' }}</strong>
-          <small>{{ stepDescription(3, current.status) }}</small>
-        </div>
+        <div><strong>{{ isGerman ? 'Python-Verarbeitung' : 'Python processing' }}</strong><small>{{ stepDescription(3, current.status) }}</small></div>
         <span class="session-progress-mark">{{ stepState(3, current.status) === 'complete' ? '✓' : '3' }}</span>
       </article>
-      }
-
-            @if (current.status === 'ready_for_approval' || current.status === 'awaiting_approval' || current.status === 'completed' || current.status === 'rejected') {
-<article class="session-progress-step"
+      <article id="workflow-step-4" class="session-progress-step"
         [class.is-active]="stepState(4, current.status) === 'active'"
         [class.is-complete]="stepState(4, current.status) === 'complete'"
         [class.is-pending]="stepState(4, current.status) === 'pending'">
         <span class="session-progress-number">04</span>
-        <div>
-          <strong>{{ isGerman ? 'Freigabe' : 'Human approval' }}</strong>
-          <small>{{ stepDescription(4, current.status) }}</small>
-        </div>
+        <div><strong>{{ isGerman ? 'Freigabe' : 'Human approval' }}</strong><small>{{ stepDescription(4, current.status) }}</small></div>
         <span class="session-progress-mark">{{ stepState(4, current.status) === 'complete' ? '✓' : '4' }}</span>
       </article>
-      }
-
-            @if (current.status === 'completed' || current.status === 'rejected') {
-<article class="session-progress-step"
-        [class.is-complete]="stepState(5, current.status) === 'complete'">
+      <article id="workflow-step-5" class="session-progress-step"
+        [class.is-active]="stepState(5, current.status) === 'active'"
+        [class.is-complete]="stepState(5, current.status) === 'complete'"
+        [class.is-pending]="stepState(5, current.status) === 'pending'">
         <span class="session-progress-number">05</span>
-        <div>
-          <strong>{{ isGerman ? 'AI-Monitoring' : 'AI monitoring' }}</strong>
-          <small>{{ stepDescription(5, current.status) }}</small>
-        </div>
+        <div><strong>{{ isGerman ? 'AI-Monitoring' : 'AI monitoring' }}</strong><small>{{ stepDescription(5, current.status) }}</small></div>
         <span class="session-progress-mark">{{ stepState(5, current.status) === 'complete' ? '✓' : '5' }}</span>
       </article>
-      }
-
-            @if (current.status === 'completed') {
-<article class="session-progress-step"
-        [class.is-active]="stepState(6, current.status, execution()?.liveExecutionStatus) === 'active'"
-        [class.is-complete]="stepState(6, current.status, execution()?.liveExecutionStatus) === 'complete'"
-        [class.is-pending]="stepState(6, current.status, execution()?.liveExecutionStatus) === 'pending'">
-        <span class="session-progress-number">06</span>
-        <div>
-          <strong>{{ isGerman ? 'Live-Ausführung' : 'Live execution' }}</strong>
-          <small>{{ stepDescription(6, current.status, execution()?.liveExecutionStatus) }}</small>
-        </div>
-        <span class="session-progress-mark">{{ stepState(6, current.status, execution()?.liveExecutionStatus) === 'complete' ? '✓' : '6' }}</span>
-      </article>
-      }
-
     </section>
 
     @if (current.status === 'needs_input') {
@@ -359,11 +326,11 @@
     <section class="session-card live-execution-card">
       <div class="session-card-header">
         <div>
-          <div class="session-eyebrow">STEP 6 · INTEGRATION CENTER</div>
-          <h2>{{ isGerman ? 'Systeme verbinden & Automatisierung aktivieren' : 'Connect systems & activate automation' }}</h2>
+          <div class="session-eyebrow">OPTIONAL · WEBHOOK HANDOFF</div>
+          <h2>{{ isGerman ? 'Workflow optional extern übergeben' : 'Optional external workflow handoff' }}</h2>
           <p>{{ isGerman
-            ? 'Verwalten Sie die AI-Plattform und prüfen Sie, welche externen Systeme für den freigegebenen Workflow vorbereitet sind.'
-            : 'Review the AI platform and check which external systems are configured for the approved workflow.' }}</p>
+            ? 'Diese optionale Aktion wird erst nach abgeschlossener Freigabe verfügbar. Die AI-Plattform und API-Einstellungen finden Sie im Menü unter Einstellungen.'
+            : 'This optional action is available only after approval. Manage AI platform and API settings from the Settings menu.' }}</p>
         </div>
         <span class="live-readiness-badge" [attr.data-ready]="liveReadiness()?.ready ? 'true' : 'false'">
           {{ liveReadiness()?.ready
@@ -372,68 +339,9 @@
         </span>
       </div>
 
-      @if (integrationReadiness(); as platform) {
-        <div class="integration-platform-grid">
-          <article class="integration-tile">
-            <div class="integration-tile-top">
-              <strong>LLM Gateway</strong>
-              <span class="integration-status" [attr.data-status]="platform.aiGateway.status">
-                {{ platform.aiGateway.configured ? (isGerman ? 'Konfiguriert' : 'Configured') : (isGerman ? 'Nicht konfiguriert' : 'Not configured') }}
-              </span>
-            </div>
-            <h3>{{ platform.aiGateway.provider }}</h3>
-            <p>{{ isGerman ? 'Aktives Modell' : 'Active model' }}: <strong>{{ platform.aiGateway.model }}</strong></p>
-            <small>{{ platform.aiGateway.baseUrlConfigured ? (isGerman ? 'OpenAI-kompatible Gateway-URL gesetzt.' : 'OpenAI-compatible gateway URL is set.') : (isGerman ? 'Direkte Provider-Verbindung oder lokale Standardkonfiguration.' : 'Direct provider connection or default local configuration.') }}</small>
-          </article>
-
-          <article class="integration-tile">
-            <div class="integration-tile-top">
-              <strong>OpenWebUI</strong>
-              <span class="integration-status" [attr.data-status]="platform.openWebUI.status">
-                {{ platform.openWebUI.configured ? (isGerman ? 'Verbunden' : 'Configured') : (isGerman ? 'Optional' : 'Optional') }}
-              </span>
-            </div>
-            <h3>{{ isGerman ? 'AI Assistant Portal' : 'AI assistant portal' }}</h3>
-            <p>{{ isGerman ? 'Eigenständige Chat- und Assistant-Oberfläche.' : 'Separate chat and assistant workspace.' }}</p>
-            @if (platform.openWebUI.url) {
-              <a class="integration-open-link" [href]="platform.openWebUI.url" target="_blank" rel="noopener noreferrer">
-                {{ isGerman ? 'OpenWebUI öffnen' : 'Open OpenWebUI' }} →
-              </a>
-            } @else {
-              <small>{{ isGerman ? 'OPENWEBUI_URL im Backend setzen, um das Portal hier zu verlinken.' : 'Set OPENWEBUI_URL in the backend to show the portal link here.' }}</small>
-            }
-          </article>
-
-          <article class="integration-tile integration-connectors">
-            <div class="integration-tile-top">
-              <strong>{{ isGerman ? 'Business-Systeme' : 'Business systems' }}</strong>
-              <span class="integration-status" data-status="planned">{{ isGerman ? 'Connector-Katalog' : 'Connector catalog' }}</span>
-            </div>
-            <div class="integration-connector-list">
-              @for (connector of platform.businessConnectors; track connector.id) {
-                <div class="integration-connector-row">
-                  <div><strong>{{ connector.name }}</strong><small>{{ connector.description }}</small></div>
-                  <span class="integration-status" [attr.data-status]="connector.status">
-                    {{ connector.status === 'ready' ? (isGerman ? 'Bereit' : 'Ready') : connector.status === 'planned' ? (isGerman ? 'Geplant' : 'Planned') : (isGerman ? 'Einrichtung nötig' : 'Setup needed') }}
-                  </span>
-                </div>
-              }
-            </div>
-          </article>
-
-          <article class="integration-tile integration-safety-tile">
-            <div class="integration-tile-top"><strong>{{ isGerman ? 'Sicherheit & Zugriff' : 'Security & access' }}</strong><span>✓</span></div>
-            <p>{{ platform.securityNote }}</p>
-            <small>{{ isGerman ? 'API-Schlüssel werden nur serverseitig verwendet. Geplante Connectoren sind noch nicht aktiv.' : 'API keys stay server-side. Planned connectors are not active yet.' }}</small>
-          </article>
-        </div>
-      } @else {
-        <p class="session-muted">{{ isGerman ? 'Der Integrationsstatus konnte nicht geladen werden.' : 'Integration readiness could not be loaded.' }}</p>
-      }
-
       <div class="integration-webhook-heading">
-        <strong>{{ isGerman ? 'Freigegebenen Workflow extern übergeben' : 'Dispatch the approved workflow' }}</strong>
-        <span>{{ isGerman ? 'HTTPS Webhook' : 'HTTPS webhook' }}</span>
+        <strong>{{ isGerman ? 'Webhook-Status & Übergabe' : 'Webhook status & dispatch' }}</strong>
+        <span>HTTPS</span>
       </div>
 
       @if (liveReadiness(); as readiness) {
