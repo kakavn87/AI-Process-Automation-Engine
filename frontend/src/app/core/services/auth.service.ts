@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { environment } from '../../../environments/environment';
 
 declare global {
   interface Window {
@@ -81,6 +81,9 @@ export class AuthService {
         });
       },
       error: () => {
+        // Fail closed: do not expose the workspace when the authentication
+        // mode cannot be confirmed with the Backend.
+        this.authRequired.set(true);
         this.error.set('Der Anmeldestatus konnte nicht geprüft werden. Bitte Backend-Verbindung prüfen.');
         this.ready.set(true);
       }
@@ -131,6 +134,10 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  isApiRequest(url: string): boolean {
+    return !!this.baseUrl && url.startsWith(this.baseUrl + '/api/');
   }
 
   private url(path: string): string {
