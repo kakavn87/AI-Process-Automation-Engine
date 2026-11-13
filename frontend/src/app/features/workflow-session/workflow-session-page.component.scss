@@ -333,6 +333,28 @@
   font-size: 12px;
   line-height: 1.6;
 }
+.live-token-field {
+  display: grid;
+  gap: 7px;
+  max-width: 480px;
+  margin-top: 18px;
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 700;
+}
+.live-token-field input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 9px;
+  padding: 11px 12px;
+  color: #111827;
+  background: #fff;
+  font: inherit;
+}
+.live-token-field input:focus {
+  outline: 3px solid rgba(99, 102, 241, .15);
+  border-color: #6366f1;
+}
 .live-confirmation {
   display: flex;
   align-items: flex-start;
