@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./process_automation.db"
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-6-luna"
+    OPENAI_INPUT_USD_PER_1M: float | None = None
+    OPENAI_OUTPUT_USD_PER_1M: float | None = None
     CORS_ORIGINS: str = "http://localhost:4200"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
