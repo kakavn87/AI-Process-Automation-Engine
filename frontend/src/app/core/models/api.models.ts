@@ -52,6 +52,20 @@ export interface RoutingDecision {
   reason: string;
 }
 
+export interface ProcessSpecification {
+  schemaVersion: string;
+  businessDomain: string;
+  businessDomainLabel: string;
+  goal: string;
+  actors: string[];
+  inputs: string[];
+  systems: string[];
+  businessRules: string[];
+  exceptionPaths: string[];
+  outputs: string[];
+  successMetrics: string[];
+}
+
 export interface ProcessAnalysis {
   automationScore: number;
   signals: string[];
@@ -61,6 +75,7 @@ export interface ProcessAnalysis {
   llmUsed: boolean;
   llmModel: string | null;
   detectedDetails: DetectedProcessDetails;
+  processSpecification?: ProcessSpecification;
   routingDecision: RoutingDecision;
   summary: string;
   currentProcess: string[];
