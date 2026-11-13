@@ -15,6 +15,18 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-6-luna"
     OPENWEBUI_URL: str = ""
     PREVIEW_OPENWEBUI_URL: str = ""
+    AI_GATEWAY_PROVIDER: str = "auto"
+    OPENAI_VISION_MODEL: str = ""
+    RAG_ENABLED: bool = False
+    QDRANT_URL: str = ""
+    QDRANT_API_KEY: str = ""
+    QDRANT_COLLECTION: str = "flowpilot_process_knowledge"
+    RAG_EMBEDDING_MODEL: str = "process-embeddings"
+    RAG_VECTOR_SIZE: int = Field(default=1536, ge=1, le=8192)
+    RAG_CHUNK_CHARS: int = Field(default=1200, ge=300, le=4000)
+    RAG_CHUNK_OVERLAP: int = Field(default=180, ge=0, le=1000)
+    RAG_TOP_K: int = Field(default=8, ge=1, le=20)
+    RAG_EMBEDDING_INPUT_USD_PER_1M: float | None = None
     OPENAI_INPUT_USD_PER_1M: float | None = None
     OPENAI_OUTPUT_USD_PER_1M: float | None = None
     WEBHOOK_EXECUTION_ENABLED: bool = False
@@ -28,7 +40,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    @field_validator("OPENAI_INPUT_USD_PER_1M", "OPENAI_OUTPUT_USD_PER_1M", mode="before")
+    @field_validator("OPENAI_INPUT_USD_PER_1M", "OPENAI_OUTPUT_USD_PER_1M", "RAG_EMBEDDING_INPUT_USD_PER_1M", mode="before")
     @classmethod
     def empty_price_is_unconfigured(cls, value):
         if isinstance(value, str) and not value.strip():
@@ -43,6 +55,10 @@ class Settings(BaseSettings):
             self.OPENAI_API_KEY = self.PREVIEW_OPENAI_API_KEY.strip()
             self.OPENAI_BASE_URL = self.PREVIEW_OPENAI_BASE_URL.strip()
             self.OPENWEBUI_URL = self.PREVIEW_OPENWEBUI_URL.strip()
+            # Pull-request previews must never share the Production knowledge store.
+            self.RAG_ENABLED = False
+            self.QDRANT_URL = ""
+            self.QDRANT_API_KEY = ""
             # PR previews must never inherit a Production webhook destination or token.
             self.WEBHOOK_EXECUTION_ENABLED = False
             self.WORKFLOW_WEBHOOK_URL = ""
