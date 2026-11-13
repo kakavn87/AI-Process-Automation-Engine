@@ -1,23 +1,43 @@
 services:
   postgres:
-    image: postgres:16
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_DB: process_automation
       POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD:-app}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # Optional local AI platform: start with --profile ai-platform.
-  # The gateway and web portal are bound to localhost by default.
+  # Optional local AI platform: docker compose --profile ai-platform up.
+  # These services bind only to localhost.
+  litellm-db:
+    image: postgres:16
+    profiles: ["ai-platform"]
+    environment:
+      POSTGRES_DB: litellm
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: ${LITELLM_DB_PASSWORD:?Set LITELLM_DB_PASSWORD in .env.ai-platform}
+    volumes:
+      - litellm_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm -d litellm"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
   litellm:
     image: ghcr.io/berriai/litellm:main-stable
     profiles: ["ai-platform"]
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     env_file:
       - .env.ai-platform
+    environment:
+      DATABASE_URL: postgresql://litellm:${LITELLM_DB_PASSWORD}@litellm-db:5432/litellm
+    depends_on:
+      litellm-db:
+        condition: service_healthy
     ports:
       - "127.0.0.1:4000:4000"
     volumes:
@@ -42,4 +62,5 @@ services:
 
 volumes:
   postgres_data:
+  litellm_data:
   open_webui_data:

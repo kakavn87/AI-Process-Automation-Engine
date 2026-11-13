@@ -220,3 +220,21 @@ frontend/src/app/
   features/         process, workflow, execution features and stores
   shared/           reusable UI components
 ```
+
+## Persistent business knowledge and RAG
+
+The private knowledge pipeline supports PDF, Word, Excel, PowerPoint, CSV, text, images, TIFF, Draw.io and BPMN/XML. It extracts text, tables and diagram labels; uses OCR or a configured vision model for visual sources; chunks content; creates embeddings; and retrieves evidence from selected document IDs. Analysis responses can include source filenames and page, slide, sheet, row or diagram locators.
+
+Persistent knowledge is disabled by default because the public portfolio demo does not yet have account authentication, tenant isolation or document-level ACLs. The public demo retains its in-memory upload-and-analyze flow. Enable KNOWLEDGE_PERSISTENCE_ENABLED only on a private authenticated instance after adding workspace/document authorization, retention and deletion controls, quotas and malware scanning. The MVP currently stores original bytes in PostgreSQL; production should move them to private object storage.
+
+## LiteLLM model aliases
+
+The backend uses its existing OpenAI-compatible Responses API adapter. Configure OPENAI_BASE_URL to the LiteLLM /v1 endpoint and OPENAI_API_KEY to a scoped LiteLLM virtual key. Set OPENAI_MODEL=process-analysis, OPENAI_VISION_MODEL=process-vision and OPENAI_EMBEDDING_MODEL=process-embeddings. The aliases are defined in infrastructure/docker/litellm-config.yaml. Direct provider configuration remains available when OPENAI_BASE_URL is empty.
+
+## Optional local Open WebUI workspace
+
+Copy infrastructure/docker/.env.ai-platform.example to infrastructure/docker/.env.ai-platform, set the upstream API key and strong gateway secrets, then start the optional profile from the repository root:
+
+    docker compose --env-file infrastructure/docker/.env.ai-platform -f infrastructure/docker/docker-compose.yml --profile ai-platform up -d
+
+Create separate least-privilege LiteLLM virtual keys for FlowPilot and Open WebUI. The master key is administrative only. Open WebUI is a secondary internal workspace; Angular remains the customer-facing product UI. See docs/architecture/flowpilot-part-1-6.md for the architecture and limitations.
