@@ -67,6 +67,7 @@ class AIService:
     def __init__(self, api_key: str | None = None, model: str | None = None):
         configured_key = settings.OPENAI_API_KEY if api_key is None else api_key
         self.model = model or settings.OPENAI_MODEL
+        self.vision_model = settings.OPENAI_VISION_MODEL.strip() or self.model
         base_url = settings.OPENAI_BASE_URL.strip() or None
         self._client = (
             OpenAI(api_key=configured_key, base_url=base_url, timeout=45.0, max_retries=1)
@@ -77,10 +78,10 @@ class AIService:
 
     @staticmethod
     def _provider_name() -> str:
-        base_url = settings.OPENAI_BASE_URL.strip().lower()
-        if "litellm" in base_url:
+        configured_provider = settings.AI_GATEWAY_PROVIDER.strip().lower()
+        if configured_provider == "litellm":
             return "litellm"
-        return "openai_compatible" if base_url else "openai"
+        return "openai_compatible" if settings.OPENAI_BASE_URL.strip() else "openai"
 
     @property
     def is_configured(self) -> bool:
@@ -97,6 +98,7 @@ class AIService:
             raise RuntimeError("OPENAI_API_KEY is not configured.")
 
         started = time.perf_counter()
+        active_model = self.vision_model if image_data_urls else self.model
         output_language = "German" if language == "de" else "English"
         system_prompt = f"""
 You are the process analysis engine for an enterprise workflow automation product.
@@ -142,7 +144,7 @@ workflow configuration. Connector should be an empty string when no connector is
         response = None
         try:
             response = self._client.responses.parse(
-                model=self.model,
+                model=active_model,
                 input=[
                     {"role": "system", "content": system_prompt},
                     {
@@ -176,7 +178,7 @@ workflow configuration. Connector should be an empty string when no connector is
             total_tokens = getattr(usage, "total_tokens", None) if usage else None
             self.last_call_telemetry = {
                 "provider": self._provider_name(),
-                "model": self.model,
+                "model": active_model,
                 "task": "process_analysis",
                 "status": "success",
                 "inputTokens": input_tokens,
@@ -191,7 +193,7 @@ workflow configuration. Connector should be an empty string when no connector is
             usage = getattr(response, "usage", None) if response is not None else None
             self.last_call_telemetry = {
                 "provider": "openai",
-                "model": self.model,
+                "model": active_model,
                 "task": "process_analysis",
                 "status": "fallback",
                 "inputTokens": getattr(usage, "input_tokens", None) if usage else None,
