@@ -8,6 +8,8 @@ from typing import Any
 
 from openpyxl import load_workbook
 
+from app.core.localization import localize_upload_result
+
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 MAX_DATA_ROWS = 20_000
@@ -17,7 +19,7 @@ PREVIEW_ROWS = 10
 class TabularDataService:
     """Processes CSV/XLSX uploads in memory; files and row data are never persisted."""
 
-    def process(self, filename: str, content: bytes) -> dict[str, Any]:
+    def process(self, filename: str, content: bytes, language: str = "en") -> dict[str, Any]:
         suffix = Path(filename or "").suffix.lower()
         if suffix not in {".csv", ".xlsx"}:
             raise ValueError("Unsupported file type. Upload a .csv or .xlsx file.")
@@ -62,7 +64,7 @@ class TabularDataService:
         uniqueness = 1 - (duplicate_rows / total_rows) if total_rows else 0
         quality_score = round((completeness * 0.7 + uniqueness * 0.3) * 100) if total_rows else 0
 
-        return {
+        result = {
             "fileName": Path(filename).name[:180],
             "fileType": suffix.removeprefix(".").upper(),
             "sheetName": sheet_name,
@@ -88,6 +90,7 @@ class TabularDataService:
                 else "The uploaded file was processed in memory and was not stored."
             ),
         }
+        return localize_upload_result(result, language)
 
     def _read_csv(self, content: bytes) -> tuple[list[Any], list[list[Any]], int, bool]:
         try:
