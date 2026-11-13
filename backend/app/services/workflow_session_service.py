@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 from uuid import uuid4
 
 from sqlalchemy.orm import Session
@@ -9,6 +10,9 @@ from app.services.question_service import QuestionService
 from app.services.ai_service import AIService
 from app.services.ai_usage_service import AIUsageService
 from app.services.process_service import ProcessService
+
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowSessionService:
@@ -168,8 +172,13 @@ class WorkflowSessionService:
                     "event": "ai_optimization_completed",
                     "status": "success",
                     "message": (
-                        f"Second-stage AI optimization completed with {optimization.get('model') or 'the configured model'}. "
-                        "Python validated the proposed workflow and approval gates."
+                        (
+                            f"Die zweite KI-Optimierung mit {optimization.get('model') or 'dem konfigurierten Modell'} ist abgeschlossen. "
+                            "Python hat den Ziel-Workflow und die Freigaberegeln geprüft."
+                            if session.language == "de"
+                            else f"Second-stage AI optimization completed with {optimization.get('model') or 'the configured model'}. "
+                            "Python validated the target workflow and approval gates."
+                        )
                     ),
                     "recordedAt": datetime.now(timezone.utc).isoformat(),
                 }
@@ -177,14 +186,14 @@ class WorkflowSessionService:
                 optimization_event = {
                     "event": "ai_optimization_fallback",
                     "status": "fallback",
-                    "message": optimization.get("summary", "AI optimization failed; the original workflow draft was retained."),
+                    "message": optimization.get("summary", "Die KI-Optimierung ist fehlgeschlagen; der ursprüngliche Workflow-Entwurf bleibt erhalten." if session.language == "de" else "AI optimization failed; the original workflow draft was retained."),
                     "recordedAt": datetime.now(timezone.utc).isoformat(),
                 }
             else:
                 optimization_event = {
                     "event": "python_optimization_path",
                     "status": "recorded",
-                    "message": optimization.get("summary", "The workflow was prepared with Python rules; no second-stage LLM call was made."),
+                    "message": optimization.get("summary", "Der Workflow wurde mit Python-Regeln vorbereitet; es gab keinen zweiten LLM-Aufruf." if session.language == "de" else "The workflow was prepared with Python rules; no second-stage LLM call was made."),
                     "recordedAt": datetime.now(timezone.utc).isoformat(),
                 }
 
@@ -194,7 +203,7 @@ class WorkflowSessionService:
                 {
                     "event": "workflow_prepared",
                     "status": "ready_for_approval",
-                    "message": "The target workflow is ready for human review. External actions remain disabled until a connected, approved executor is configured.",
+                    "message": "Der Ziel-Workflow ist bereit zur menschlichen Prüfung. Externe Aktionen bleiben deaktiviert, bis ein freigegebener Executor verbunden ist." if session.language == "de" else "The target workflow is ready for human review. External actions remain disabled until a connected, approved executor is configured.",
                     "recordedAt": datetime.now(timezone.utc).isoformat(),
                 },
             ]
