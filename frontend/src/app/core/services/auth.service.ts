@@ -21,10 +21,12 @@ export interface AuthUser {
 }
 
 interface AuthLoginResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  user: AuthUser;
+  access_token?: string;
+  token_type?: string;
+  expires_in?: number;
+  user?: AuthUser;
+  requires_workspace_selection?: boolean;
+  workspaces?: Array<{ id: string; name: string; role: string }>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -38,6 +40,7 @@ export class AuthService {
   readonly authRequired = signal(false);
   readonly token = signal<string | null>(this.readToken());
   readonly user = signal<AuthUser | null>(null);
+  readonly workspaces = signal<Array<{ id: string; name: string; role: string }>>([]);
   readonly isAuthenticated = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -90,16 +93,22 @@ export class AuthService {
     });
   }
 
-  login(email: string, password: string): Observable<AuthLoginResponse> {
+  login(email: string, password: string, tenantId?: string): Observable<AuthLoginResponse> {
     this.error.set(null);
     return this.http.post<AuthLoginResponse>(this.url('/auth/login'), {
       email: email.trim().toLowerCase(),
-      password
+      password,
+      ...(tenantId ? { tenant_id: tenantId } : {})
     }).pipe(tap(response => {
-      this.storeToken(response.access_token);
-      this.user.set(response.user);
-      this.isAuthenticated.set(true);
-      this.ready.set(true);
+      if (response.access_token && response.user) {
+        this.storeToken(response.access_token);
+        this.user.set(response.user);
+        this.workspaces.set([]);
+        this.isAuthenticated.set(true);
+        this.ready.set(true);
+      } else if (response.requires_workspace_selection) {
+        this.workspaces.set(response.workspaces ?? []);
+      }
     }));
   }
 
@@ -120,6 +129,7 @@ export class AuthService {
   private clearToken(): void {
     this.token.set(null);
     this.user.set(null);
+    this.workspaces.set([]);
     this.isAuthenticated.set(false);
     try {
       sessionStorage.removeItem(this.tokenKey);
