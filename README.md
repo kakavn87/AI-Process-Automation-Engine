@@ -1,6 +1,6 @@
 # AI Process Optimierung
 
-AI Process Optimierung is a portfolio MVP that turns natural-language business process descriptions into structured workflow proposals, enforces a human approval gate, and records simulated execution events.
+AI Process Optimierung is a portfolio MVP that turns natural-language business process descriptions into structured workflow proposals, supports optional workspace authentication and tenant-scoped records, enforces a human approval gate, and records simulated execution events.
 
 ## What this demonstrates
 
@@ -47,6 +47,42 @@ In the Render Dashboard, open the backend service's **Environment** page and add
 - `OPENWEBUI_URL`: optional URL of a separately deployed OpenWebUI portal
 
 Save the environment changes to trigger a redeploy. The frontend never receives the API key.
+
+## Workspace authentication and tenant isolation
+
+Workspace authentication is optional and remains **disabled by default** so the public portfolio demo continues to work without a login screen. To enable it on a Backend deployment, configure these secret environment variables:
+
+- `AUTH_ENABLED=true`
+- `JWT_SECRET_KEY`: a cryptographically random secret of at least 32 characters.
+- `BOOTSTRAP_ADMIN_EMAIL`: the first workspace owner's email address.
+- `BOOTSTRAP_ADMIN_PASSWORD`: the first owner's password (at least 12 characters).
+- `BOOTSTRAP_TENANT_NAME`: optional display name for the initial workspace.
+
+The first authenticated startup creates the initial workspace and owner membership if they do not already exist. The backend refuses to start in authentication mode if the JWT secret is too short or the initial workspace has no active owner. Keep all of these values in the Backend service's secret environment settings; they are never sent to Angular. Pull-request previews forcibly disable authentication and clear inherited Production JWT/bootstrap secrets.
+
+### Sign-in and workspace membership
+
+- `GET /api/auth/config` — public bootstrap check; reports only whether authentication is required.
+- `POST /api/auth/login` — verifies email/password and issues a short-lived JWT bound to one workspace. If an account belongs to several workspaces, the response lists the available workspaces and the client submits the chosen `tenant_id`.
+- `GET /api/auth/me` — returns the signed-in user's workspace and role.
+- `POST /api/auth/invitations` — owner/admin only; creates a one-time invitation token with a three-day expiry.
+- `POST /api/auth/invitations/accept` — accepts an invitation and creates or activates the workspace membership.
+
+Invitation tokens are returned once to the workspace administrator. The MVP does not send invitation emails; share the token through an approved secure channel. Passwords are stored as Argon2 hashes. Access tokens expire after 60 minutes by default; the user signs in again after expiry.
+
+### Roles and data boundaries
+
+- `owner` / `admin`: manage workspace invitations and can authorize live dispatch when that capability is supported.
+- `approver`: can approve or reject execution requests.
+- `member`: can create and review their workspace's workflows but cannot approve or reject them.
+
+Workflow sessions, approval executions and AI-usage events carry a `tenant_id`. Session lookup, answers, deletion, knowledge search, execution reads/decisions and usage analytics are filtered against the active workspace. Existing demo rows are assigned to the default demo tenant by Alembic migration `0002_tenant_identity`.
+
+In authentication mode, the global webhook is intentionally disabled because it is not yet configured per workspace. RAG continues to use server-generated session IDs as vector filters; every RAG API request first checks that the session belongs to the signed-in tenant.
+
+### Remaining production hardening
+
+This foundation does not yet include tenant self-service creation, password reset, MFA, email verification/delivery, login rate limiting, refresh-token rotation/revocation or per-workspace OAuth/API credential vaults. Do not enable customer authentication until the Backend deployment has the migration and auth code and the owner secrets above have been configured. Authentication is off by default and can be enabled later without changing the public demo.
 
 ## API
 
@@ -172,13 +208,13 @@ The webhook receives an event name, execution ID/name, workflow name/trigger, an
 
 Each execution permits only one recorded live dispatch attempt. A timeout is marked `unknown`, because the receiving system may have processed the request even when no response arrived; the app blocks automatic retries to avoid duplicate side effects. A non-2xx response is recorded as failed and must be investigated in the receiver's logs. A 2xx response is recorded as confirmed receipt, not proof that every downstream business action completed.
 
-The live webhook endpoint is exposed as `GET /api/executions/live-readiness` and `POST /api/executions/{id}/live`. The POST body requires `{"confirm_live_execution": true, "confirmation_token": "…"}`; the confirmation token is validated against the backend environment secret and never forwarded to the receiver. The app is still a single-user MVP without full account authentication or tenant-level authorization. Keep live execution disabled in public demos unless the operator-token control and receiving-system protections are appropriate for the intended environment. For production use, implement account authentication, role-based authorization, tenant isolation, idempotency at the receiver, and a security review.
+The live webhook endpoint is exposed as `GET /api/executions/live-readiness` and `POST /api/executions/{id}/live`. The POST body requires `{"confirm_live_execution": true, "confirmation_token": "…"}`; the confirmation token is validated against the backend environment secret and never forwarded to the receiver. The app remains a portfolio MVP. Authentication and tenant-scoped records are opt-in; enable them only after configuring the Backend signing key and bootstrap owner. Live webhook execution is disabled when authenticated workspace mode is enabled until per-workspace destinations and credentials are implemented. The receiving system still needs idempotency and its own authorization.
 
 ## Safety and production boundaries
 
 The action dispatcher remains simulation-only. Approval records authorization for the demo workflow, but it does not send email, post to Teams, invoke HTTP endpoints, or modify an external business system. Live connectors must be implemented and separately configured before those actions can be enabled.
 
-The new session and usage endpoints are currently intended for this single-user portfolio MVP. Authentication, tenant isolation, role-based approval permissions, durable migrations, retention controls, and production-grade audit/security reviews are still required before exposing business data to multiple users.
+The session and usage endpoints now enforce tenant scoping when authentication is enabled. Production deployment still requires a managed durable database, backups, retention/deletion controls, password recovery, MFA, rate limiting, per-workspace integration credentials, and an independent security review before sensitive business data is exposed to multiple customers.
 
 ## Run locally
 
