@@ -208,13 +208,13 @@ export class ProcessPageComponent {
   };
 
   private readonly en = {
-    brand: 'AI Process Optimierung', product: 'KI-gestützte Prozessoptimierung',
+    brand: 'AI Process Optimierung', product: 'AI-powered process optimization',
     workspace: 'DEMO WORKSPACE', language: 'Language',
     navOverview: 'Start', navIndustries: 'Examples', navBuilder: 'Process builder',
     navData: 'Data workspace', navSecurity: 'Governance & approvals',
     activeWorkspace: 'Workspace active', systemReady: 'System ready',
-    heroEyebrow: 'KI-GESTÜTZTE PROZESSOPTIMIERUNG',
-    heroTitle: 'Eine KI. Jeder Geschäftsprozess.',
+    heroEyebrow: 'AI-POWERED PROCESS OPTIMIZATION',
+    heroTitle: 'One AI. Every business process.',
     heroCopy: 'Describe any business process, including niche and specialist workflows. AI Process Optimierung understands the task, structures the workflow and uses Python for data, rules and safe execution.',
     startAnalysis: 'Start analysis', exploreAreas: 'Explore business areas',
     pillHybrid: 'Hybrid: Python + AI', pillApproval: 'Human approvals stay in control', pillNoCode: 'Start without coding',
