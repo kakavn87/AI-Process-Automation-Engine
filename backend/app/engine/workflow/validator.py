@@ -20,11 +20,15 @@ def validate(workflow: dict) -> None:
             seen_ids.add(step_id)
 
     for index, step in enumerate(steps):
+        if step.get("type") not in OUTBOUND_STEP_TYPES:
+            continue
+
         config = step.get("config") or {}
-        needs_approval = step.get("type") in OUTBOUND_STEP_TYPES or (
-            step.get("type") == "http" and config.get("requiresApproval")
+        if config.get("requiresApproval") is not True:
+            raise ValueError("Every outbound side-effect step must explicitly require human approval.")
+
+        has_prior_approval = any(
+            previous.get("type") == "approval" for previous in steps[:index]
         )
-        if needs_approval:
-            has_prior_approval = any(previous.get("type") == "approval" for previous in steps[:index])
-            if not has_prior_approval:
-                raise ValueError("A human approval step must come before any outbound side-effect step.")
+        if not has_prior_approval:
+            raise ValueError("A human approval step must come before any outbound side-effect step.")
