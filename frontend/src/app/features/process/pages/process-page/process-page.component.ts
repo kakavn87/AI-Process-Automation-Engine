@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../../core/services/api.service';
 import { TabularDataResult } from '../../../../core/models/api.models';
@@ -30,6 +30,18 @@ export class ProcessPageComponent {
   readonly store = inject(ProcessStore);
   private readonly service = inject(ProcessService);
   private readonly api = inject(ApiService);
+
+  private readonly resultScrollEffect = effect(() => {
+    const analysis = this.store.analysis();
+    if (!analysis || typeof document === 'undefined') return;
+
+    setTimeout(() => {
+      document.getElementById('results')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 0);
+  });
 
   readonly language = signal<AppLanguage>('de');
   readonly selectedDomain = signal('general');
