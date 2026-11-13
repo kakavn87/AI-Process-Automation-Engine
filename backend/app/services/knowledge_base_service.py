@@ -114,6 +114,12 @@ class KnowledgeBaseService:
             raise RuntimeError("RAG is not configured.")
         collections = self._qdrant.get_collections().collections
         if any(item.name == settings.QDRANT_COLLECTION for item in collections):
+            self._qdrant.create_payload_index(
+                collection_name=settings.QDRANT_COLLECTION,
+                field_name="session_id",
+                field_schema=qmodels.PayloadSchemaType.KEYWORD,
+                wait=True,
+            )
             return
         self._qdrant.create_collection(
             collection_name=settings.QDRANT_COLLECTION,
@@ -121,6 +127,12 @@ class KnowledgeBaseService:
                 size=settings.RAG_VECTOR_SIZE,
                 distance=qmodels.Distance.COSINE,
             ),
+        )
+        self._qdrant.create_payload_index(
+            collection_name=settings.QDRANT_COLLECTION,
+            field_name="session_id",
+            field_schema=qmodels.PayloadSchemaType.KEYWORD,
+            wait=True,
         )
 
     @staticmethod
