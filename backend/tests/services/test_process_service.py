@@ -44,7 +44,7 @@ class FakeAIService:
     def __init__(self):
         self.calls = 0
 
-    def analyze_process(self, description, signals):
+    def analyze_process(self, description, signals, language="en"):
         self.calls += 1
         return {
             "summary": "AI-generated summary.",
@@ -155,3 +155,37 @@ def test_llm_strategy_falls_back_when_api_key_is_missing():
     assert result["routingDecision"]["selectedEngine"] == "rules"
     assert result["routingDecision"]["llmAvailable"] is False
     assert "not configured" in result["routingDecision"]["reason"]
+
+
+def test_german_response_and_explicit_business_domain_are_localized():
+    service = ProcessService(db=None, ai_service=AIService(api_key=""))
+    description = (
+        "Jeden Tag prüft die Produktion Qualitätsprotokolle. "
+        "Mitarbeitende erfassen Produktionsmengen, validieren Messwerte, "
+        "berechnen Ausschussquoten und erstellen einen Bericht."
+    )
+
+    result = service.analyze(
+        description,
+        strategy="rules",
+        language="de",
+        business_domain="manufacturing",
+    )
+
+    assert result["detectedDetails"]["businessDomain"] == "manufacturing"
+    assert result["detectedDetails"]["businessDomainLabel"] == "Produktion"
+    assert result["summary"].startswith("Der Prozess umfasst")
+    assert result["analysisNote"].startswith("Python-Regeln") or "Python-Regeln" in result["analysisNote"]
+    assert result["proposedWorkflow"]["name"].endswith("-Workflow")
+    assert all("Start workflow" not in step["name"] for step in result["proposedWorkflow"]["steps"])
+
+
+def test_explicit_industry_selection_is_respected_even_without_keywords():
+    service = ProcessService(db=None, ai_service=AIService(api_key=""))
+    result = service.analyze(
+        "Collect requests, validate details, create an output and notify the owner.",
+        strategy="rules",
+        business_domain="legal_compliance",
+    )
+
+    assert result["detectedDetails"]["businessDomain"] == "legal_compliance"
