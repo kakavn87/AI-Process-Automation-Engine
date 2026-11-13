@@ -96,7 +96,10 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       simulated: 'Simuliert',
       recorded: 'Gespeichert',
       success: 'Erfolgreich',
-      error: 'Fehler'
+      error: 'Fehler',
+      ai_optimization_completed: 'KI-Optimierung abgeschlossen',
+      ai_optimization_fallback: 'KI-Fallback',
+      python_optimization_path: 'Python-Verarbeitung'
     };
     return labels[status] ?? status.replaceAll('_', ' ');
   }
@@ -297,9 +300,13 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
         : (status === 'needs_input' ? 'Your input is needed' : 'Clarification complete');
     }
     if (step === 3) {
+      const optimization = this.session()?.analysis.optimization;
       if (status === 'needs_input') return this.isGerman ? 'Nach den Antworten' : 'After your answers';
-      if (status === 'processing') return this.isGerman ? 'Python prüft die Angaben' : 'Python validates the answers';
+      if (status === 'processing') return this.isGerman ? 'KI analysiert Ihre Antworten' : 'AI is analyzing your answers';
       if (status === 'failed') return this.isGerman ? 'Verarbeitung fehlgeschlagen' : 'Processing failed';
+      if (optimization?.status === 'completed') return this.isGerman ? 'KI-Optimierung abgeschlossen' : 'AI optimization completed';
+      if (optimization?.status === 'fallback') return this.isGerman ? 'KI-Fallback – Entwurf beibehalten' : 'AI fallback – draft retained';
+      if (optimization?.status === 'rules_only') return this.isGerman ? 'Python-Regelmodus' : 'Python rules mode';
       return this.isGerman ? 'Workflow vorbereitet' : 'Workflow prepared';
     }
     if (step === 4) {
