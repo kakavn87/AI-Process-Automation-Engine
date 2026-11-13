@@ -9,8 +9,15 @@ from app.services.question_service import QuestionService
 
 
 class WorkflowSessionService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, tenant_id: str | None = None):
         self.db = db
+        self.tenant_id = tenant_id
+
+    def _get_session(self, session_id: str):
+        query = self.db.query(WorkflowSession).filter(WorkflowSession.id == session_id)
+        if self.tenant_id is not None:
+            query = query.filter(WorkflowSession.tenant_id == self.tenant_id)
+        return query.one_or_none()
         self.question_service = QuestionService()
         self.automation_engine = WorkflowAutomationEngine()
 
@@ -27,6 +34,7 @@ class WorkflowSessionService:
         initial_status = "needs_input" if questions else "processing"
         session = WorkflowSession(
             id=session_id or str(uuid4()),
+            tenant_id=self.tenant_id,
             description=description,
             analysis_strategy=strategy,
             language=language,
@@ -55,11 +63,11 @@ class WorkflowSessionService:
         return self.serialize(session)
 
     def get(self, session_id: str) -> dict | None:
-        session = self.db.get(WorkflowSession, session_id)
+        session = self._get_session(session_id)
         return self.serialize(session) if session else None
 
     def submit_answers(self, session_id: str, answers: dict) -> dict:
-        session = self.db.get(WorkflowSession, session_id)
+        session = self._get_session(session_id)
         if session is None:
             raise KeyError("Workflow session was not found.")
         if session.status != "needs_input":
@@ -114,7 +122,7 @@ class WorkflowSessionService:
         from app.services.execution_service import ExecutionService
 
         workflow = (session.analysis or {}).get("proposedWorkflow") or {}
-        execution = ExecutionService(self.db).create(workflow)
+        execution = ExecutionService(self.db, tenant_id=self.tenant_id).create(workflow)
         session.related_execution_id = execution["id"]
         session.status = "awaiting_approval"
         session.events = [
