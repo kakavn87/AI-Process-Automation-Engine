@@ -258,7 +258,11 @@ class AuthService:
 
         invitation.accepted_at = now
         self.db.commit()
-        return {"accepted": True, "tenant": {"id": tenant.id, "name": tenant.name}}
+        return {
+            "accepted": True,
+            "email": user.email,
+            "tenant": {"id": tenant.id, "name": tenant.name},
+        }
 
     @staticmethod
     def _user_payload(user: User, tenant: Tenant, role: str) -> dict:
