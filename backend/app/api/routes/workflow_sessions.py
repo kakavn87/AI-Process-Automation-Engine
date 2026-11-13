@@ -19,6 +19,32 @@ def get_workflow_session(session_id: str, db: Session = Depends(get_db)):
     return result
 
 
+@router.delete("/{session_id}", status_code=204)
+def delete_workflow_session(session_id: str, db: Session = Depends(get_db)):
+    session = db.get(WorkflowSession, session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Workflow session was not found.")
+
+    indexed_chunks = int(((session.analysis or {}).get("knowledgeBase") or {}).get("indexedChunks", 0))
+    try:
+        vectors_deleted = KnowledgeBaseService().delete_session(session_id)
+    except Exception as error:
+        raise HTTPException(
+            status_code=503,
+            detail="The session knowledge store could not delete its data. The workflow session was not deleted.",
+        ) from error
+
+    if indexed_chunks > 0 and not vectors_deleted:
+        raise HTTPException(
+            status_code=503,
+            detail="Vector storage is not configured. Restore Qdrant access before deleting this session's indexed knowledge.",
+        )
+
+    db.delete(session)
+    db.commit()
+    return None
+
+
 @router.post("/{session_id}/answers")
 def submit_workflow_answers(
     session_id: str,
