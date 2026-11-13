@@ -1,28 +1,27 @@
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING
+from datetime import datetime
 
-from sqlalchemy import DateTime, JSON, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import DateTime, JSON, String, Text, func
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
-
-if TYPE_CHECKING:
-    from app.models.execution_step import ExecutionStep
 
 
 class Execution(Base):
     __tablename__ = "executions"
-
     id: Mapped[int] = mapped_column(primary_key=True)
-    workflow_name: Mapped[str] = mapped_column(String(200))
-    status: Mapped[str] = mapped_column(String(50), index=True)
-    workflow_data: Mapped[dict] = mapped_column(JSON)
-    decision_note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String(50))
 
-    steps: Mapped[list["ExecutionStep"]] = relationship(
-        back_populates="execution",
-        cascade="all, delete-orphan",
-        order_by="ExecutionStep.position",
+
+class ApprovalExecution(Base):
+    __tablename__ = "approval_executions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    workflow_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    workflow_definition: Mapped[dict] = mapped_column(JSON, nullable=False)
+    status: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    events: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    decision_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
