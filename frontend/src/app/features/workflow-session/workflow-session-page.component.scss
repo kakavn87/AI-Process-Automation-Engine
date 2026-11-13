@@ -86,3 +86,119 @@
   .usage-events > div { grid-template-columns: 1fr auto; }
   .usage-events small { grid-column: 1 / -1; }
 }
+
+
+/* Modern accessible typography and contrast for workflow sessions */
+.session-shell {
+  color: #111827;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+}
+.session-topbar { border-bottom-color: #e5e7eb; }
+.session-brand strong { color: #111827; font-family: 'Manrope', sans-serif; font-size: 20px; }
+.session-brand small { color: #4b5563; font-size: 12px; }
+.session-brand-mark {
+  border-radius: 12px;
+  background: linear-gradient(145deg, #6366f1, #4338ca);
+  box-shadow: 0 5px 14px rgba(79, 70, 229, .18);
+}
+.session-back, .session-secondary {
+  border-color: #d1d5db;
+  border-radius: 10px;
+  color: #1f2937;
+  font-size: 13px;
+}
+.session-back:hover, .session-secondary:hover { background: #f9fafb; }
+.session-heading { padding: 42px 0 25px; }
+.session-eyebrow { color: #4338ca; font-size: 11px; letter-spacing: .1em; }
+.session-heading h1 {
+  color: #111827;
+  font-size: clamp(29px, 3vw, 38px);
+  letter-spacing: -.04em;
+}
+.session-heading p, .session-card > p, .session-card-header p {
+  color: #374151;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.session-status { font-size: 12px; }
+.session-overview { gap: 14px; }
+.session-stat, .usage-grid article {
+  border-color: #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, .035);
+}
+.session-stat small, .usage-grid small { color: #4b5563; font-size: 12px; }
+.session-stat strong, .usage-grid strong { color: #111827; font-size: 25px; }
+.session-card {
+  border-color: #e5e7eb;
+  border-radius: 16px;
+  padding: 26px;
+  box-shadow: 0 6px 22px rgba(15, 23, 42, .04);
+}
+.session-card h2 {
+  color: #111827;
+  font-size: 22px;
+  letter-spacing: -.03em;
+}
+.question-field label { color: #1f2937; font-size: 14px; }
+.question-field label span { color: #4b5563; font-size: 12px; }
+.question-field textarea, .question-field select {
+  border-color: #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  color: #111827;
+  font: inherit;
+  font-size: 15px;
+}
+.question-field textarea::placeholder { color: #6b7280; }
+.question-field textarea:focus, .question-field select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, .13);
+}
+.session-action-row > span { color: #4b5563; font-size: 13px; }
+.session-primary {
+  border-radius: 10px;
+  background: #4f46e5;
+  font-size: 14px;
+}
+.session-primary:hover { background: #4338ca; }
+.workflow-step { border-top-color: #e5e7eb; }
+.workflow-step-index { background: #eef2ff; color: #3730a3; }
+.workflow-step strong, .session-event strong { color: #111827; font-size: 14px; }
+.workflow-step p, .session-event p, .safety-note p {
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.workflow-step small, .session-event small { color: #4b5563; font-size: 12px; }
+.confirmed-answers { border-color: #e5e7eb; background: #f9fafb; }
+.confirmed-answers h3 { color: #111827; font-size: 14px; }
+.confirmed-answer { border-top-color: #e5e7eb; }
+.confirmed-answer strong { color: #4b5563; font-size: 13px; }
+.confirmed-answer span { color: #111827; font-size: 14px; }
+.safety-note {
+  border-color: #fde68a;
+  border-radius: 12px;
+  background: #fffbeb;
+}
+.safety-note strong { color: #78350f; font-size: 14px; }
+.safety-note p { color: #78350f; }
+.ready-indicator { font-size: 12px; }
+.execution-reference small { color: #4b5563; font-size: 12px; }
+.execution-reference code { color: #3730a3; font-size: 13px; }
+.session-event { gap: 14px; }
+.session-muted { color: #4b5563; font-size: 13px; line-height: 1.7; }
+.usage-events strong { color: #111827; font-size: 13px; }
+.usage-events span, .usage-events small { color: #4b5563; font-size: 12px; }
+.session-error { font-size: 14px; }
+.session-loading { color: #374151; font-size: 14px; }
+.session-footer { color: #4b5563; font-size: 12px; }
+
+@media (max-width: 760px) {
+  .session-shell { padding: 19px 16px 34px; }
+  .session-heading { padding-top: 30px; }
+  .session-card { padding: 19px; }
+  .session-stat strong, .usage-grid strong { font-size: 22px; }
+}
