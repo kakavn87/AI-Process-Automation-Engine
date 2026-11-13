@@ -18,6 +18,9 @@
       <a class="nav-link" href="#data"><span class="nav-icon">▤</span>{{ i18n.navData }}</a>
 
       <span class="nav-label nav-label-spaced">{{ language() === 'de' ? 'EINSTELLUNGEN' : 'SETTINGS' }}</span>
+      @if (auth.isAuthenticated()) {
+        <a class="nav-link" href="#workspace-settings"><span class="nav-icon">▣</span>{{ language() === 'de' ? 'Arbeitsbereiche' : 'Workspaces' }}</a>
+      }
       <a class="nav-link" href="#integrations"><span class="nav-icon">⚙</span>{{ language() === 'de' ? 'KI-Plattform & Integrationen' : 'AI platform & integrations' }}</a>
       @if (canManageWorkspace()) {
         <a class="nav-link" href="#workspace-members"><span class="nav-icon">♙</span>{{ language() === 'de' ? 'Mitglieder' : 'Members' }}</a>
@@ -520,6 +523,41 @@
         }
       </section>
 
+
+
+      @if (auth.isAuthenticated()) {
+        <section class="section-block workspace-create-section" id="workspace-settings">
+          <div class="section-header">
+            <div>
+              <div class="section-kicker">{{ language() === 'de' ? 'ARBEITSBEREICH · MANDANTENVERWALTUNG' : 'WORKSPACE · TENANT MANAGEMENT' }}</div>
+              <h2>{{ language() === 'de' ? 'Neuen Arbeitsbereich erstellen' : 'Create a workspace' }}</h2>
+              <p>{{ language() === 'de' ? 'Jeder Arbeitsbereich erhält eigene Mitglieder, Workflows und Nutzungsdaten. Nach dem Erstellen wechseln Sie direkt in den neuen Arbeitsbereich.' : 'Each workspace has its own members, workflows and usage records. After creation you are switched into the new workspace.' }}</p>
+            </div>
+          </div>
+          <article class="result-panel workspace-create-panel">
+            <form class="workspace-create-form" (ngSubmit)="createWorkspace()">
+              <div class="workspace-create-field">
+                <label for="new-workspace-name">{{ language() === 'de' ? 'Name des Arbeitsbereichs' : 'Workspace name' }}</label>
+                <input id="new-workspace-name" name="newWorkspaceName" type="text"
+                  [(ngModel)]="newWorkspaceName" required minlength="2" maxlength="120"
+                  [placeholder]="language() === 'de' ? 'z. B. Musterfirma GmbH' : 'e.g. Example Company'" />
+              </div>
+              <button class="button-primary" type="submit" [disabled]="workspaceCreating() || newWorkspaceName.trim().length < 2">
+                {{ workspaceCreating()
+                  ? (language() === 'de' ? 'Arbeitsbereich wird erstellt …' : 'Creating workspace …')
+                  : (language() === 'de' ? 'Arbeitsbereich erstellen' : 'Create workspace') }}
+                <span>→</span>
+              </button>
+            </form>
+            @if (workspaceCreateError(); as error) {
+              <div class="workspace-invite-error" role="alert">{{ error }}</div>
+            }
+            @if (workspaceCreateSuccess(); as success) {
+              <div class="workspace-create-success" role="status">{{ success }}</div>
+            }
+          </article>
+        </section>
+      }
 
       @if (canManageWorkspace()) {
         <section class="section-block workspace-members-section" id="workspace-members">
