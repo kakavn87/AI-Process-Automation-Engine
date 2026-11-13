@@ -108,93 +108,6 @@
         </div>
       </section>
 
-      <section class="section-block builder-section" id="builder">
-        <div class="section-header">
-          <div>
-            <div class="section-kicker">{{ language() === 'de' ? 'STARTEN SIE HIER · PROZESSEINGABE' : 'START HERE · PROCESS INPUT' }}</div>
-            <h2>{{ language() === 'de' ? 'Wie läuft der Prozess heute ab?' : 'How does the process work today?' }}</h2>
-            <p>{{ i18n.builderCopy }}</p>
-          </div>
-          
-        </div>
-
-        <div class="builder-layout">
-          <section class="builder-card">
-            <div class="builder-card-heading">
-              <div class="builder-card-title"><span class="builder-number">01</span><div><strong>{{ language() === 'de' ? 'Prozessbeschreibung' : 'Process description' }}</strong><small>{{ i18n.descriptionHint }}</small></div></div>
-              <span class="required-label">{{ language() === 'de' ? 'ERFORDERLICH' : 'REQUIRED' }}</span>
-            </div>
-
-            <div class="selected-domain-row">
-              <span class="selected-domain-label">{{ i18n.selectedArea }}</span>
-              @if (selectedIndustry; as industry) {
-                <span class="selected-domain-chip"><span>{{ industry.icon }}</span>{{ language() === 'de' ? industry.nameDe : industry.nameEn }}</span>
-                <button class="small-text-button" type="button" (click)="useExampleForCurrentLanguage()">{{ i18n.useExample }}</button>
-              } @else {
-                <span class="selected-domain-chip">{{ i18n.domainGeneral }}</span>
-              }
-              <button class="small-text-button reset-domain" type="button" (click)="useFreeDescription()">{{ i18n.allAreas }}</button>
-            </div>
-
-            <label class="textarea-label" for="process-description">{{ i18n.descriptionLabel }}</label>
-            <textarea
-              id="process-description"
-              [(ngModel)]="description"
-              rows="7"
-              maxlength="8000"
-              [placeholder]="i18n.descriptionPlaceholder"
-            ></textarea>
-            <div class="textarea-footer"><span>{{ formatNumber(description.length) }} / 8.000 {{ i18n.chars }}</span><span class="privacy-note"><span>◈</span> {{ language() === 'de' ? 'Ihre Beschreibung wird nicht öffentlich angezeigt' : 'Your description is not shown publicly' }}</span></div>
-
-            <div class="builder-options">
-              <div class="strategy-field">
-                <label for="analysis-strategy">{{ i18n.strategy }}</label>
-                <select id="analysis-strategy" [(ngModel)]="analysisStrategy">
-                  <option value="auto">{{ i18n.strategyAuto }}</option>
-                  <option value="rules">{{ i18n.strategyRules }}</option>
-                  <option value="llm">{{ i18n.strategyLlm }}</option>
-                </select>
-              </div>
-              <div class="strategy-explainer"><span class="strategy-indicator"></span><span>{{ language() === 'de' ? 'Im Automatikmodus versteht zuerst die KI jeden Prozess. Python übernimmt danach Datenprüfung, Berechnungen, Sicherheitskontrollen und Fallback.' : 'In automatic mode, AI understands any process first. Python handles data validation, calculations, safety controls and fallback.' }}</span></div>
-            </div>
-
-            <div class="builder-submit-row">
-              <span class="field-hint">{{ language() === 'de' ? 'Analyse dauert normalerweise nur wenige Sekunden.' : 'Analysis usually takes only a few seconds.' }}</span>
-              <button class="button-primary analyze-button" type="button" (click)="analyze()" [disabled]="store.loading() || description.trim().length < 3">
-                {{ store.loading() ? i18n.analyzing : i18n.analyze }} <span>→</span>
-              </button>
-            </div>
-          </section>
-
-          <aside class="builder-aside">
-            <div class="aside-card aside-highlight">
-              <span class="aside-illustration">✦</span>
-              <div class="section-kicker">{{ language() === 'de' ? 'WAS AI PROCESS OPTIMIERUNG ERKENNT' : 'WHAT AI PROCESS OPTIMIERUNG DETECTS' }}</div>
-              <h3>{{ language() === 'de' ? 'Aus Beschreibung wird Struktur.' : 'Turn descriptions into structure.' }}</h3>
-              <ul>
-                <li><span>✓</span>{{ language() === 'de' ? 'Manuelle und wiederkehrende Schritte' : 'Manual and repetitive activities' }}</li>
-                <li><span>✓</span>{{ language() === 'de' ? 'Datenquellen und beteiligte Systeme' : 'Data sources and connected systems' }}</li>
-                <li><span>✓</span>{{ language() === 'de' ? 'Prüfungen, Risiken und Freigaben' : 'Checks, risks and approval gates' }}</li>
-                <li><span>✓</span>{{ language() === 'de' ? 'Konkreter Workflow-Entwurf' : 'A structured workflow proposal' }}</li>
-              </ul>
-            </div>
-            <div class="aside-card aside-security" id="governance">
-              <span class="security-icon">♢</span>
-              <div><strong>{{ language() === 'de' ? 'Sicherheit durch Freigabe' : 'Human control by design' }}</strong><p>{{ language() === 'de' ? 'Externe Aktionen benötigen eine explizite Freigabe. Die aktuelle Demo führt keine echten Aktionen aus.' : 'External actions require explicit approval. This demo does not perform real-world actions.' }}</p></div>
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      
-      
-
-      
-
-      
-
-      
-
       @if (store.error(); as error) {
         <div class="error-panel" role="alert">{{ error }}</div>
       }
@@ -289,6 +202,95 @@
           }
         </section>
       }
+
+      
+
+      <section class="section-block builder-section" id="builder">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">{{ language() === 'de' ? 'STARTEN SIE HIER · PROZESSEINGABE' : 'START HERE · PROCESS INPUT' }}</div>
+            <h2>{{ language() === 'de' ? 'Wie läuft der Prozess heute ab?' : 'How does the process work today?' }}</h2>
+            <p>{{ i18n.builderCopy }}</p>
+          </div>
+          
+        </div>
+
+        <div class="builder-layout">
+          <section class="builder-card">
+            <div class="builder-card-heading">
+              <div class="builder-card-title"><span class="builder-number">01</span><div><strong>{{ language() === 'de' ? 'Prozessbeschreibung' : 'Process description' }}</strong><small>{{ i18n.descriptionHint }}</small></div></div>
+              <span class="required-label">{{ language() === 'de' ? 'ERFORDERLICH' : 'REQUIRED' }}</span>
+            </div>
+
+            <div class="selected-domain-row">
+              <span class="selected-domain-label">{{ i18n.selectedArea }}</span>
+              @if (selectedIndustry; as industry) {
+                <span class="selected-domain-chip"><span>{{ industry.icon }}</span>{{ language() === 'de' ? industry.nameDe : industry.nameEn }}</span>
+                <button class="small-text-button" type="button" (click)="useExampleForCurrentLanguage()">{{ i18n.useExample }}</button>
+              } @else {
+                <span class="selected-domain-chip">{{ i18n.domainGeneral }}</span>
+              }
+              <button class="small-text-button reset-domain" type="button" (click)="useFreeDescription()">{{ i18n.allAreas }}</button>
+            </div>
+
+            <label class="textarea-label" for="process-description">{{ i18n.descriptionLabel }}</label>
+            <textarea
+              id="process-description"
+              [(ngModel)]="description"
+              rows="7"
+              maxlength="8000"
+              [placeholder]="i18n.descriptionPlaceholder"
+            ></textarea>
+            <div class="textarea-footer"><span>{{ formatNumber(description.length) }} / 8.000 {{ i18n.chars }}</span><span class="privacy-note"><span>◈</span> {{ language() === 'de' ? 'Ihre Beschreibung wird nicht öffentlich angezeigt' : 'Your description is not shown publicly' }}</span></div>
+
+            <div class="builder-options">
+              <div class="strategy-field">
+                <label for="analysis-strategy">{{ i18n.strategy }}</label>
+                <select id="analysis-strategy" [(ngModel)]="analysisStrategy">
+                  <option value="auto">{{ i18n.strategyAuto }}</option>
+                  <option value="rules">{{ i18n.strategyRules }}</option>
+                  <option value="llm">{{ i18n.strategyLlm }}</option>
+                </select>
+              </div>
+              <div class="strategy-explainer"><span class="strategy-indicator"></span><span>{{ language() === 'de' ? 'Im Automatikmodus versteht zuerst die KI jeden Prozess. Python übernimmt danach Datenprüfung, Berechnungen, Sicherheitskontrollen und Fallback.' : 'In automatic mode, AI understands any process first. Python handles data validation, calculations, safety controls and fallback.' }}</span></div>
+            </div>
+
+            <div class="builder-submit-row">
+              <span class="field-hint">{{ language() === 'de' ? 'Analyse dauert normalerweise nur wenige Sekunden.' : 'Analysis usually takes only a few seconds.' }}</span>
+              <button class="button-primary analyze-button" type="button" (click)="analyze()" [disabled]="store.loading() || description.trim().length < 3">
+                {{ store.loading() ? i18n.analyzing : i18n.analyze }} <span>→</span>
+              </button>
+            </div>
+          </section>
+
+          <aside class="builder-aside">
+            <div class="aside-card aside-highlight">
+              <span class="aside-illustration">✦</span>
+              <div class="section-kicker">{{ language() === 'de' ? 'WAS AI PROCESS OPTIMIERUNG ERKENNT' : 'WHAT AI PROCESS OPTIMIERUNG DETECTS' }}</div>
+              <h3>{{ language() === 'de' ? 'Aus Beschreibung wird Struktur.' : 'Turn descriptions into structure.' }}</h3>
+              <ul>
+                <li><span>✓</span>{{ language() === 'de' ? 'Manuelle und wiederkehrende Schritte' : 'Manual and repetitive activities' }}</li>
+                <li><span>✓</span>{{ language() === 'de' ? 'Datenquellen und beteiligte Systeme' : 'Data sources and connected systems' }}</li>
+                <li><span>✓</span>{{ language() === 'de' ? 'Prüfungen, Risiken und Freigaben' : 'Checks, risks and approval gates' }}</li>
+                <li><span>✓</span>{{ language() === 'de' ? 'Konkreter Workflow-Entwurf' : 'A structured workflow proposal' }}</li>
+              </ul>
+            </div>
+            <div class="aside-card aside-security" id="governance">
+              <span class="security-icon">♢</span>
+              <div><strong>{{ language() === 'de' ? 'Sicherheit durch Freigabe' : 'Human control by design' }}</strong><p>{{ language() === 'de' ? 'Externe Aktionen benötigen eine explizite Freigabe. Die aktuelle Demo führt keine echten Aktionen aus.' : 'External actions require explicit approval. This demo does not perform real-world actions.' }}</p></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      
+      
+
+      
+
+      
+
+      
 
       <section class="section-block data-section" id="data">
         <div class="section-header">
