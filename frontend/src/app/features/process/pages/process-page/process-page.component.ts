@@ -1,6 +1,7 @@
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../../core/services/api.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { IntegrationReadiness, TabularDataResult, WorkflowSession } from '../../../../core/models/api.models';
 import { ProcessStore } from '../../process.store';
 import { ProcessService } from '../../process.service';
@@ -28,6 +29,7 @@ interface Industry {
 })
 export class ProcessPageComponent implements OnInit {
   readonly store = inject(ProcessStore);
+  readonly auth = inject(AuthService);
   private readonly service = inject(ProcessService);
   private readonly api = inject(ApiService);
 
