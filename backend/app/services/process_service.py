@@ -3,6 +3,7 @@ import logging
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.localization import localize_process_analysis, translate_text
 from app.engine.analyzer.process_analyzer import ProcessAnalyzer
 from app.engine.analyzer.routing_policy import ProcessRoutingPolicy
 from app.engine.workflow.generator import WorkflowGenerator
@@ -21,8 +22,17 @@ class ProcessService:
         self.routing_policy = ProcessRoutingPolicy()
         self.ai_service = ai_service or AIService()
 
-    def analyze(self, description: str, strategy: str = "auto") -> dict:
-        analysis = self.analyzer.analyze(description)
+    def analyze(
+        self,
+        description: str,
+        strategy: str = "auto",
+        language: str = "en",
+        business_domain: str | None = None,
+    ) -> dict:
+        analysis = self.analyzer.analyze(description, language=language)
+        if business_domain and business_domain != "general":
+            analysis["detectedDetails"]["businessDomain"] = business_domain
+            analysis["detectedDetails"]["businessDomainLabel"] = business_domain.replace("_", " ").title()
         analysis["llmUsed"] = False
         analysis["llmModel"] = None
         analysis["analysisMode"] = "deterministic_rules_v1"
@@ -33,48 +43,61 @@ class ProcessService:
             requested_strategy=strategy,
             llm_available=self.ai_service.is_configured,
         )
+        routing["reason"] = translate_text(routing["reason"], language)
         analysis["routingDecision"] = routing
 
         if routing["selectedEngine"] == "llm":
             try:
-                ai_result = self.ai_service.analyze_process(description, analysis["signals"])
+                ai_result = self.ai_service.analyze_process(description, analysis["signals"], language=language)
                 self._apply_ai_result(analysis, ai_result)
                 analysis["llmUsed"] = True
                 analysis["llmModel"] = self.ai_service.model
                 analysis["analysisMode"] = "openai_responses"
                 analysis["analysisNote"] = (
-                    f"Analyzed with OpenAI Responses API ({self.ai_service.model}). "
+                    f"Mit der OpenAI Responses API ({self.ai_service.model}) analysiert. "
+                    "Integrationen sind nicht verbunden; die Workflow-Ausführung wird nur simuliert."
+                    if language == "de"
+                    else f"Analyzed with OpenAI Responses API ({self.ai_service.model}). "
                     "The workflow is a proposal; integrations are not connected and execution is simulated."
                 )
-                return analysis
+                return localize_process_analysis(analysis, language)
             except Exception:
                 logger.exception("OpenAI process analysis failed; using the deterministic fallback.")
+                fallback_reason = (
+                    "Die LLM-Anfrage ist fehlgeschlagen. Der deterministische Python-Fallback wurde verwendet. "
+                    "Bitte API-Abrechnung, Modellzugriff und Backend-Protokolle prüfen."
+                    if language == "de"
+                    else "The LLM request failed. The deterministic Python fallback was used instead; "
+                    "check API billing, model access, and backend logs."
+                )
                 analysis["routingDecision"] = {
                     **routing,
                     "selectedEngine": "rules",
-                    "reason": (
-                        "The LLM request failed. The deterministic Python fallback was used instead; "
-                        "check API billing, model access, and backend logs."
-                    ),
+                    "reason": fallback_reason,
                 }
                 analysis["analysisNote"] = (
-                    "The OpenAI request could not be completed. A deterministic rules-based fallback was used."
+                    "Die OpenAI-Anfrage konnte nicht abgeschlossen werden. Es wurde eine regelbasierte Fallback-Analyse verwendet."
+                    if language == "de"
+                    else "The OpenAI request could not be completed. A deterministic rules-based fallback was used."
                 )
         else:
             analysis["analysisNote"] = (
                 routing["reason"]
-                + " The workflow remains a proposal; integrations are not connected and execution is simulated."
+                + (" Der Workflow ist ein Vorschlag; Integrationen sind nicht verbunden und die Ausführung wird simuliert."
+                   if language == "de" else
+                   " The workflow remains a proposal; integrations are not connected and execution is simulated.")
             )
 
         workflow = self.workflow_generator.generate(
             description,
             analysis["signals"],
             analysis.get("detectedDetails"),
+            language=language,
         )
         self._ensure_approval_gate(workflow)
         validate(workflow)
         analysis["proposedWorkflow"] = workflow
-        return analysis
+        return localize_process_analysis(analysis, language)
 
     def _apply_ai_result(self, analysis: dict, ai_result: dict) -> None:
         workflow_steps = []
