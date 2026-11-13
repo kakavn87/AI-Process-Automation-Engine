@@ -271,19 +271,14 @@
           <div class="result-two-column"><article class="result-panel"><h3>{{ i18n.risks }}</h3><ul class="bullet-list">@for (risk of analysis.risks; track risk) { <li>{{ risk }}</li> }</ul></article><article class="result-panel"><h3>{{ i18n.questions }}</h3><ul class="bullet-list">@for (question of analysis.questions; track question) { <li>{{ question }}</li> }</ul></article></div>
           @if (analysis.assumptions.length > 0) { <article class="result-panel"><h3>{{ i18n.assumptions }}</h3><ul class="bullet-list">@for (assumption of analysis.assumptions; track assumption) { <li>{{ assumption }}</li> }</ul></article> }
 
-          <article class="result-panel execution-panel">
-            <div class="result-panel-heading"><div><div class="section-kicker">{{ i18n.execution }}</div><h3>{{ i18n.executionTitle }}</h3><p class="plain-copy">{{ i18n.executionCopy }}</p></div><span class="draft-badge">{{ i18n.simulation }}</span></div>
-            @if (!execution()) { <button class="button-primary" type="button" (click)="startExecution()" [disabled]="executionLoading()">{{ executionLoading() ? i18n.creating : i18n.createRequest }} <span>→</span></button> }
-            @if (execution(); as currentExecution) {
-              <div class="execution-meta"><div><small>{{ i18n.executionId }}</small><code>{{ currentExecution.id }}</code></div><span class="execution-status" [class.status-awaiting]="currentExecution.status === 'awaiting_approval'" [class.status-completed]="currentExecution.status === 'completed'" [class.status-rejected]="currentExecution.status === 'rejected'">{{ currentExecution.status === 'awaiting_approval' ? i18n.awaiting : currentExecution.status === 'completed' ? i18n.completed : i18n.rejected }}</span></div>
-              @if (currentExecution.status === 'awaiting_approval') { <p class="muted-note">{{ i18n.reviewBefore }}</p><div class="decision-actions"><button class="button-primary" type="button" (click)="approveExecution()" [disabled]="executionLoading()">{{ i18n.approveRun }}</button><button class="button-secondary" type="button" (click)="rejectExecution()" [disabled]="executionLoading()">{{ i18n.reject }}</button></div> }
-              @if (currentExecution.status === 'completed') { <p class="success-copy">{{ i18n.approvalRecorded }}</p> }
-              @if (currentExecution.status === 'rejected') { <p class="muted-note">{{ i18n.rejectionRecorded }}</p> }
-              <div class="event-list">@for (event of currentExecution.events; track $index) { <div class="event-item"><span class="event-dot"></span><div><strong>{{ event.step || event.event || 'Event' }}</strong><p>{{ event.message }}</p><small>{{ event.status }}</small></div></div> }</div>
-            }
-            @if (executionError(); as error) { <div class="error-panel" role="alert">{{ error }}</div> }
-          </article>
           <p class="analysis-disclaimer">{{ analysis.analysisNote }}</p>
+
+          @if (analysis.processSessionId; as sessionId) {
+            <app-workflow-session-page
+              [sessionId]="sessionId"
+              [embedded]="true">
+            </app-workflow-session-page>
+          }
         </section>
       }
 
@@ -310,7 +305,11 @@
         }
       </section>
 
-      <footer class="page-footer"><span><strong>AI Process Optimierung</strong> · {{ i18n.product }}</span><span>{{ i18n.footer }}</span></footer>
+      <footer class="page-footer">
+        <span><strong>AI Process Optimierung</strong> · {{ i18n.product }}</span>
+        <span>{{ i18n.footer }}</span>
+        <span>Entwickler: Hai Linh Nguyen</span>
+      </footer>
     </main>
   </div>
 </div>

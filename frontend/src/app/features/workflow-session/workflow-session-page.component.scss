@@ -396,3 +396,19 @@
   .session-progress { grid-template-columns: 1fr; }
   .live-readiness-badge { white-space: normal; }
 }
+
+
+/* Inline workflow mode shares the analysis page without a second page header/footer. */
+.session-shell.is-embedded {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  margin: 22px 0 0;
+  padding: 0;
+}
+.session-shell.is-embedded .session-heading {
+  padding: 22px 0 18px;
+}
+.session-shell.is-embedded .session-card {
+  margin-top: 12px;
+}
