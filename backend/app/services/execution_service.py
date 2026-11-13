@@ -344,11 +344,12 @@ class ExecutionService:
     def _sync_live_workflow_session(self, execution_id: str, status: str, message: str) -> None:
         if not sqlalchemy_inspect(self.db.get_bind()).has_table(WorkflowSession.__tablename__):
             return
-        session = (
-            self.db.query(WorkflowSession)
-            .filter(WorkflowSession.related_execution_id == execution_id)
-            .one_or_none()
+        query = self.db.query(WorkflowSession).filter(
+            WorkflowSession.related_execution_id == execution_id
         )
+        if self.tenant_id is not None:
+            query = query.filter(WorkflowSession.tenant_id == self.tenant_id)
+        session = query.one_or_none()
         if session is None:
             return
         session.events = [

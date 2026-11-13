@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.core.database import Base
 from app.dependencies.auth import TenantContext, get_tenant_context, require_roles
 from app.models.tenant import Tenant, TenantInvitation, TenantMembership, User
+from app.models.workflow_session import WorkflowSession
 from app.schemas.auth import InvitationAcceptRequest, InvitationCreateRequest, LoginRequest
 from app.services.ai_usage_service import AIUsageService
 from app.services.auth_service import AuthService, password_hash
@@ -338,3 +339,50 @@ def test_live_webhook_is_disabled_when_shared_auth_mode_is_enabled(monkeypatch):
     assert readiness["ready"] is False
     assert readiness["enabled"] is False
     assert readiness["status"] == "workspace_configuration_required"
+
+
+def test_live_webhook_session_sync_is_scoped_to_the_active_tenant(db_session):
+    tenant_a = add_tenant(db_session, "Tenant Live A")
+    tenant_b = add_tenant(db_session, "Tenant Live B")
+    execution_id = str(uuid4())
+
+    session_a = WorkflowSessionService(db_session, tenant_id=tenant_a.id).create(
+        description="Tenant A workflow",
+        analysis={"questions": []},
+        strategy="rules",
+        language="en",
+    )
+    session_b = WorkflowSession(
+        id=str(uuid4()),
+        tenant_id=tenant_b.id,
+        description="Tenant B workflow",
+        analysis_strategy="rules",
+        language="en",
+        business_domain="general",
+        analysis={},
+        questions=[],
+        answers={},
+        status="completed",
+        events=[],
+        related_execution_id=execution_id,
+    )
+    db_session.add(session_b)
+    db_session.flush()
+
+    # Attach the same reference deliberately to simulate an inconsistent or
+    # legacy relation. Tenant A must never append events to Tenant B's row.
+    session_a_row = db_session.get(WorkflowSession, session_a["id"])
+    session_a_row.related_execution_id = execution_id
+    db_session.commit()
+
+    ExecutionService(db_session, tenant_id=tenant_a.id)._sync_live_workflow_session(
+        execution_id,
+        "succeeded",
+        "Webhook receipt confirmed.",
+    )
+    db_session.commit()
+    db_session.refresh(session_a_row)
+    db_session.refresh(session_b)
+
+    assert any(event["event"] == "live_execution_succeeded" for event in session_a_row.events)
+    assert session_b.events == []
