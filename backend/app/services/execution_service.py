@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from hmac import compare_digest
 from ipaddress import ip_address
 from uuid import uuid4
 from urllib.parse import urlparse
@@ -120,11 +121,14 @@ class ExecutionService:
         if enabled and not endpoint:
             status = "missing_endpoint"
             message = "Add WORKFLOW_WEBHOOK_URL to configure the approved webhook endpoint."
+        elif enabled and not settings.WORKFLOW_LIVE_EXECUTION_TOKEN.strip():
+            status = "missing_operator_token"
+            message = "Set WORKFLOW_LIVE_EXECUTION_TOKEN to authorize a human operator before live dispatch."
         elif enabled:
             try:
                 ExecutionService._validate_webhook_url(endpoint)
                 status = "ready"
-                message = "A secure HTTPS webhook is configured and live execution is enabled."
+                message = "A secure HTTPS webhook and operator confirmation token are configured."
             except ValueError as error:
                 status = "invalid_endpoint"
                 message = str(error)
@@ -137,6 +141,7 @@ class ExecutionService:
             "status": status,
             "message": message,
             "secretConfigured": bool(settings.WORKFLOW_WEBHOOK_BEARER_TOKEN.strip()),
+            "operatorTokenConfigured": bool(settings.WORKFLOW_LIVE_EXECUTION_TOKEN.strip()),
         }
 
     @staticmethod
@@ -161,9 +166,13 @@ class ExecutionService:
             raise ValueError("Use a public DNS hostname for the webhook endpoint, not an IP address.")
         return endpoint
 
-    def run_live(self, execution_id: str, confirmed: bool) -> dict:
+    def run_live(self, execution_id: str, confirmed: bool, confirmation_token: str) -> dict:
         if confirmed is not True:
             raise ValueError("Explicit confirmation is required before sending data to the configured webhook.")
+        expected_token = settings.WORKFLOW_LIVE_EXECUTION_TOKEN.strip()
+        supplied_token = (confirmation_token or "").strip()
+        if not expected_token or not compare_digest(supplied_token, expected_token):
+            raise ValueError("A valid operator confirmation token is required before live execution.")
 
         execution = self.db.get(ApprovalExecution, execution_id)
         if execution is None:
