@@ -20,7 +20,7 @@ AI Process Optimierung is a portfolio MVP that turns natural-language business p
 
 ## LLM configuration
 
-The backend uses the OpenAI **Responses API** and schema-constrained Pydantic output. The default model is `gpt-6-luna`; it can be changed with `OPENAI_MODEL`. Set optional `OPENAI_BASE_URL` to an OpenAI-compatible gateway such as LiteLLM Proxy. When a gateway is used, `OPENAI_API_KEY` must be a least-privilege virtual key issued by that gateway. The provider API key must never be sent to the browser.
+The backend uses the OpenAI **Responses API** and schema-constrained Pydantic output. The shared default model is `gpt-6-luna`; it can be changed with `OPENAI_MODEL`. Optional `OPENAI_ANALYSIS_MODEL` and `OPENAI_OPTIMIZATION_MODEL` let you select a faster model for the initial analysis and a stronger model for the redesign after clarification. Leave either variable blank to reuse `OPENAI_MODEL`. Use only aliases that are available from the configured provider or LiteLLM gateway. Set optional `OPENAI_BASE_URL` to an OpenAI-compatible gateway such as LiteLLM Proxy. When a gateway is used, `OPENAI_API_KEY` must be a least-privilege virtual key issued by that gateway. The provider API key must never be sent to the browser.
 
 The deterministic analyzer continues to provide the baseline automation score and canonical signals. When the key is configured, the LLM generates the process summary, current process, automation opportunities, integrations, risks, assumptions, questions, and proposed workflow.
 
@@ -33,6 +33,10 @@ Copy `backend/.env.example` to `backend/.env`, then add your API key:
 ```env
 OPENAI_API_KEY=your-api-key
 OPENAI_MODEL=gpt-6-luna
+# Optional: use a faster/cheaper model for the first analysis.
+OPENAI_ANALYSIS_MODEL=
+# Optional: reserve a stronger model for the optimization after clarification.
+OPENAI_OPTIMIZATION_MODEL=
 ```
 
 When `OPENAI_API_KEY` is empty, the API returns `llmUsed: false` and uses deterministic rules. A successful model call returns `llmUsed: true`. If the model request fails, the backend logs the exception and falls back to deterministic analysis.
@@ -42,7 +46,9 @@ When `OPENAI_API_KEY` is empty, the API returns `llmUsed: false` and uses determ
 In the Render Dashboard, open the backend service's **Environment** page and add:
 
 - `OPENAI_API_KEY`: your provider API key, or a least-privilege LiteLLM virtual key (secret)
-- `OPENAI_MODEL`: `gpt-6-luna` or the exact model alias exposed by your gateway
+- `OPENAI_MODEL`: the shared default model alias
+- `OPENAI_ANALYSIS_MODEL`: optional fast model alias for Step 1
+- `OPENAI_OPTIMIZATION_MODEL`: optional model alias for Step 3; can be stronger than the analysis model
 - `OPENAI_BASE_URL`: optional private OpenAI-compatible gateway URL, e.g. LiteLLM's `https://gateway.example/v1`
 - `OPENWEBUI_URL`: optional URL of a separately deployed OpenWebUI portal
 
