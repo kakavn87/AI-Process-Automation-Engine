@@ -45,6 +45,10 @@ export class ProcessPageComponent implements OnInit {
   readonly integrationLoading = signal(false);
   readonly integrationError = signal<string | null>(null);
   readonly workflowSession = signal<WorkflowSession | null>(null);
+  readonly workspaceCreating = signal(false);
+  readonly workspaceCreateError = signal<string | null>(null);
+  readonly workspaceCreateSuccess = signal<string | null>(null);
+  newWorkspaceName = '';
   readonly invitationLoading = signal(false);
   readonly invitationError = signal<string | null>(null);
   readonly invitationResult = signal<{
@@ -95,6 +99,34 @@ export class ProcessPageComponent implements OnInit {
             : 'Could not load integration status.'
         );
         this.integrationLoading.set(false);
+      }
+    });
+  }
+
+  createWorkspace(): void {
+    const name = this.newWorkspaceName.trim();
+    if (!name || this.workspaceCreating() || !this.auth.isAuthenticated()) return;
+
+    this.workspaceCreating.set(true);
+    this.workspaceCreateError.set(null);
+    this.workspaceCreateSuccess.set(null);
+    this.auth.createWorkspace(name).subscribe({
+      next: () => {
+        this.newWorkspaceName = '';
+        this.workspaceCreateSuccess.set(this.language() === 'de'
+          ? 'Arbeitsbereich erstellt. Sie sind jetzt im neuen Arbeitsbereich angemeldet.'
+          : 'Workspace created. You are now signed in to the new workspace.');
+        this.workspaceCreating.set(false);
+        this.invitationResult.set(null);
+      },
+      error: response => {
+        const detail = response?.error?.detail;
+        this.workspaceCreateError.set(typeof detail === 'string'
+          ? detail
+          : (this.language() === 'de'
+            ? 'Der Arbeitsbereich konnte nicht erstellt werden.'
+            : 'Could not create the workspace.'));
+        this.workspaceCreating.set(false);
       }
     });
   }
