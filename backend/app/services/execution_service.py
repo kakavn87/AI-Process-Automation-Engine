@@ -1,154 +1,104 @@
 from datetime import datetime, timezone
+from uuid import uuid4
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.engine.execution.executor import WorkflowExecutor
 from app.engine.workflow.validator import validate
-from app.models.execution import Execution
-from app.models.execution_step import ExecutionStep
-
-
-OUTBOUND_TYPES = {"notify", "email", "teams"}
+from app.models.execution import ApprovalExecution
 
 
 class ExecutionService:
-    """Persist a reviewable workflow run; do not invoke external connectors yet."""
-
     def __init__(self, db: Session):
         self.db = db
+        self.executor = WorkflowExecutor()
 
     def create(self, workflow: dict) -> dict:
-        workflow = self._ensure_approval_gate(workflow)
         validate(workflow)
-        steps = workflow.get("steps", [])
-        if not steps:
-            raise ValueError("The workflow must contain at least one step.")
-
-        approval_index = next(i for i, step in enumerate(steps) if step.get("type") == "approval")
-        execution = Execution(
-            workflow_name=workflow.get("name", "Workflow execution"),
+        execution = ApprovalExecution(
+            id=str(uuid4()),
+            workflow_name=workflow.get("name", "Untitled workflow"),
+            workflow_definition=workflow,
             status="awaiting_approval",
-            workflow_data=workflow,
+            events=[{
+                "event": "execution_created",
+                "status": "awaiting_approval",
+                "message": "Execution is paused. Review the workflow and approve it before running.",
+            }],
         )
-        for index, step in enumerate(steps):
-            if index < approval_index:
-                step_status = "pending"
-            elif index == approval_index:
-                step_status = "awaiting_approval"
-            else:
-                step_status = "blocked"
-            execution.steps.append(ExecutionStep(
-                step_key=step.get("id", f"step-{index + 1}"),
-                step_type=step["type"],
-                name=step.get("name", step["type"]),
-                description=step.get("description", ""),
-                status=step_status,
-                position=index,
-                config=step.get("config", {}),
-            ))
-
         self.db.add(execution)
         self.db.commit()
         self.db.refresh(execution)
         return self._serialize(execution)
 
-    def list(self) -> list[dict]:
-        executions = self.db.scalars(
-            select(Execution).order_by(Execution.created_at.desc(), Execution.id.desc())
-        ).all()
-        return [self._serialize(item) for item in executions]
-
-    def get(self, execution_id: int) -> dict | None:
-        execution = self.db.get(Execution, execution_id)
+    def get(self, execution_id: str) -> dict | None:
+        execution = self.db.get(ApprovalExecution, execution_id)
         return self._serialize(execution) if execution else None
 
-    def approve(self, execution_id: int, note: str = "") -> dict:
-        execution = self._require_pending(execution_id)
-        execution.status = "approved_ready"
-        execution.decision_note = note
-        execution.decided_at = datetime.now(timezone.utc)
-        for step in execution.steps:
-            if step.step_type == "approval":
-                step.status = "approved"
-            elif step.status == "blocked":
-                step.status = "pending"
-        self.db.commit()
-        self.db.refresh(execution)
-        return self._serialize(execution)
+    def list(self, limit: int = 20) -> list[dict]:
+        items = (
+            self.db.query(ApprovalExecution)
+            .order_by(ApprovalExecution.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return [self._serialize(item) for item in items]
 
-    def reject(self, execution_id: int, reason: str = "") -> dict:
-        execution = self._require_pending(execution_id)
-        execution.status = "rejected"
-        execution.decision_note = reason
-        execution.decided_at = datetime.now(timezone.utc)
-        for step in execution.steps:
-            step.status = "rejected" if step.step_type == "approval" else "cancelled"
-        self.db.commit()
-        self.db.refresh(execution)
-        return self._serialize(execution)
-
-    def _require_pending(self, execution_id: int) -> Execution:
-        execution = self.db.get(Execution, execution_id)
+    def approve(self, execution_id: str, note: str | None = None) -> dict:
+        execution = self.db.get(ApprovalExecution, execution_id)
         if execution is None:
-            raise LookupError("Execution not found.")
+            raise KeyError("Execution was not found.")
         if execution.status != "awaiting_approval":
-            raise RuntimeError(f"Execution is already {execution.status}.")
-        return execution
+            raise ValueError(f"Cannot approve an execution with status '{execution.status}'.")
+
+        result = self.executor.execute(execution.workflow_definition, approved=True)
+        execution.status = result["status"]
+        execution.decision_note = note
+        execution.events = [
+            *execution.events,
+            {
+                "event": "approval_granted",
+                "status": "approved",
+                "message": note or "Approved by a human reviewer.",
+            },
+            *result["events"],
+        ]
+        execution.updated_at = datetime.now(timezone.utc)
+        self.db.commit()
+        self.db.refresh(execution)
+        return self._serialize(execution)
+
+    def reject(self, execution_id: str, note: str | None = None) -> dict:
+        execution = self.db.get(ApprovalExecution, execution_id)
+        if execution is None:
+            raise KeyError("Execution was not found.")
+        if execution.status != "awaiting_approval":
+            raise ValueError(f"Cannot reject an execution with status '{execution.status}'.")
+
+        execution.status = "rejected"
+        execution.decision_note = note
+        execution.events = [
+            *execution.events,
+            {
+                "event": "approval_rejected",
+                "status": "rejected",
+                "message": note or "Rejected by a human reviewer. No workflow steps were executed.",
+            },
+        ]
+        execution.updated_at = datetime.now(timezone.utc)
+        self.db.commit()
+        self.db.refresh(execution)
+        return self._serialize(execution)
 
     @staticmethod
-    def _ensure_approval_gate(workflow: dict) -> dict:
-        definition = {
-            **workflow,
-            "steps": [dict(step, config=dict(step.get("config") or {})) for step in workflow.get("steps", [])],
-        }
-        approval_index = next((i for i, step in enumerate(definition["steps"]) if step.get("type") == "approval"), -1)
-        first_outbound = next((i for i, step in enumerate(definition["steps"]) if step.get("type") in OUTBOUND_TYPES), len(definition["steps"]))
-
-        if approval_index < 0:
-            approval = {
-                "id": "approval-gate",
-                "type": "approval",
-                "name": "Human approval",
-                "description": "Review and approve this workflow before any execution begins.",
-                "config": {"requiresApproval": False},
-            }
-            definition["steps"].insert(first_outbound, approval)
-        elif approval_index > first_outbound:
-            approval = definition["steps"].pop(approval_index)
-            definition["steps"].insert(first_outbound, approval)
-
-        for step in definition["steps"]:
-            if step.get("type") in OUTBOUND_TYPES:
-                step.setdefault("config", {})["requiresApproval"] = True
-        for index, step in enumerate(definition["steps"], start=1):
-            step["id"] = f"step-{index}"
-        return definition
-
-    @staticmethod
-    def _serialize(execution: Execution) -> dict:
+    def _serialize(execution: ApprovalExecution) -> dict:
         return {
             "id": execution.id,
             "workflowName": execution.workflow_name,
             "status": execution.status,
-            "workflow": execution.workflow_data,
-            "decisionNote": execution.decision_note or "",
+            "decisionNote": execution.decision_note,
             "createdAt": execution.created_at.isoformat() if execution.created_at else None,
-            "decidedAt": execution.decided_at.isoformat() if execution.decided_at else None,
-            "steps": [
-                {
-                    "id": step.step_key,
-                    "type": step.step_type,
-                    "name": step.name,
-                    "description": step.description,
-                    "status": step.status,
-                    "position": step.position,
-                }
-                for step in execution.steps
-            ],
-            "executionNote": (
-                "Approval is recorded. Workflow actions have not been executed in this release; "
-                "connectors must be configured and tested before external side effects are enabled."
-                if execution.status == "approved_ready"
-                else "No workflow actions have been executed."
-            ),
+            "updatedAt": execution.updated_at.isoformat() if execution.updated_at else None,
+            "executionMode": "simulation",
+            "events": execution.events or [],
         }
