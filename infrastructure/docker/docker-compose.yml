@@ -9,5 +9,37 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  # Optional local AI platform: start with --profile ai-platform.
+  # The gateway and web portal are bound to localhost by default.
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    profiles: ["ai-platform"]
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    env_file:
+      - .env.ai-platform
+    ports:
+      - "127.0.0.1:4000:4000"
+    volumes:
+      - ./litellm-config.yaml:/app/config.yaml:ro
+    restart: unless-stopped
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    profiles: ["ai-platform"]
+    depends_on:
+      - litellm
+    environment:
+      WEBUI_AUTH: "true"
+      OPENAI_API_BASE_URL: http://litellm:4000/v1
+      OPENAI_API_KEY: ${LITELLM_WEBUI_KEY:?Set a scoped LiteLLM virtual key in .env.ai-platform}
+      ENABLE_OPENAI_API: "true"
+    ports:
+      - "127.0.0.1:3000:8080"
+    volumes:
+      - open_webui_data:/app/backend/data
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  open_webui_data:
