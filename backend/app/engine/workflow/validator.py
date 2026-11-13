@@ -2,6 +2,7 @@ ALLOWED_STEP_TYPES = {
     "analyze", "approval", "email", "teams", "http",
     "trigger", "collect", "extract", "transform", "validate", "generate", "notify",
 }
+OUTBOUND_STEP_TYPES = {"notify", "email", "teams"}
 
 
 def validate(workflow: dict) -> None:
@@ -19,8 +20,13 @@ def validate(workflow: dict) -> None:
             seen_ids.add(step_id)
 
     for index, step in enumerate(steps):
+        if step.get("type") not in OUTBOUND_STEP_TYPES:
+            continue
         config = step.get("config") or {}
-        if step.get("type") in {"notify", "email", "teams"} and config.get("requiresApproval"):
-            has_prior_approval = any(previous.get("type") == "approval" for previous in steps[:index])
-            if not has_prior_approval:
-                raise ValueError("An approval step must come before an outbound notification step.")
+        if config.get("requiresApproval") is not True:
+            raise ValueError("Outbound notification steps must require human approval.")
+        has_prior_approval = any(
+            previous.get("type") == "approval" for previous in steps[:index]
+        )
+        if not has_prior_approval:
+            raise ValueError("An approval step must come before an outbound notification step.")
