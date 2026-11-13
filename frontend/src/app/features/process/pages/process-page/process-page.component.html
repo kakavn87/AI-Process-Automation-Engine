@@ -1,6 +1,6 @@
 <div class="app-frame" [attr.lang]="language()">
   <aside class="sidebar">
-    <a class="brand" href="#overview" aria-label="FlowPilot Startseite">
+    <a class="brand" href="#overview" aria-label="AI Engine Startseite">
       <span class="brand-mark"><span>F</span></span>
       <span class="brand-copy"><strong>{{ i18n.brand }}</strong><small>{{ i18n.product }}</small></span>
     </a>
@@ -24,13 +24,13 @@
 
     <div class="sidebar-bottom">
       <div class="workspace-health"><span class="health-dot"></span><span><strong>{{ i18n.systemReady }}</strong><small>{{ i18n.activeWorkspace }}</small></span></div>
-      <div class="sidebar-footer"><span class="avatar">FP</span><span><strong>FlowPilot Demo</strong><small>Portfolio workspace</small></span><span class="more-icon">···</span></div>
+      <div class="sidebar-footer"><span class="avatar">AI</span><span><strong>AI Engine Demo</strong><small>Portfolio workspace</small></span><span class="more-icon">···</span></div>
     </div>
   </aside>
 
   <div class="main-column">
     <header class="topbar">
-      <div class="breadcrumb"><span>FlowPilot</span><span class="crumb-separator">/</span><strong>{{ i18n.navOverview }}</strong></div>
+      <div class="breadcrumb"><span>AI Engine</span><span class="crumb-separator">/</span><strong>{{ i18n.navOverview }}</strong></div>
       <div class="topbar-actions">
         <span class="environment-label"><span class="health-dot"></span>{{ i18n.workspace }}</span>
         <div class="language-switch" role="group" [attr.aria-label]="i18n.language">
@@ -60,7 +60,7 @@
           <div class="orbit orbit-one"></div>
           <div class="orbit orbit-two"></div>
           <div class="orbit orbit-three"></div>
-          <div class="visual-core"><span class="core-spark">✦</span><span>FLOW<br/>ENGINE</span></div>
+          <div class="visual-core"><span class="core-spark">✦</span><span>AI<br/>ENGINE</span></div>
           <div class="float-node node-python"><span class="node-symbol">Py</span><span><strong>Python</strong><small>Rules engine</small></span><b>✓</b></div>
           <div class="float-node node-ai"><span class="node-symbol ai-symbol">✧</span><span><strong>AI Analysis</strong><small>When needed</small></span><b>✓</b></div>
           <div class="float-node node-approval"><span class="node-symbol approval-symbol">✓</span><span><strong>Human approval</strong><small>Always in control</small></span></div>
@@ -145,7 +145,7 @@
                   <option value="llm">{{ i18n.strategyLlm }}</option>
                 </select>
               </div>
-              <div class="strategy-explainer"><span class="strategy-indicator"></span><span>{{ language() === 'de' ? 'Einfache Abläufe werden lokal mit Python analysiert. Komplexe Fälle können an das LLM weitergeleitet werden.' : 'Simple workflows are analyzed locally with Python. Complex cases can be routed to the LLM.' }}</span></div>
+              <div class="strategy-explainer"><span class="strategy-indicator"></span><span>{{ language() === 'de' ? 'Im Automatikmodus versteht zuerst die KI jeden Prozess. Python übernimmt danach Datenprüfung, Berechnungen, Sicherheitskontrollen und Fallback.' : 'In automatic mode, AI understands any process first. Python handles data validation, calculations, safety controls and fallback.' }}</span></div>
             </div>
 
             <div class="builder-submit-row">
@@ -221,6 +221,22 @@
             </article>
           }
 
+          @if (analysis.processSpecification; as specification) {
+            <article class="result-panel specification-panel">
+              <div class="result-panel-heading"><div><div class="section-kicker">{{ i18n.universalModel }}</div><h3>{{ specification.businessDomainLabel }}</h3></div><span class="draft-badge">v{{ specification.schemaVersion }}</span></div>
+              <div class="specification-goal"><small>{{ i18n.processGoal }}</small><p>{{ specification.goal }}</p></div>
+              <div class="specification-grid">
+                <div><small>{{ i18n.actors }}</small><div class="tag-row">@for (item of specification.actors; track item) { <span>{{ item }}</span> } @if (!specification.actors.length) { <span>—</span> }</div></div>
+                <div><small>{{ i18n.inputs }}</small><div class="tag-row">@for (item of specification.inputs; track item) { <span>{{ item }}</span> } @if (!specification.inputs.length) { <span>—</span> }</div></div>
+                <div><small>{{ i18n.systems }}</small><div class="tag-row">@for (item of specification.systems; track item) { <span>{{ item }}</span> } @if (!specification.systems.length) { <span>—</span> }</div></div>
+                <div><small>{{ i18n.outputs }}</small><div class="tag-row">@for (item of specification.outputs; track item) { <span>{{ item }}</span> } @if (!specification.outputs.length) { <span>—</span> }</div></div>
+                <div><small>{{ i18n.businessRules }}</small><ul class="bullet-list">@for (item of specification.businessRules; track item) { <li>{{ item }}</li> } @if (!specification.businessRules.length) { <li>—</li> }</ul></div>
+                <div><small>{{ i18n.exceptionPaths }}</small><ul class="bullet-list">@for (item of specification.exceptionPaths; track item) { <li>{{ item }}</li> } @if (!specification.exceptionPaths.length) { <li>—</li> }</ul></div>
+                <div><small>{{ i18n.successMetrics }}</small><div class="tag-row">@for (item of specification.successMetrics; track item) { <span>{{ item }}</span> } @if (!specification.successMetrics.length) { <span>—</span> }</div></div>
+              </div>
+            </article>
+          }
+
           <div class="result-two-column">
             <article class="result-panel"><div class="result-panel-heading"><h3>{{ i18n.currentProcess }}</h3><span class="panel-count">{{ analysis.currentProcess.length }}</span></div><ol class="numbered-list">@for (step of analysis.currentProcess; track $index) { <li>{{ step }}</li> }</ol></article>
             <article class="result-panel"><div class="result-panel-heading"><h3>{{ i18n.opportunities }}</h3><span class="panel-count">{{ analysis.automationOpportunities.length }}</span></div><div class="opportunity-list">@for (item of analysis.automationOpportunities; track item.title) { <div class="opportunity-item"><div><strong>{{ item.title }}</strong><p>{{ item.description }}</p></div><span class="impact-pill" [class.impact-high]="item.impact === 'high'">{{ item.impact === 'high' ? i18n.impactHigh : item.impact === 'low' ? i18n.impactLow : i18n.impactMedium }}</span></div> }</div></article>
@@ -283,7 +299,7 @@
         }
       </section>
 
-      <footer class="page-footer"><span><strong>FlowPilot</strong> · {{ i18n.product }}</span><span>{{ i18n.footer }}</span></footer>
+      <footer class="page-footer"><span><strong>AI Engine</strong> · {{ i18n.product }}</span><span>{{ i18n.footer }}</span></footer>
     </main>
   </div>
 </div>

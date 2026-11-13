@@ -143,24 +143,24 @@ export class ProcessPageComponent {
   ];
 
   private readonly de = {
-    brand: 'FlowPilot', product: 'AI Process Automation Engine',
+    brand: 'AI Engine', product: 'Universal Process Intelligence',
     workspace: 'DEMO-ARBEITSBEREICH', language: 'Sprache',
     navOverview: 'Übersicht', navIndustries: 'Geschäftsbereiche', navBuilder: 'Prozess erstellen',
     navData: 'Datenwerkstatt', navSecurity: 'Kontrolle & Freigaben',
     activeWorkspace: 'Arbeitsbereich aktiv', systemReady: 'System bereit',
-    heroEyebrow: 'INTELLIGENTE PROZESSAUTOMATISIERUNG',
-    heroTitle: 'Weniger Routine. Mehr Wirkung.',
-    heroCopy: 'Beschreiben Sie Ihre Abläufe. FlowPilot erkennt Potenziale und entwirft kontrollierbare Workflows – mit Python-Regeln und KI.',
+    heroEyebrow: 'UNIVERSELLE KI-PROZESSAUTOMATISIERUNG',
+    heroTitle: 'Ein KI-Kern. Jeder Prozess.',
+    heroCopy: 'Beschreiben Sie jeden Geschäftsprozess – auch Nischen- und Spezialabläufe. AI Engine versteht die Aufgabe, strukturiert den Workflow und nutzt Python für Daten, Regeln und sichere Ausführung.',
     startAnalysis: 'Analyse starten', exploreAreas: 'Geschäftsbereiche entdecken',
     pillHybrid: 'Hybrid: Python + KI', pillApproval: 'Freigaben bleiben unter Kontrolle', pillNoCode: 'Ohne Programmierung starten',
     metricIndustries: 'Geschäftsbereiche', metricEngines: 'Analysemodi', metricData: 'Datenformate',
-    industriesEyebrow: 'BRANCHEN & FACHBEREICHE', industriesTitle: 'Wo möchten Sie automatisieren?',
-    industriesCopy: 'Wählen Sie einen Bereich. Ein passendes Praxisbeispiel wird direkt in den Prozess-Editor übernommen.',
+    industriesEyebrow: 'BEISPIELE AUS FACHBEREICHEN', industriesTitle: 'Einige Beispiele. Unbegrenzte Anwendungsfälle.',
+    industriesCopy: 'Diese Karten sind nur Startbeispiele. Beschreiben Sie jeden anderen Prozess frei – die KI ist nicht auf diese Bereiche beschränkt.',
     selected: 'Ausgewählt', useExample: 'Beispiel verwenden', allAreas: 'Freie Beschreibung',
     builderEyebrow: 'WORKFLOW DESIGNER', builderTitle: 'Beschreiben Sie Ihren Prozess',
-    builderCopy: 'Starten Sie mit einem Beispiel oder schildern Sie Ihren eigenen Ablauf. Die Analyse erstellt daraus einen strukturierten Workflow-Entwurf.',
+    builderCopy: 'Nutzen Sie ein Beispiel oder beschreiben Sie einen beliebigen eigenen Ablauf. Die KI leitet Ziel, Rollen, Eingaben, Regeln, Ausnahmen und einen Workflow daraus ab.',
     selectedArea: 'Geschäftsbereich', strategy: 'Analysemethode',
-    strategyAuto: 'Automatisch · Hybrid', strategyRules: 'Python-Regeln · kostenlos', strategyLlm: 'KI-Analyse · API-Guthaben',
+    strategyAuto: 'Automatisch · KI zuerst', strategyRules: 'Python-Regeln · kostenlos', strategyLlm: 'KI-Analyse · API-Guthaben',
     descriptionLabel: 'Wie läuft der Prozess heute ab?',
     descriptionHint: 'Beschreiben Sie Auslöser, beteiligte Personen, Datenquellen, manuelle Schritte und gewünschtes Ergebnis.',
     descriptionPlaceholder: 'Beispiel: Jeden Montag erhält unser Einkauf Excel-Listen von Lieferanten. Die Daten werden geprüft, mit offenen Bestellungen abgeglichen und als Abweichungsbericht vorbereitet …',
@@ -197,35 +197,35 @@ export class ProcessPageComponent {
     routePython: 'Python ausgewählt', routeLlm: 'KI ausgewählt', complexity: 'Hinweise für eine vertiefte Analyse',
     missingKey: 'API-Schlüssel fehlt', missingKeyText: 'KI-Analyse wurde angefordert, aber der Backend-API-Schlüssel ist nicht konfiguriert. Es wurden stattdessen Python-Regeln verwendet.',
     engineNote: 'Analysehinweis', impactHigh: 'Hohe Wirkung', impactMedium: 'Mittlere Wirkung', impactLow: 'Geringe Wirkung',
-    footer: 'FlowPilot ist ein Portfolio-Prototyp. Integrationen sind derzeit nicht verbunden; Workflow-Ausführungen laufen ausschließlich im Simulationsmodus.',
+    footer: 'AI Engine ist ein Portfolio-Prototyp. Integrationen sind derzeit nicht verbunden; Workflow-Ausführungen laufen ausschließlich im Simulationsmodus.',
     errorAnalysis: 'Der Prozess konnte nicht analysiert werden. Bitte prüfen Sie die Backend-Verbindung.',
     errorUpload: 'Die Datei konnte nicht verarbeitet werden. Bitte prüfen Sie das Format.',
     errorRequest: 'Die Freigabeanfrage konnte nicht erstellt werden.',
     errorApprove: 'Die Freigabe konnte nicht gespeichert werden.',
     errorReject: 'Die Ablehnung konnte nicht gespeichert werden.',
     qualityScore: 'Datenqualität', min: 'Min', average: 'Ø', max: 'Max',
-    uploadSelected: 'Ausgewählte Datei', domainGeneral: 'Allgemeiner Prozess'
+    uploadSelected: 'Ausgewählte Datei', universalModel: 'UNIVERSELLES PROZESSMODELL', processGoal: 'Prozessziel', actors: 'Beteiligte Rollen', inputs: 'Eingaben', systems: 'Systeme', businessRules: 'Geschäftsregeln', exceptionPaths: 'Ausnahmen & Sonderfälle', outputs: 'Ergebnisse', successMetrics: 'Erfolgskennzahlen', domainGeneral: 'Freier Prozess / neue Domäne'
   };
 
   private readonly en = {
-    brand: 'FlowPilot', product: 'AI Process Automation Engine',
+    brand: 'AI Engine', product: 'Universal Process Intelligence',
     workspace: 'DEMO WORKSPACE', language: 'Language',
     navOverview: 'Overview', navIndustries: 'Business areas', navBuilder: 'Process builder',
     navData: 'Data workspace', navSecurity: 'Governance & approvals',
     activeWorkspace: 'Workspace active', systemReady: 'System ready',
-    heroEyebrow: 'INTELLIGENT PROCESS AUTOMATION',
-    heroTitle: 'Less routine. More impact.',
-    heroCopy: 'Describe how work gets done. FlowPilot finds opportunities and designs controlled workflows with Python rules and AI.',
+    heroEyebrow: 'UNIVERSAL AI PROCESS AUTOMATION',
+    heroTitle: 'One AI engine. Every process.',
+    heroCopy: 'Describe any business process, including niche and specialist workflows. AI Engine understands the task, structures the workflow and uses Python for data, rules and safe execution.',
     startAnalysis: 'Start analysis', exploreAreas: 'Explore business areas',
     pillHybrid: 'Hybrid: Python + AI', pillApproval: 'Human approvals stay in control', pillNoCode: 'Start without coding',
     metricIndustries: 'Business areas', metricEngines: 'Analysis modes', metricData: 'Data formats',
-    industriesEyebrow: 'INDUSTRIES & FUNCTIONS', industriesTitle: 'Where would you like to automate?',
-    industriesCopy: 'Choose an area. A practical example will be loaded directly into the process builder.',
+    industriesEyebrow: 'EXAMPLES ACROSS BUSINESS AREAS', industriesTitle: 'A few examples. Unlimited use cases.',
+    industriesCopy: 'These cards are starting examples only. Describe any other process freely — the AI is not limited to this gallery.',
     selected: 'Selected', useExample: 'Use example', allAreas: 'Free description',
     builderEyebrow: 'WORKFLOW DESIGNER', builderTitle: 'Describe your process',
-    builderCopy: 'Start with an example or describe your own workflow. The analysis turns it into a structured workflow proposal.',
+    builderCopy: 'Use an example or describe any workflow in your own words. The AI derives the goal, roles, inputs, rules, exceptions and a structured workflow.',
     selectedArea: 'Business area', strategy: 'Analysis strategy',
-    strategyAuto: 'Automatic · Hybrid', strategyRules: 'Python rules · no API cost', strategyLlm: 'AI analysis · API credits',
+    strategyAuto: 'Automatic · AI first', strategyRules: 'Python rules · no API cost', strategyLlm: 'AI analysis · API credits',
     descriptionLabel: 'How does the process work today?',
     descriptionHint: 'Describe the trigger, people involved, data sources, manual steps and expected outcome.',
     descriptionPlaceholder: 'Example: Every Monday, Procurement receives Excel lists from suppliers. The data is checked, matched against open purchase orders and prepared as an exception report …',
@@ -262,14 +262,14 @@ export class ProcessPageComponent {
     routePython: 'Python selected', routeLlm: 'AI selected', complexity: 'Signals requiring deeper analysis',
     missingKey: 'API key missing', missingKeyText: 'AI analysis was requested, but the backend API key is not configured. Python rules were used instead.',
     engineNote: 'Analysis note', impactHigh: 'High impact', impactMedium: 'Medium impact', impactLow: 'Low impact',
-    footer: 'FlowPilot is a portfolio prototype. Integrations are not connected yet; workflow execution runs in simulation mode only.',
+    footer: 'AI Engine is a portfolio prototype. Integrations are not connected yet; workflow execution runs in simulation mode only.',
     errorAnalysis: 'Could not analyze the process. Please check the backend connection.',
     errorUpload: 'Could not process this file. Please check its format.',
     errorRequest: 'Could not create the approval request.',
     errorApprove: 'Could not save the approval.',
     errorReject: 'Could not save the rejection.',
     qualityScore: 'Data quality', min: 'Min', average: 'Avg', max: 'Max',
-    uploadSelected: 'Selected file', domainGeneral: 'General process'
+    uploadSelected: 'Selected file', universalModel: 'UNIVERSAL PROCESS MODEL', processGoal: 'Process goal', actors: 'People & roles', inputs: 'Inputs', systems: 'Systems', businessRules: 'Business rules', exceptionPaths: 'Exceptions & edge cases', outputs: 'Outputs', successMetrics: 'Success metrics', domainGeneral: 'Free process / new domain'
   };
 
   get i18n() {
@@ -375,7 +375,7 @@ export class ProcessPageComponent {
 
     this.executionLoading.set(true);
     this.executionError.set(null);
-    const note = this.language() === 'de' ? 'Über FlowPilot freigegeben.' : 'Approved from FlowPilot.';
+    const note = this.language() === 'de' ? 'Über AI Engine freigegeben.' : 'Approved from AI Engine.';
     this.api.approveExecution(current.id, note).subscribe({
       next: result => {
         this.execution.set(result);
@@ -394,7 +394,7 @@ export class ProcessPageComponent {
 
     this.executionLoading.set(true);
     this.executionError.set(null);
-    const note = this.language() === 'de' ? 'Über FlowPilot abgelehnt.' : 'Rejected from FlowPilot.';
+    const note = this.language() === 'de' ? 'Über AI Engine abgelehnt.' : 'Rejected from AI Engine.';
     this.api.rejectExecution(current.id, note).subscribe({
       next: result => {
         this.execution.set(result);
