@@ -20,13 +20,11 @@ def validate(workflow: dict) -> None:
             seen_ids.add(step_id)
 
     for index, step in enumerate(steps):
-        if step.get("type") not in OUTBOUND_STEP_TYPES:
-            continue
         config = step.get("config") or {}
-        if config.get("requiresApproval") is not True:
-            raise ValueError("Outbound notification steps must require human approval.")
-        has_prior_approval = any(
-            previous.get("type") == "approval" for previous in steps[:index]
+        needs_approval = step.get("type") in OUTBOUND_STEP_TYPES or (
+            step.get("type") == "http" and config.get("requiresApproval")
         )
-        if not has_prior_approval:
-            raise ValueError("An approval step must come before an outbound notification step.")
+        if needs_approval:
+            has_prior_approval = any(previous.get("type") == "approval" for previous in steps[:index])
+            if not has_prior_approval:
+                raise ValueError("A human approval step must come before any outbound side-effect step.")
