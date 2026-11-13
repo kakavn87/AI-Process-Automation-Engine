@@ -19,7 +19,11 @@ class AIUsageService:
 
         input_rate = settings.OPENAI_INPUT_USD_PER_1M
         output_rate = settings.OPENAI_OUTPUT_USD_PER_1M
-        if (
+        if telemetry.get("task") == "rag_embedding":
+            embedding_rate = settings.RAG_EMBEDDING_INPUT_USD_PER_1M
+            if input_tokens is not None and embedding_rate is not None:
+                cost = input_tokens * embedding_rate / 1_000_000
+        elif (
             input_tokens is not None
             and output_tokens is not None
             and input_rate is not None
