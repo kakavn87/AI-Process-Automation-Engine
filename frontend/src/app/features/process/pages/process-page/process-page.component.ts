@@ -236,9 +236,9 @@ export class ProcessPageComponent implements OnInit {
         : (this.language() === 'de' ? 'Nach der Analyse' : 'After analysis');
     }
     if (step === 3) {
-      if (status === 'processing') return this.language() === 'de' ? 'Python prüft die Angaben' : 'Python validates the answers';
-      if (state === 'complete') return this.language() === 'de' ? 'Workflow vorbereitet' : 'Workflow prepared';
-      if (state === 'error') return this.language() === 'de' ? 'Verarbeitung fehlgeschlagen' : 'Processing failed';
+      if (status === 'processing') return this.language() === 'de' ? 'LLM optimiert; Python validiert' : 'LLM optimizes; Python validates';
+      if (state === 'complete') return this.language() === 'de' ? 'Optimierungsvorschlag bereit' : 'Optimization proposal ready';
+      if (state === 'error') return this.language() === 'de' ? 'KI-Optimierung fehlgeschlagen' : 'AI optimization failed';
       return this.language() === 'de' ? 'Nach der Klärung' : 'After clarification';
     }
     if (step === 4) {
