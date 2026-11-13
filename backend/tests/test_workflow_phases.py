@@ -253,7 +253,8 @@ def test_live_webhook_is_disabled_by_default(monkeypatch):
 def test_live_webhook_requires_confirmation_and_dispatches_once(monkeypatch):
     monkeypatch.setattr(settings, "WEBHOOK_EXECUTION_ENABLED", True)
     monkeypatch.setattr(settings, "WORKFLOW_WEBHOOK_URL", "https://hooks.example.com/process")
-    monkeypatch.setattr(settings, "WORKFLOW_WEBHOOK_BEARER_TOKEN", "test-token")
+    monkeypatch.setattr(settings, "WORKFLOW_WEBHOOK_BEARER_TOKEN", "receiver-token")
+    monkeypatch.setattr(settings, "WORKFLOW_LIVE_EXECUTION_TOKEN", "operator-token")
     monkeypatch.setattr(settings, "WORKFLOW_WEBHOOK_TIMEOUT_SECONDS", 4.0)
 
     calls = []
@@ -278,15 +279,18 @@ def test_live_webhook_requires_confirmation_and_dispatches_once(monkeypatch):
         service = ExecutionService(db)
 
         with pytest.raises(ValueError, match="Explicit confirmation"):
-            service.run_live(completed["id"], confirmed=False)
+            service.run_live(completed["id"], confirmed=False, confirmation_token="operator-token")
+        with pytest.raises(ValueError, match="operator confirmation token"):
+            service.run_live(completed["id"], confirmed=True, confirmation_token="wrong-token")
 
-        delivered = service.run_live(completed["id"], confirmed=True)
+        delivered = service.run_live(completed["id"], confirmed=True, confirmation_token="operator-token")
         assert delivered["status"] == "completed"
         assert delivered["executionMode"] == "live_webhook"
         assert delivered["liveExecutionStatus"] == "succeeded"
         assert len(calls) == 1
         assert calls[0][0] == "https://hooks.example.com/process"
-        assert calls[0][1]["headers"]["Authorization"] == "Bearer test-token"
+        assert calls[0][1]["headers"]["Authorization"] == "Bearer receiver-token"
+        assert "operator-token" not in calls[0][1]["headers"].values()
         assert calls[0][1]["follow_redirects"] is False
         payload = calls[0][1]["json"]
         assert payload["event"] == "ai_process_optimierung.workflow.approved"
@@ -295,7 +299,7 @@ def test_live_webhook_requires_confirmation_and_dispatches_once(monkeypatch):
         assert "answers" not in payload
 
         with pytest.raises(ValueError, match="already been recorded"):
-            service.run_live(completed["id"], confirmed=True)
+            service.run_live(completed["id"], confirmed=True, confirmation_token="operator-token")
         assert len(calls) == 1
 
     Base.metadata.drop_all(bind=engine)
@@ -323,9 +327,11 @@ def test_pull_request_settings_always_disable_live_webhooks():
         WEBHOOK_EXECUTION_ENABLED=True,
         WORKFLOW_WEBHOOK_URL="https://hooks.example.com/production",
         WORKFLOW_WEBHOOK_BEARER_TOKEN="production-token",
+        WORKFLOW_LIVE_EXECUTION_TOKEN="production-operator-token",
     )
 
     assert preview.OPENAI_API_KEY == "preview-key"
     assert preview.WEBHOOK_EXECUTION_ENABLED is False
     assert preview.WORKFLOW_WEBHOOK_URL == ""
     assert preview.WORKFLOW_WEBHOOK_BEARER_TOKEN == ""
+    assert preview.WORKFLOW_LIVE_EXECUTION_TOKEN == ""
