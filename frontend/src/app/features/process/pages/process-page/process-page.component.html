@@ -293,7 +293,7 @@
                 </div>
               </div>
               <input id="process-files" type="file" multiple
-                accept=".pdf,.docx,.pptx,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,.drawio,.bpmn,.xml,.svg,application/pdf,image/png,image/jpeg,image/webp,application/xml,text/xml,image/svg+xml"
+                accept=".pdf,.docx,.pptx,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,.tif,.tiff,.drawio,.bpmn,.xml,.svg,application/pdf,image/png,image/jpeg,image/webp,image/tiff,application/xml,text/xml,image/svg+xml"
                 (change)="onProcessFilesSelected($event)" />
               <label for="process-files" class="button-secondary file-label">{{ language() === 'de' ? 'Dateien auswählen' : 'Choose files' }}</label>
               @if (processFiles.length > 0) {

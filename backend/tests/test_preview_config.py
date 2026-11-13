@@ -71,3 +71,16 @@ def test_preview_can_use_an_explicit_test_openai_key():
     )
 
     assert settings.OPENAI_API_KEY == "preview-key"
+
+def test_pull_request_preview_never_inherits_production_rag_or_qdrant():
+    settings = Settings(
+        _env_file=None,
+        IS_PULL_REQUEST=True,
+        RAG_ENABLED=True,
+        QDRANT_URL="https://production-qdrant.example",
+        QDRANT_API_KEY="production-qdrant-secret",
+    )
+
+    assert settings.RAG_ENABLED is False
+    assert settings.QDRANT_URL == ""
+    assert settings.QDRANT_API_KEY == ""

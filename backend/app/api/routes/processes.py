@@ -143,6 +143,13 @@ async def analyze_process_with_documents(
         }
         for item in retrieved_evidence
     ]
+    if extracted["image_data_urls"] and not analysis.get("llmUsed"):
+        extracted["warnings"].append(
+            "Visual content was not interpreted by a vision model. The fallback analysis used extracted text only."
+        )
+    # Persist extraction details with the workflow session, not only in the initial response.
+    analysis["sourceDocuments"] = extracted["documents"]
+    analysis["documentWarnings"] = extracted["warnings"]
     session = WorkflowSessionService(db).create(
         description=description.strip() or "Uploaded process documents",
         analysis=analysis,
@@ -157,12 +164,6 @@ async def analyze_process_with_documents(
         for embedding_event in knowledge.telemetry_events:
             AIUsageService(db).record(session["id"], embedding_event)
 
-    if extracted["image_data_urls"] and not analysis.get("llmUsed"):
-        extracted["warnings"].append(
-            "Visual content was not interpreted by a vision model. The fallback analysis used extracted text only."
-        )
-    analysis["sourceDocuments"] = extracted["documents"]
-    analysis["documentWarnings"] = extracted["warnings"]
     return {
         **analysis,
         "processSessionId": session["id"],

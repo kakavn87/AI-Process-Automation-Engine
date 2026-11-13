@@ -31,7 +31,7 @@ MAX_ARCHIVE_UNCOMPRESSED_BYTES = 80 * 1024 * 1024
 MAX_XML_DIAGRAM_UNCOMPRESSED_BYTES = 20 * 1024 * 1024
 SUPPORTED_EXTENSIONS = {
     ".pdf", ".docx", ".pptx", ".xlsx", ".csv", ".txt", ".md",
-    ".png", ".jpg", ".jpeg", ".webp", ".drawio", ".bpmn", ".xml", ".svg",
+    ".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff", ".drawio", ".bpmn", ".xml", ".svg",
 }
 
 
@@ -67,7 +67,7 @@ class DocumentProcessingService:
             suffix = PurePath(filename).suffix.lower()
             if suffix not in SUPPORTED_EXTENSIONS:
                 raise ValueError(
-                    f"{filename}: unsupported file type. Supported formats: PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, PNG, JPG and WEBP."
+                    f"{filename}: unsupported file type. Supported formats: PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, PNG, JPG, WEBP, TIFF, Draw.io, BPMN, SVG and XML."
                 )
 
             self._validate_file_signature(filename, suffix, content)
