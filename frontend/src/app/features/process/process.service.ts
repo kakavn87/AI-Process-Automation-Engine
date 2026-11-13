@@ -13,11 +13,11 @@ export class ProcessService {
 
     this.api.analyzeProcess(description).subscribe({
       next: result => {
-        this.store.setAnalysis(result as any);
+        this.store.setAnalysis(result);
         this.store.setLoading(false);
       },
       error: () => {
-        this.store.setError('Could not analyze process.');
+        this.store.setError('Could not analyze process. Please check that the backend is available and try again.');
         this.store.setLoading(false);
       }
     });
