@@ -101,3 +101,15 @@ def test_extracts_bpmn_tasks_and_sequence_flow():
     assert "Request received" in result
     assert "Manager approval" in result
     assert "start -> approve" in result
+
+def test_normalizes_uploaded_tiff_for_vision_model():
+    image = Image.new("RGB", (32, 32), "white")
+    output = BytesIO()
+    image.save(output, format="TIFF")
+
+    result = DocumentProcessingService().process([("diagram.tiff", output.getvalue())])
+
+    assert len(result["image_data_urls"]) == 1
+    assert result["image_data_urls"][0].startswith("data:image/jpeg;base64,")
+    assert result["documents"][0]["fileType"] == "TIFF"
+    assert result["documents"][0]["visualAssets"] == 1
