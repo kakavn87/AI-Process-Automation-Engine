@@ -31,6 +31,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
   readonly answerValues = signal<Record<string, string | boolean>>({});
   readonly loading = signal(false);
   readonly submitting = signal(false);
+  readonly optimizationSubmitting = signal(false);
   readonly executionLoading = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -203,7 +204,11 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       return;
     }
 
+    const willOptimize = current.openQuestions.every(question =>
+      Object.prototype.hasOwnProperty.call(submitted, question.id)
+    );
     this.submitting.set(true);
+    this.optimizationSubmitting.set(willOptimize);
     this.error.set(null);
     this.api.submitWorkflowAnswers(current.id, submitted).subscribe({
       next: result => {
@@ -211,12 +216,14 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
         this.sessionChange.emit(result);
         this.answerValues.set({});
         this.submitting.set(false);
+        this.optimizationSubmitting.set(false);
       },
       error: error => {
         this.error.set(error?.error?.detail || (this.isGerman
           ? 'Die Antworten konnten nicht gespeichert werden.'
           : 'Could not save the answers.'));
         this.submitting.set(false);
+        this.optimizationSubmitting.set(false);
       }
     });
   }
