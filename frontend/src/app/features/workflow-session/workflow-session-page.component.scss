@@ -285,6 +285,9 @@
   color: #3730a3;
 }
 .session-progress-step.is-pending { background: #f9fafb; }
+.session-progress-step.is-error { border-color: #fecaca; background: #fff5f5; }
+.session-progress-step.is-error .session-progress-number,
+.session-progress-step.is-error .session-progress-mark { background: #fee2e2; color: #991b1b; }
 .live-readiness-badge {
   flex-shrink: 0;
   border-radius: 999px;
