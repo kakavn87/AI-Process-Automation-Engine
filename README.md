@@ -56,15 +56,13 @@ npm start
 
 Open http://localhost:4200.
 
-## Deployment (Render blueprint)
+## Deployment (Render Blueprint)
 
-The repository includes `infrastructure/render/render.yaml` as a starting point for the backend service. In Render, create a Blueprint from this repository and select that YAML file. The frontend can be deployed as a Static Site with:
+The root `render.yaml` defines both services in one Blueprint: a FastAPI web service and an Angular static site. In Render, create a new Blueprint and connect this GitHub repository; Render will discover the root `render.yaml` automatically.
 
-- Root directory: `frontend`
-- Build command: `npm ci && npm run build`
-- Publish directory: `dist/ai-process-automation-engine/browser`
+The Angular production environment currently points to the backend's default Render hostname. The backend CORS allow-list contains the matching default frontend hostname. If Render assigns different hostnames, update `frontend/src/environments/environment.prod.ts` and the backend `CORS_ORIGINS` environment variable.
 
-Update `frontend/src/environments/environment.prod.ts` to the actual backend URL and set the backend `CORS_ORIGINS` environment variable to the actual frontend URL. Because the current backend uses SQLite, its database is demo-only and may be ephemeral on hosts with ephemeral filesystems. Use managed PostgreSQL before treating stored data as durable.
+The API currently runs without requiring persistent database writes for the demo. SQLite on a free web service is not durable across all redeploys/restarts; use managed PostgreSQL and migrations before storing real business data.
 
 ## Project structure
 
