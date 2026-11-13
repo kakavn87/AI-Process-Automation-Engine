@@ -21,7 +21,8 @@
                 "replace": "src/environments/environment.ts",
                 "with": "src/environments/environment.prod.ts"
               }
-            ]
+            ],
+            "outputPath": "dist/ai-process-automation-engine"
           }
         },
         "serve": {
