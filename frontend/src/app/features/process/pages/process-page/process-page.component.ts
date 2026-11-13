@@ -31,17 +31,6 @@ export class ProcessPageComponent {
   private readonly service = inject(ProcessService);
   private readonly api = inject(ApiService);
 
-  private readonly resultScrollEffect = effect(() => {
-    const analysis = this.store.analysis();
-    if (!analysis || typeof document === 'undefined') return;
-
-    setTimeout(() => {
-      document.getElementById('results')?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
-    }, 0);
-  });
 
   readonly language = signal<AppLanguage>('de');
   readonly selectedDomain = signal('general');
@@ -53,6 +42,20 @@ export class ProcessPageComponent {
   selectedDataFile: File | null = null;
   description = '';
   analysisStrategy: AnalysisStrategy = 'auto';
+
+  constructor() {
+    effect(() => {
+      const analysis = this.store.analysis();
+      if (!analysis || typeof document === 'undefined') return;
+
+      setTimeout(() => {
+        document.getElementById('results')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 0);
+    });
+  }
 
   readonly industries: Industry[] = [
     {
