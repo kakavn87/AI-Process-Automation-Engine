@@ -135,6 +135,28 @@
               @for (warning of analysis.documentWarnings; track warning) { <p>{{ warning }}</p> }
             </div>
           }
+          @if (analysis.knowledgeBase; as knowledge) {
+            <div class="routing-panel">
+              <span class="routing-icon">RAG</span>
+              <div>
+                <strong>{{ language() === 'de' ? 'Dokumenten-Wissensbasis' : 'Document knowledge base' }}</strong>
+                <p>{{ knowledge.status }} · {{ knowledge.indexedChunks }} {{ language() === 'de' ? 'Chunks indexiert' : 'chunks indexed' }} · {{ knowledge.retrievedChunks }} {{ language() === 'de' ? 'Treffer abgerufen' : 'chunks retrieved' }}</p>
+              </div>
+            </div>
+          }
+          @if (analysis.sourceEvidence?.length) {
+            <article class="result-panel">
+              <div class="result-panel-heading"><h3>{{ language() === 'de' ? 'Verwendete Quellen' : 'Retrieved source evidence' }}</h3><span class="panel-count">{{ analysis.sourceEvidence.length }}</span></div>
+              <div class="integration-list">
+                @for (source of analysis.sourceEvidence; track source.filename + source.page + $index) {
+                  <div class="integration-item">
+                    <div><strong>{{ source.filename }}{{ source.page ? ' · p. ' + source.page : '' }}</strong><p>{{ source.excerpt }}</p></div>
+                    <span class="planned-pill">{{ source.score }}</span>
+                  </div>
+                }
+              </div>
+            </article>
+          }
 
           <div class="result-summary-grid">
             <article class="result-panel score-panel">
@@ -265,13 +287,13 @@
                 <span class="document-upload-icon">⇧</span>
                 <div>
                   <strong>{{ language() === 'de' ? 'Prozessdokumente oder Diagramme hinzufügen' : 'Add process documents or diagrams' }}</strong>
-                  <p>{{ language() === 'de' ? 'PDF, Word, PowerPoint, Excel, CSV, Text oder Bilder. Ohne RAG werden Inhalte nur für diese Analyse verarbeitet. Wenn die optionale, sitzungsbezogene Wissensbasis aktiviert ist, werden Textausschnitte mit Quellenangaben bis zur Löschung der Sitzung im Vector Store gespeichert.' : 'PDF, Word, PowerPoint, Excel, CSV, text or images. Without RAG, content is processed only for this analysis. When the optional session-scoped knowledge base is enabled, text chunks and source references are stored in the vector store until the session is deleted.' }}</p>
+                  <p>{{ language() === 'de' ? 'PDF, Word, PowerPoint, Excel, CSV, Draw.io, BPMN, SVG, XML, Text oder Bilder. Ohne RAG werden Inhalte nur für diese Analyse verarbeitet. Wenn die optionale, sitzungsbezogene Wissensbasis aktiviert ist, werden Textausschnitte mit Quellenangaben bis zur Löschung der Sitzung im Vector Store gespeichert.' : 'PDF, Word, PowerPoint, Excel, CSV, Draw.io, BPMN, SVG, XML, text or images. Without RAG, content is processed only for this analysis. When the optional session-scoped knowledge base is enabled, text chunks and source references are stored in the vector store until the session is deleted.' }}</p>
                   <small>{{ language() === 'de' ? 'Bis zu 8 Dateien · 10 MB je Datei · 25 MB insgesamt' : 'Up to 8 files · 10 MB each · 25 MB combined' }}</small>
                   <small class="document-upload-warning">{{ language() === 'de' ? 'Bitte laden Sie in dieser öffentlichen Demo keine vertraulichen oder personenbezogenen Unternehmensdaten hoch.' : 'Please do not upload confidential or personal business data to this public demo.' }}</small>
                 </div>
               </div>
               <input id="process-files" type="file" multiple
-                accept=".pdf,.docx,.pptx,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                accept=".pdf,.docx,.pptx,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,.drawio,.bpmn,.xml,.svg,application/pdf,image/png,image/jpeg,image/webp,application/xml,text/xml,image/svg+xml"
                 (change)="onProcessFilesSelected($event)" />
               <label for="process-files" class="button-secondary file-label">{{ language() === 'de' ? 'Dateien auswählen' : 'Choose files' }}</label>
               @if (processFiles.length > 0) {
