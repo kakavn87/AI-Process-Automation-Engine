@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - ".upload/project-source.tar.gz"
+      - ".upload/archive-tail.bin"
 permissions:
   contents: write
 jobs:
@@ -17,10 +18,11 @@ jobs:
             echo "No source archive to expand."
             exit 0
           fi
+          cat .upload/archive-tail.bin >> .upload/project-source.tar.gz
           mkdir -p /tmp/project-source
           tar -xzf .upload/project-source.tar.gz -C /tmp/project-source
           cp -a /tmp/project-source/. .
-          rm -f .upload/project-source.tar.gz
+          rm -f .upload/project-source.tar.gz .upload/archive-tail.bin
           rm -f .github/workflows/expand-source.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
