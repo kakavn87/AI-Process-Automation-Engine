@@ -308,6 +308,7 @@ def test_live_webhook_requires_confirmation_and_dispatches_once(monkeypatch):
 
 def test_live_webhook_rejects_insecure_or_internal_endpoint(monkeypatch):
     monkeypatch.setattr(settings, "WEBHOOK_EXECUTION_ENABLED", True)
+    monkeypatch.setattr(settings, "WORKFLOW_LIVE_EXECUTION_TOKEN", "operator-token")
     for endpoint in (
         "http://hooks.example.com/process",
         "https://localhost/process",
