@@ -55,20 +55,31 @@ class AIUsageService:
             func.sum(AIUsageEvent.total_tokens),
             func.sum(AIUsageEvent.estimated_cost_usd),
         ).one()
-
-        success_count = sum(1 for row in rows if row.status == "success")
-        fallback_count = sum(1 for row in rows if row.status == "fallback")
-        priced_count = sum(1 for row in rows if row.estimated_cost_usd is not None)
+        success_count = (
+            self.db.query(func.count(AIUsageEvent.id))
+            .filter(AIUsageEvent.status == "success")
+            .scalar() or 0
+        )
+        fallback_count = (
+            self.db.query(func.count(AIUsageEvent.id))
+            .filter(AIUsageEvent.status == "fallback")
+            .scalar() or 0
+        )
+        priced_count = (
+            self.db.query(func.count(AIUsageEvent.id))
+            .filter(AIUsageEvent.estimated_cost_usd.is_not(None))
+            .scalar() or 0
+        )
 
         return {
             "totalCalls": int(totals[0] or 0),
-            "successfulCalls": success_count,
-            "fallbackCalls": fallback_count,
+            "successfulCalls": int(success_count),
+            "fallbackCalls": int(fallback_count),
             "inputTokens": int(totals[1] or 0),
             "outputTokens": int(totals[2] or 0),
             "totalTokens": int(totals[3] or 0),
             "estimatedCostUsd": float(totals[4]) if totals[4] is not None else None,
-            "pricedCalls": priced_count,
+            "pricedCalls": int(priced_count),
             "pricingConfigured": (
                 settings.OPENAI_INPUT_USD_PER_1M is not None
                 and settings.OPENAI_OUTPUT_USD_PER_1M is not None
