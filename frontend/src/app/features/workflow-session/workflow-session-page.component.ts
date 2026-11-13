@@ -67,6 +67,40 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
     this.loadLiveReadiness();
   }
 
+  sessionStatusLabel(status: string): string {
+    if (!this.isGerman) return status.replaceAll('_', ' ');
+    const labels: Record<string, string> = {
+      needs_input: 'Angaben erforderlich',
+      processing: 'Wird verarbeitet',
+      ready_for_approval: 'Zur Freigabe bereit',
+      awaiting_approval: 'Wartet auf Freigabe',
+      completed: 'Abgeschlossen',
+      rejected: 'Abgelehnt',
+      failed: 'Fehlgeschlagen'
+    };
+    return labels[status] ?? status.replaceAll('_', ' ');
+  }
+
+  eventStatusLabel(status: string): string {
+    if (!this.isGerman) return status.replaceAll('_', ' ');
+    const labels: Record<string, string> = {
+      completed: 'Abgeschlossen',
+      succeeded: 'Erfolgreich',
+      failed: 'Fehlgeschlagen',
+      rejected: 'Abgelehnt',
+      pending: 'Ausstehend',
+      awaiting_approval: 'Wartet auf Freigabe',
+      needs_input: 'Angaben erforderlich',
+      processing: 'Wird verarbeitet',
+      ready_for_approval: 'Zur Freigabe bereit',
+      simulated: 'Simuliert',
+      recorded: 'Gespeichert',
+      success: 'Erfolgreich',
+      error: 'Fehler'
+    };
+    return labels[status] ?? status.replaceAll('_', ' ');
+  }
+
   get isGerman(): boolean {
     return this.session()?.language !== 'en';
   }
