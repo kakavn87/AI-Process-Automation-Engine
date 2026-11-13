@@ -1,57 +1,35 @@
 from app.engine.analyzer.process_analyzer import ProcessAnalyzer
-from app.schemas.ai_analysis import LLMProcessAnalysis, LLMWorkflowStep
+from app.services.ai_service import AIService
 from app.services.process_service import ProcessService
 
 
-def test_process_analyzer():
-    result = ProcessAnalyzer().analyze("Weekly PDF email process")
-    assert result["automationScore"] > 0
+SAMPLE_PROCESS = """Every Monday, the finance team receives Excel and PDF reports from different departments by email.
+An employee manually downloads all attachments, extracts the relevant data, combines it into a master Excel
+spreadsheet, checks for missing values, calculates weekly results, and creates a summary report.
+The report is sent to management via Microsoft Teams after a manager reviews and approves it."""
 
 
-def test_process_service_uses_rules_fallback_when_llm_is_unavailable():
-    service = ProcessService(db=None)
-    service.ai_service.analyze_process = lambda description: None
+def test_process_analyzer_detects_expected_signals():
+    result = ProcessAnalyzer().analyze(SAMPLE_PROCESS)
+    assert result["automationScore"] == 85
+    assert result["signals"] == ["email", "pdf", "excel", "manual", "teams", "weekly"]
 
-    result = service.analyze("Weekly PDF email process")
 
-    assert result["analysisMode"] == "rules_fallback"
+def test_process_service_falls_back_when_api_key_is_missing():
+    service = ProcessService(db=None, ai_service=AIService(api_key=""))
+    result = service.analyze(SAMPLE_PROCESS)
+
+    assert result["llmUsed"] is False
+    assert result["analysisMode"] == "deterministic_rules_v1"
+    assert result["automationScore"] == 85
     assert result["proposedWorkflow"]["steps"]
 
 
-def test_process_service_inserts_approval_before_outbound_llm_step():
-    service = ProcessService(db=None)
-    analysis = LLMProcessAnalysis(
-        automation_score=80,
-        signals=["teams"],
-        summary="A process that publishes a report to Teams.",
-        current_process=["Prepare the report.", "Send it to Teams."],
-        automation_opportunities=[],
-        integrations=[],
-        approval_required=False,
-        approval_reason="External delivery requires review.",
-        approval_gate_before="Teams delivery",
-        risks=[],
-        assumptions=[],
-        questions=[],
-        workflow_name="Report delivery",
-        workflow_trigger="Start when ready.",
-        workflow_steps=[
-            LLMWorkflowStep(
-                type="trigger", name="Start", description="Start workflow.",
-                connector="", requires_approval=False,
-            ),
-            LLMWorkflowStep(
-                type="notify", name="Send to Teams", description="Publish the report.",
-                connector="microsoft_teams", requires_approval=False,
-            ),
-        ],
-    )
-    service.ai_service.analyze_process = lambda description: analysis
-
-    result = service.analyze("Send a report to Teams.")
-
+def test_fallback_workflow_has_approval_before_teams_notification():
+    service = ProcessService(db=None, ai_service=AIService(api_key=""))
+    result = service.analyze(SAMPLE_PROCESS)
     steps = result["proposedWorkflow"]["steps"]
     types = [step["type"] for step in steps]
-    assert result["analysisMode"] == "openai_llm"
+
     assert types.index("approval") < types.index("notify")
     assert steps[types.index("notify")]["config"]["requiresApproval"] is True
