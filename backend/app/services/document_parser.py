@@ -59,7 +59,8 @@ def _extract_xml_diagram(content: bytes, suffix: str) -> list[dict]:
 
     labels = labels_from(root)
     # Compressed Draw.io XML is valid XML too; its visible labels are in a deflated diagram payload.
-    if not any(label.split(": ", 1)[-1].strip() for label in labels):
+    # Try decoding every non-empty diagram payload; the wrapper title is not the diagram content.
+    if suffix == ".drawio":
         for diagram in root.findall(".//diagram"):
             encoded = (diagram.text or "").strip()
             if not encoded:
