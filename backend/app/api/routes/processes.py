@@ -61,7 +61,7 @@ async def analyze_process_with_documents(
     analysis_description = description.strip()
     if extracted["text_context"]:
         analysis_description = (
-            f"{analysis_description}\\n\\nReference document evidence:\\n{extracted['text_context']}"
+            f"{analysis_description}\n\nReference document evidence:\n{extracted['text_context']}"
             if analysis_description else extracted["text_context"]
         )
     analysis_description = analysis_description[:45_000]
