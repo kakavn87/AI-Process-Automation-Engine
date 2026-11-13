@@ -162,18 +162,22 @@ class AuthService:
             if existing_membership:
                 raise ValueError("This user is already a member of the workspace.")
 
-        pending = (
+        now = datetime.now(timezone.utc)
+        pending_invitations = (
             self.db.query(TenantInvitation)
             .filter(
                 TenantInvitation.tenant_id == tenant_id,
                 TenantInvitation.email == request.email,
                 TenantInvitation.accepted_at.is_(None),
-                TenantInvitation.expires_at > datetime.now(timezone.utc),
             )
-            .one_or_none()
+            .all()
         )
-        if pending:
-            raise ValueError("A pending invitation already exists for this email address.")
+        for pending in pending_invitations:
+            pending_expiry = pending.expires_at
+            if pending_expiry.tzinfo is None:
+                pending_expiry = pending_expiry.replace(tzinfo=timezone.utc)
+            if pending_expiry > now:
+                raise ValueError("A pending invitation already exists for this email address.")
 
         raw_token = secrets.token_urlsafe(36)
         expires_at = datetime.now(timezone.utc) + timedelta(days=3)
@@ -200,6 +204,7 @@ class AuthService:
         invitation = (
             self.db.query(TenantInvitation)
             .filter(TenantInvitation.token_hash == token_hash)
+            .with_for_update()
             .one_or_none()
         )
         now = datetime.now(timezone.utc)
