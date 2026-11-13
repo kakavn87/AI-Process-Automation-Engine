@@ -6,7 +6,8 @@ import zipfile
 from pathlib import PurePath
 from typing import Any
 
-import fitz
+import pypdfium2 as pdfium
+from pypdf import PdfReader
 from docx import Document
 from openpyxl import load_workbook
 from PIL import Image, ImageOps
@@ -151,20 +152,73 @@ class DocumentProcessingService:
 
     def _extract_pdf(self, filename: str, content: bytes, images: list[str]) -> tuple[str, int]:
         sections: list[str] = []
-        with fitz.open(stream=content, filetype="pdf") as document:
-            page_count = len(document)
-            if page_count > 200:
-                raise ValueError(f"{filename}: PDFs may contain no more than 200 pages.")
-            for index, page in enumerate(document):
-                page_text = page.get_text("text").strip()
+        reader = PdfReader(io.BytesIO(content), strict=False)
+        page_count = len(reader.pages)
+        if page_count > 200:
+            raise ValueError(f"{filename}: PDFs may contain no more than 200 pages.")
+
+        # Render the first pages to capture vector flowcharts, then prioritize
+        # later image-only/sparse pages. This keeps visual token usage bounded.
+        visual_indices: set[int] = set(range(min(page_count, 4)))
+        for index, page in enumerate(reader.pages):
+            try:
+                resources = page.get("/Resources")
+                resources = resources.get_object() if resources else {}
+                xobjects = resources.get("/XObject") if resources else None
+                xobjects = xobjects.get_object() if xobjects else {}
+                if any(
+                    item.get_object().get("/Subtype") == "/Image"
+                    for item in xobjects.values()
+                ):
+                    visual_indices.add(index)
+            except Exception:
+                # Page text remains useful even when optional image metadata is unusual.
+                pass
+
+        pdf = None
+        try:
+            pdf = pdfium.PdfDocument(content)
+            for index, page in enumerate(reader.pages):
+                page_text = (page.extract_text() or "").strip()
                 if page_text:
                     sections.append(f"[Page {index + 1}]\n{page_text}")
-                has_visual_content = bool(page.get_images(full=True)) or bool(page.get_drawings())
-                needs_render = index < 6 and (not page_text or has_visual_content)
-                if needs_render and len(images) < MAX_IMAGES:
-                    pixmap = page.get_pixmap(matrix=fitz.Matrix(1.35, 1.35), alpha=False)
-                    self._append_image(f"{filename} · page {index + 1}", pixmap.tobytes("png"), images)
+
+                needs_render = (
+                    index in visual_indices
+                    or not page_text
+                    or len(page_text) < 160
+                )
+                if not needs_render or len(images) >= MAX_IMAGES:
+                    continue
+
+                pdf_page = None
+                bitmap = None
+                try:
+                    pdf_page = pdf[index]
+                    bitmap = pdf_page.render(scale=1.35)
+                    rendered = bitmap.to_pil()
+                    output = io.BytesIO()
+                    rendered.save(output, format="PNG")
+                    self._append_image(
+                        f"{filename} · page {index + 1}",
+                        output.getvalue(),
+                        images,
+                    )
+                finally:
+                    if bitmap is not None:
+                        bitmap.close()
+                    if pdf_page is not None:
+                        pdf_page.close()
+        except ValueError:
+            raise
+        except Exception as error:
+            raise ValueError(f"{filename}: the PDF could not be read or rendered.") from error
+        finally:
+            if pdf is not None:
+                pdf.close()
+
         return "\n\n".join(sections), page_count
+
 
     @staticmethod
     def _extract_docx(content: bytes) -> str:
