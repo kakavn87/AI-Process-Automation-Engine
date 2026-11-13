@@ -1,11 +1,11 @@
 model_list:
   - model_name: process-analysis
     litellm_params:
-      model: openai/gpt-4o-mini
+      model: openai/gpt-6-luna
       api_key: os.environ/OPENAI_API_KEY
   - model_name: process-vision
     litellm_params:
-      model: openai/gpt-4o-mini
+      model: openai/gpt-6.1-terra
       api_key: os.environ/OPENAI_API_KEY
   - model_name: process-embeddings
     litellm_params:

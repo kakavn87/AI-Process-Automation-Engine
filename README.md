@@ -238,3 +238,6 @@ Copy infrastructure/docker/.env.ai-platform.example to infrastructure/docker/.en
     docker compose --env-file infrastructure/docker/.env.ai-platform -f infrastructure/docker/docker-compose.yml --profile ai-platform up -d
 
 Create separate least-privilege LiteLLM virtual keys for FlowPilot and Open WebUI. The master key is administrative only. Open WebUI is a secondary internal workspace; Angular remains the customer-facing product UI. See docs/architecture/flowpilot-part-1-6.md for the architecture and limitations. For local persistent RAG, also set the backend DATABASE_URL to postgresql+psycopg://app:YOUR_APP_DB_PASSWORD@localhost:5432/process_automation and set APP_DB_PASSWORD in .env.ai-platform to the same value. Keep KNOWLEDGE_PERSISTENCE_ENABLED=false on the public demo.
+
+
+The sample model map defaults to `gpt-6-luna` for process analysis, `gpt-6.1-terra` for vision, and `text-embedding-3-small` for embeddings. You can change these aliases centrally in `infrastructure/docker/litellm-config.yaml`.

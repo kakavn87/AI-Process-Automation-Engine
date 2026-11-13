@@ -100,3 +100,8 @@ Local endpoints: Open WebUI at localhost:3000, LiteLLM at localhost:4000, Postgr
 - Malware scanning, quotas, deletion UI, migrations and enterprise retention controls are not implemented.
 - Vision and embeddings require configured compatible model aliases; OCR/keyword fallback is available where implemented.
 - Native third-party business connectors are not part of this change.
+
+
+### Default model selection (November 2026)
+
+The included LiteLLM example maps `process-analysis` to `gpt-6-luna` for cost-efficient high-volume structured analysis, and `process-vision` to `gpt-6.1-terra` for visual reasoning over process diagrams and screenshots. `process-embeddings` uses `text-embedding-3-small`; its output dimensions must match `EMBEDDING_DIMENSIONS=1536`. These are example defaults and can be changed by editing the LiteLLM model map. GPT-4o mini is intentionally not used in the new configuration because the API deprecation notice lists January 14, 2027 as its shutdown date.
