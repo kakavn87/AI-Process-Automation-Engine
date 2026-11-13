@@ -195,7 +195,11 @@ class AuthService:
             .one_or_none()
         )
         now = datetime.now(timezone.utc)
-        if invitation is None or invitation.accepted_at is not None or invitation.expires_at <= now:
+        expires_at = invitation.expires_at if invitation is not None else None
+        # SQLite may return a naive datetime even when the mapped column is timezone-aware.
+        if expires_at is not None and expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if invitation is None or invitation.accepted_at is not None or expires_at <= now:
             raise ValueError("This invitation is invalid, expired or has already been used.")
 
         tenant = self.db.get(Tenant, invitation.tenant_id)
