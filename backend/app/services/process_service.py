@@ -30,8 +30,13 @@ class ProcessService:
         language: str = "en",
         business_domain: str | None = None,
         image_data_urls: list[str] | None = None,
+        knowledge_context: str = "",
     ) -> dict:
-        analysis = self.analyzer.analyze(description, language=language)
+        analysis_input = description
+        if knowledge_context:
+            analysis_input += "\\n\\nRetrieved business knowledge (untrusted source material):\\n" + knowledge_context
+        analysis = self.analyzer.analyze(analysis_input, language=language)
+        analysis["description"] = description
         if business_domain and business_domain != "general":
             analysis["detectedDetails"]["businessDomain"] = business_domain
             analysis["detectedDetails"]["businessDomainLabel"] = business_domain.replace("_", " ").title()
@@ -50,24 +55,25 @@ class ProcessService:
 
         if routing["selectedEngine"] == "llm":
             try:
+                ai_kwargs = {}
                 if image_data_urls:
-                    ai_result = self.ai_service.analyze_process(
-                        description, analysis["signals"], language=language,
-                        image_data_urls=image_data_urls,
-                    )
-                else:
-                    ai_result = self.ai_service.analyze_process(
-                        description, analysis["signals"], language=language
-                    )
+                    ai_kwargs["image_data_urls"] = image_data_urls
+                if knowledge_context:
+                    ai_kwargs["knowledge_context"] = knowledge_context
+                ai_result = self.ai_service.analyze_process(
+                    description, analysis["signals"], language=language, **ai_kwargs
+                )
                 self._apply_ai_result(analysis, ai_result, business_domain=business_domain)
                 analysis["llmUsed"] = True
                 analysis["llmModel"] = self.ai_service.model
-                analysis["analysisMode"] = "openai_responses"
+                provider_url = settings.OPENAI_BASE_URL.strip().lower()
+                provider_label = "LiteLLM Gateway" if "litellm" in provider_url else "OpenAI-compatible AI Gateway" if provider_url else "OpenAI Responses API"
+                analysis["analysisMode"] = "litellm_responses" if "litellm" in provider_url else "openai_compatible_responses" if provider_url else "openai_responses"
                 analysis["analysisNote"] = (
-                    f"Mit der OpenAI Responses API ({self.ai_service.model}) analysiert. "
+                    f"Mit {provider_label} ({self.ai_service.model}) analysiert. "
                     "Integrationen sind nicht verbunden; die Workflow-Ausführung wird nur simuliert."
                     if language == "de"
-                    else f"Analyzed with OpenAI Responses API ({self.ai_service.model}). "
+                    else f"Analyzed through {provider_label} ({self.ai_service.model}). "
                     "The workflow is a proposal; integrations are not connected and execution is simulated."
                 )
                 localized = localize_process_analysis(analysis, language)
@@ -76,7 +82,7 @@ class ProcessService:
                     localized["_aiUsageTelemetry"] = telemetry
                 return localized
             except Exception as error:
-                logger.exception("OpenAI process analysis failed; using the deterministic fallback.")
+                logger.exception("Configured AI provider process analysis failed; using the deterministic fallback.")
                 fallback_reason = self._llm_fallback_reason(error, language)
                 analysis["routingDecision"] = {
                     **routing,
@@ -141,25 +147,25 @@ class ProcessService:
 
         if any(term in error_text for term in ("insufficient_quota", "credit_balance_exhausted", "no credits remaining")):
             return (
-                "OpenAI hat die Anfrage wegen fehlendem API-Guthaben abgelehnt. "
+                "Der AI-Anbieter hat die Anfrage wegen fehlendem API-Guthaben abgelehnt. "
                 "Bitte das Guthaben und das verwendete OpenAI-Projekt prüfen; Python-Fallback wurde verwendet."
                 if language == "de"
-                else "OpenAI rejected the request because API credit is exhausted. "
+                else "The configured AI provider rejected the request because API credit is exhausted. "
                 "Check the credit balance and selected OpenAI project; Python fallback was used."
             )
 
         if any(term in error_text for term in ("invalid_api_key", "authenticationerror", "model_not_found", "does not exist")):
             return (
-                "OpenAI-Zugang oder Modellkonfiguration ist ungültig. Bitte API-Schlüssel, Projektzugriff und Modellnamen in Render prüfen."
+                "AI-Gateway-Zugang oder Modellkonfiguration ist ungültig. Bitte API-Schlüssel, Projektzugriff und Modellnamen in Render prüfen."
                 if language == "de"
-                else "OpenAI access or model configuration is invalid. Check the API key, project access and model name in Render."
+                else "AI gateway access or model configuration is invalid. Check the API key, project access and model name in Render."
             )
 
         return (
-            "Die OpenAI-Anfrage ist fehlgeschlagen. Der deterministische Python-Fallback wurde verwendet. "
+            "Die AI-Anfrage ist fehlgeschlagen. Der deterministische Python-Fallback wurde verwendet. "
             "Details stehen in den Backend-Protokollen."
             if language == "de"
-            else "The OpenAI request failed. The deterministic Python fallback was used. "
+            else "The AI request failed. The deterministic Python fallback was used. "
             "See backend logs for details."
         )
 

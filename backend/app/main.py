@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
 
+from sqlalchemy import text
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,10 +10,14 @@ from app.core.config import settings
 from app.core.database import Base, engine
 from app.models.execution import ApprovalExecution  # noqa: F401 - registers the table
 from app.models.workflow_session import AIUsageEvent, WorkflowSession  # noqa: F401 - register tables
+from app.models.knowledge import KnowledgeChunk, KnowledgeDocument  # noqa: F401 - register tables
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if engine.dialect.name == "postgresql":
+        with engine.begin() as connection:
+            connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
     Base.metadata.create_all(bind=engine)
     yield
 

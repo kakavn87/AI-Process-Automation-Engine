@@ -7,3 +7,4 @@ class ProcessAnalyzeRequest(BaseModel):
     analysis_language: str = Field(default="de", pattern="^(de|en)$")
     # Open-ended on purpose: the AI engine must support domains that are not in a predefined list.
     business_domain: str = Field(default="general", min_length=1, max_length=80)
+    document_ids: list[str] = Field(default_factory=list, max_length=30)

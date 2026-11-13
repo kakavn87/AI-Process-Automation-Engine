@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     OPENAI_BASE_URL: str = ""
     PREVIEW_OPENAI_BASE_URL: str = ""
     OPENAI_MODEL: str = "gpt-6-luna"
+    OPENAI_VISION_MODEL: str = ""
+    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    EMBEDDING_DIMENSIONS: int = Field(default=1536, ge=1, le=8192)
+    KNOWLEDGE_PERSISTENCE_ENABLED: bool = False
+    PREVIEW_KNOWLEDGE_PERSISTENCE_ENABLED: bool = False
     OPENWEBUI_URL: str = ""
     PREVIEW_OPENWEBUI_URL: str = ""
     OPENAI_INPUT_USD_PER_1M: float | None = None
@@ -43,6 +48,9 @@ class Settings(BaseSettings):
             self.OPENAI_API_KEY = self.PREVIEW_OPENAI_API_KEY.strip()
             self.OPENAI_BASE_URL = self.PREVIEW_OPENAI_BASE_URL.strip()
             self.OPENWEBUI_URL = self.PREVIEW_OPENWEBUI_URL.strip()
+            self.OPENAI_VISION_MODEL = ""
+            self.OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
+            self.KNOWLEDGE_PERSISTENCE_ENABLED = self.PREVIEW_KNOWLEDGE_PERSISTENCE_ENABLED
             # PR previews must never inherit a Production webhook destination or token.
             self.WEBHOOK_EXECUTION_ENABLED = False
             self.WORKFLOW_WEBHOOK_URL = ""
