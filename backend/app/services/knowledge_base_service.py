@@ -22,20 +22,23 @@ class KnowledgeBaseService:
     def __init__(self) -> None:
         self.telemetry_events: list[dict] = []
         self.enabled = bool(settings.RAG_ENABLED)
+        self.storage_configured = bool(settings.QDRANT_URL.strip())
         self.configured = bool(
             self.enabled
-            and settings.QDRANT_URL.strip()
+            and self.storage_configured
             and settings.OPENAI_API_KEY.strip()
         )
         self._qdrant: QdrantClient | None = None
         self._embedding_client: OpenAI | None = None
 
-        if self.configured:
+        # Keep Qdrant available for deletion even after RAG is switched off.
+        if self.storage_configured:
             self._qdrant = QdrantClient(
                 url=settings.QDRANT_URL.strip(),
                 api_key=settings.QDRANT_API_KEY.strip() or None,
                 timeout=8.0,
             )
+        if self.configured:
             self._embedding_client = OpenAI(
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_BASE_URL.strip() or None,
@@ -245,6 +248,27 @@ class KnowledgeBaseService:
             "indexedChunks": len(points),
             "status": "indexed",
         }
+
+    def delete_session(self, session_id: str) -> bool:
+        """Delete every stored vector chunk belonging to one process session."""
+        if self._qdrant is None:
+            return False
+        collections = self._qdrant.get_collections().collections
+        if not any(item.name == settings.QDRANT_COLLECTION for item in collections):
+            return True
+        self._qdrant.delete(
+            collection_name=settings.QDRANT_COLLECTION,
+            points_selector=qmodels.Filter(
+                must=[
+                    qmodels.FieldCondition(
+                        key="session_id",
+                        match=qmodels.MatchValue(value=session_id),
+                    )
+                ]
+            ),
+            wait=True,
+        )
+        return True
 
     def search(self, session_id: str, query: str, top_k: int | None = None) -> list[dict]:
         if not self.enabled or not self.configured:
