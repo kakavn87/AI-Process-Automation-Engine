@@ -2,7 +2,7 @@ ALLOWED_STEP_TYPES = {
     "analyze", "approval", "email", "teams", "http",
     "trigger", "collect", "extract", "transform", "validate", "generate", "notify",
 }
-OUTBOUND_STEP_TYPES = {"notify", "email", "teams"}
+OUTBOUND_STEP_TYPES = {"notify", "email", "teams", "http"}
 
 
 def validate(workflow: dict) -> None:
