@@ -141,6 +141,22 @@
           }
         </div>
 
+        @if (current.questions.length > 0) {
+          <div class="confirmed-answers">
+            <h3>{{ isGerman ? 'Bestätigte Angaben' : 'Confirmed details' }}</h3>
+            @for (question of current.questions; track question.id) {
+              @if (current.answers[question.id] !== undefined) {
+                <div class="confirmed-answer">
+                  <strong>{{ question.prompt }}</strong>
+                  <span>{{ typeof current.answers[question.id] === 'boolean'
+                    ? (current.answers[question.id] ? (isGerman ? 'Ja' : 'Yes') : (isGerman ? 'Nein' : 'No'))
+                    : current.answers[question.id] }}</span>
+                </div>
+              }
+            }
+          </div>
+        }
+
         <div class="safety-note">
           <strong>{{ isGerman ? 'Sicherheitsmodus' : 'Safety mode' }}</strong>
           <p>{{ isGerman
