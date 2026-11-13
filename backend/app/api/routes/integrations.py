@@ -19,6 +19,7 @@ def _safe_http_url(value: str) -> str | None:
         or parsed.username
         or parsed.password
         or parsed.fragment
+        or parsed.query
     ):
         return None
     return candidate.rstrip("/")
