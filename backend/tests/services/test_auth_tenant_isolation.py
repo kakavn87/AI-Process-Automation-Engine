@@ -264,3 +264,77 @@ def test_workspace_role_protects_approval_and_live_actions_but_demo_remains_open
         authenticated=False,
     )
     assert require_roles("owner", "admin")(demo_context) == demo_context
+
+
+def test_user_with_multiple_workspaces_must_choose_one(db_session, monkeypatch):
+    tenant_a = add_tenant(db_session, "First workspace")
+    user = add_user(db_session, tenant_a, "multi@example.com")
+    tenant_b = add_tenant(db_session, "Second workspace")
+    db_session.add(TenantMembership(
+        id=str(uuid4()),
+        tenant_id=tenant_b.id,
+        user_id=user.id,
+        role="approver",
+        is_active=True,
+    ))
+    db_session.commit()
+    monkeypatch.setattr(settings, "AUTH_ENABLED", True)
+    monkeypatch.setattr(settings, "JWT_SECRET_KEY", "test-secret-that-is-at-least-32-characters-long")
+
+    service = AuthService(db_session)
+    selection = service.login(LoginRequest(
+        email="multi@example.com",
+        password="Correct-Horse-Battery-12!",
+    ))
+    assert selection["requires_workspace_selection"] is True
+    assert {item["id"] for item in selection["workspaces"]} == {tenant_a.id, tenant_b.id}
+    assert "access_token" not in selection
+
+    selected = service.login(LoginRequest(
+        email="multi@example.com",
+        password="Correct-Horse-Battery-12!",
+        tenant_id=tenant_b.id,
+    ))
+    payload = jwt.decode(selected["access_token"], settings.JWT_SECRET_KEY, algorithms=["HS256"])
+    assert payload["tid"] == tenant_b.id
+    assert selected["user"]["role"] == "approver"
+
+
+def test_jwt_cannot_switch_to_a_workspace_without_membership(db_session, monkeypatch):
+    tenant_a = add_tenant(db_session, "Private A")
+    tenant_b = add_tenant(db_session, "Private B")
+    user = add_user(db_session, tenant_a, "private-a@example.com")
+    monkeypatch.setattr(settings, "AUTH_ENABLED", True)
+    secret = "test-secret-that-is-at-least-32-characters-long"
+    monkeypatch.setattr(settings, "JWT_SECRET_KEY", secret)
+    now = datetime.now(timezone.utc)
+    forged_scope_token = jwt.encode(
+        {
+            "sub": user.id,
+            "tid": tenant_b.id,
+            "iat": now,
+            "exp": now + timedelta(minutes=10),
+        },
+        secret,
+        algorithm="HS256",
+    )
+
+    with pytest.raises(HTTPException) as error:
+        get_tenant_context(
+            HTTPAuthorizationCredentials(scheme="Bearer", credentials=forged_scope_token),
+            db_session,
+        )
+    assert error.value.status_code == 401
+
+
+def test_live_webhook_is_disabled_when_shared_auth_mode_is_enabled(monkeypatch):
+    monkeypatch.setattr(settings, "AUTH_ENABLED", True)
+    monkeypatch.setattr(settings, "WEBHOOK_EXECUTION_ENABLED", True)
+    monkeypatch.setattr(settings, "WORKFLOW_WEBHOOK_URL", "https://hooks.example.com/process")
+    monkeypatch.setattr(settings, "WORKFLOW_LIVE_EXECUTION_TOKEN", "operator-token")
+
+    readiness = ExecutionService.live_execution_readiness()
+
+    assert readiness["ready"] is False
+    assert readiness["enabled"] is False
+    assert readiness["status"] == "workspace_configuration_required"
