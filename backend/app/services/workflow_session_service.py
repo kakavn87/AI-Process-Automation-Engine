@@ -6,14 +6,18 @@ from sqlalchemy.orm import Session
 from app.engine.workflow.automation_engine import WorkflowAutomationEngine
 from app.models.workflow_session import WorkflowSession
 from app.services.question_service import QuestionService
+from app.services.ai_service import AIService
+from app.services.ai_usage_service import AIUsageService
+from app.services.process_service import ProcessService
 
 
 class WorkflowSessionService:
-    def __init__(self, db: Session, tenant_id: str | None = None):
+    def __init__(self, db: Session, tenant_id: str | None = None, ai_service: AIService | None = None):
         self.db = db
         self.tenant_id = tenant_id
         self.question_service = QuestionService()
         self.automation_engine = WorkflowAutomationEngine()
+        self.process_service = ProcessService(db, ai_service=ai_service)
 
     def _get_session(self, session_id: str):
         query = self.db.query(WorkflowSession).filter(WorkflowSession.id == session_id)
@@ -142,27 +146,60 @@ class WorkflowSessionService:
 
     def _prepare(self, session: WorkflowSession) -> None:
         try:
+            optimized = self.process_service.optimize_after_clarification(
+                analysis=session.analysis or {},
+                description=session.description,
+                questions=session.questions or [],
+                answers=session.answers or {},
+                strategy=session.analysis_strategy,
+                language=session.language,
+            )
+            usage_telemetry = optimized.pop("_optimizationUsageTelemetry", None)
             prepared = self.automation_engine.prepare(
-                session.analysis or {},
+                optimized,
                 session.answers or {},
             )
             session.analysis = prepared
             session.status = "ready_for_approval"
+
+            optimization = prepared.get("optimization") or {}
+            if optimization.get("status") == "completed":
+                optimization_event = {
+                    "event": "ai_optimization_completed",
+                    "status": "success",
+                    "message": (
+                        f"Second-stage AI optimization completed with {optimization.get('model') or 'the configured model'}. "
+                        "Python validated the proposed workflow and approval gates."
+                    ),
+                    "recordedAt": datetime.now(timezone.utc).isoformat(),
+                }
+            elif optimization.get("status") == "fallback":
+                optimization_event = {
+                    "event": "ai_optimization_fallback",
+                    "status": "fallback",
+                    "message": optimization.get("summary", "AI optimization failed; the original workflow draft was retained."),
+                    "recordedAt": datetime.now(timezone.utc).isoformat(),
+                }
+            else:
+                optimization_event = {
+                    "event": "python_optimization_path",
+                    "status": "recorded",
+                    "message": optimization.get("summary", "The workflow was prepared with Python rules; no second-stage LLM call was made."),
+                    "recordedAt": datetime.now(timezone.utc).isoformat(),
+                }
+
             session.events = [
                 *(session.events or []),
-                {
-                    "event": "deterministic_processing_started",
-                    "status": "success",
-                    "message": "Python validated the answers and updated the workflow context; no additional LLM call was made.",
-                    "recordedAt": datetime.now(timezone.utc).isoformat(),
-                },
+                optimization_event,
                 {
                     "event": "workflow_prepared",
                     "status": "ready_for_approval",
-                    "message": "Workflow is ready for human review. External actions remain disabled until a connected, approved executor is configured.",
+                    "message": "The target workflow is ready for human review. External actions remain disabled until a connected, approved executor is configured.",
                     "recordedAt": datetime.now(timezone.utc).isoformat(),
                 },
             ]
+            if usage_telemetry:
+                AIUsageService(self.db, tenant_id=self.tenant_id).record(session.id, usage_telemetry)
         except Exception as error:
             session.status = "failed"
             session.events = [
