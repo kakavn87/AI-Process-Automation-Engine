@@ -11,7 +11,8 @@ A portfolio MVP that turns natural-language business process descriptions into s
 - **Human-in-the-loop approval lifecycle**: create an execution request, inspect workflow steps, approve or reject, and retain a decision note.
 - **Server-side safety validation** that requires a human approval step before outbound email, Teams, or notification steps.
 - **Simulation-only execution**: approved steps create an event log; no real email, Teams message, or external business action is sent.
-- **Python tabular-data engine** for in-memory CSV/XLSX profiling, missing-value detection, numeric summaries, duplicate removal, and cleaned previews without LLM API usage.\n- **Connector boundaries** for Outlook, document parsing, spreadsheets, and Teams. These are planned integrations, not live connections.
+- **Python tabular-data engine** for in-memory CSV/XLSX profiling, missing-value detection, numeric summaries, duplicate removal, and cleaned previews without LLM API usage.
+- **Connector boundaries** for Outlook, document parsing, spreadsheets, and Teams. These are planned integrations, not live connections.
 
 > This is a portfolio MVP, not a production-ready automation platform. Authentication/authorization, durable production database migrations, and live connector implementations must be added before real business processes are used.
 
@@ -45,7 +46,8 @@ Save the environment changes to trigger a redeploy. The frontend never receives 
 
 ## API
 
-- `POST /api/processes/analyze` — analyze a business process and return the workflow proposal.\n- `POST /api/data-processing/upload` — upload a CSV or XLSX file (max 10 MB) for in-memory data profiling and a cleaned preview.
+- `POST /api/processes/analyze` — analyze a business process and return the workflow proposal.
+- `POST /api/data-processing/upload` — upload a CSV or XLSX file (max 10 MB) for in-memory data profiling and a cleaned preview.
 - `POST /api/executions/` — create an execution record and pause at human approval.
 - `GET /api/executions/` — list execution records.
 - `GET /api/executions/{id}` — retrieve one execution record.
