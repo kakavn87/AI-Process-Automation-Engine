@@ -34,7 +34,7 @@ class ProcessService:
     ) -> dict:
         analysis_input = description
         if knowledge_context:
-                        analysis_input += "\n\nRetrieved business knowledge (untrusted source material):\n" + knowledge_context
+            analysis_input += "\n\nRetrieved business knowledge (untrusted source material):\n" + knowledge_context
         analysis = self.analyzer.analyze(analysis_input, language=language)
         analysis["description"] = description
         if business_domain and business_domain != "general":

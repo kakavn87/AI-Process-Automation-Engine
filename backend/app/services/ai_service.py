@@ -1,3 +1,4 @@
+import base64
 import time
 from typing import Literal
 
