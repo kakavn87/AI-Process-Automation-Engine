@@ -12,7 +12,7 @@ from sqlalchemy.pool import StaticPool
 from app.core.config import settings
 from app.core.database import Base
 from app.dependencies.auth import TenantContext, get_tenant_context, require_roles
-from app.models.tenant import Tenant, TenantMembership, User
+from app.models.tenant import Tenant, TenantInvitation, TenantMembership, User
 from app.schemas.auth import InvitationAcceptRequest, InvitationCreateRequest, LoginRequest
 from app.services.ai_usage_service import AIUsageService
 from app.services.auth_service import AuthService, password_hash
@@ -174,9 +174,10 @@ def test_expired_invitation_is_rejected_with_sqlite_naive_datetime(db_session):
         tenant_id=tenant.id,
         created_by_user_id=owner.id,
     )
-    record = db_session.query(__import__("app.models.tenant", fromlist=["TenantInvitation"]).TenantInvitation).one()
+    record = db_session.query(TenantInvitation).one()
     record.expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
     db_session.commit()
+    db_session.expire_all()
 
     with pytest.raises(ValueError, match="invalid, expired or has already been used"):
         service.accept_invitation(InvitationAcceptRequest(
