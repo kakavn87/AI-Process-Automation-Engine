@@ -239,13 +239,13 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
     this.router.navigate(['/']);
   }
 
-  stepState(step: number, status: string): 'complete' | 'active' | 'pending' {
+  stepState(step: number, status: string): 'complete' | 'active' | 'pending' | 'error' {
     if (step === 1) return 'complete';
     if (step === 2) return status === 'needs_input' ? 'active' : 'complete';
     if (step === 3) {
       if (status === 'needs_input') return 'pending';
       if (status === 'processing') return 'active';
-      return 'complete';
+      return status === 'failed' ? 'error' : 'complete';
     }
     if (step === 4) {
       if (status === 'ready_for_approval' || status === 'awaiting_approval') return 'active';
