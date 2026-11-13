@@ -8,4 +8,4 @@ router = APIRouter(prefix="/processes", tags=["processes"])
 
 @router.post("/analyze")
 def analyze_process(request: ProcessAnalyzeRequest, db: Session = Depends(get_db)):
-    return ProcessService(db).analyze(request.description)
+    return ProcessService(db).analyze(request.description, strategy=request.analysis_strategy)

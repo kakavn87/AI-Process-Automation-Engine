@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.engine.analyzer.process_analyzer import ProcessAnalyzer
+from app.engine.analyzer.routing_policy import ProcessRoutingPolicy
 from app.engine.workflow.generator import WorkflowGenerator
 from app.engine.workflow.validator import validate
 from app.services.ai_service import AIService
@@ -17,15 +18,24 @@ class ProcessService:
         self.db = db
         self.analyzer = ProcessAnalyzer()
         self.workflow_generator = WorkflowGenerator()
+        self.routing_policy = ProcessRoutingPolicy()
         self.ai_service = ai_service or AIService()
 
-    def analyze(self, description: str) -> dict:
+    def analyze(self, description: str, strategy: str = "auto") -> dict:
         analysis = self.analyzer.analyze(description)
         analysis["llmUsed"] = False
         analysis["llmModel"] = None
         analysis["analysisMode"] = "deterministic_rules_v1"
 
-        if self.ai_service.is_configured:
+        routing = self.routing_policy.decide(
+            description=description,
+            analysis=analysis,
+            requested_strategy=strategy,
+            llm_available=self.ai_service.is_configured,
+        )
+        analysis["routingDecision"] = routing
+
+        if routing["selectedEngine"] == "llm":
             try:
                 ai_result = self.ai_service.analyze_process(description, analysis["signals"])
                 self._apply_ai_result(analysis, ai_result)
@@ -39,14 +49,21 @@ class ProcessService:
                 return analysis
             except Exception:
                 logger.exception("OpenAI process analysis failed; using the deterministic fallback.")
+                analysis["routingDecision"] = {
+                    **routing,
+                    "selectedEngine": "rules",
+                    "reason": (
+                        "The LLM request failed. The deterministic Python fallback was used instead; "
+                        "check API billing, model access, and backend logs."
+                    ),
+                }
                 analysis["analysisNote"] = (
-                    "The OpenAI request could not be completed. A deterministic rules-based fallback was used. "
-                    "Check the backend API key, model access, and API billing configuration."
+                    "The OpenAI request could not be completed. A deterministic rules-based fallback was used."
                 )
         else:
             analysis["analysisNote"] = (
-                "OpenAI is not enabled because OPENAI_API_KEY is missing on the backend. "
-                "A deterministic rules-based fallback was used."
+                routing["reason"]
+                + " The workflow remains a proposal; integrations are not connected and execution is simulated."
             )
 
         workflow = self.workflow_generator.generate(

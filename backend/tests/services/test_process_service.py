@@ -41,7 +41,11 @@ class FakeAIService:
     is_configured = True
     model = "test-model"
 
+    def __init__(self):
+        self.calls = 0
+
     def analyze_process(self, description, signals):
+        self.calls += 1
         return {
             "summary": "AI-generated summary.",
             "current_process": ["Receive source data.", "Create report."],
@@ -85,7 +89,7 @@ class FakeAIService:
 
 def test_llm_result_is_used_and_backend_inserts_mandatory_approval_gate():
     service = ProcessService(db=None, ai_service=FakeAIService())
-    result = service.analyze(SAMPLE_PROCESS)
+    result = service.analyze(SAMPLE_PROCESS, strategy="llm")
     steps = result["proposedWorkflow"]["steps"]
     types = [step["type"] for step in steps]
 
@@ -94,3 +98,60 @@ def test_llm_result_is_used_and_backend_inserts_mandatory_approval_gate():
     assert result["detectedDetails"]["businessDomain"] == "finance"
     assert types.index("generate") < types.index("approval") < types.index("notify")
     assert steps[types.index("notify")]["config"]["requiresApproval"] is True
+
+
+
+def test_auto_strategy_uses_python_for_a_supported_process_even_when_llm_is_available():
+    ai_service = FakeAIService()
+    service = ProcessService(db=None, ai_service=ai_service)
+
+    result = service.analyze(SAMPLE_PROCESS)
+
+    assert result["llmUsed"] is False
+    assert ai_service.calls == 0
+    assert result["routingDecision"]["selectedEngine"] == "rules"
+    assert result["routingDecision"]["rulesSuitable"] is True
+    assert result["routingDecision"]["ruleConfidence"] >= 70
+
+
+def test_auto_strategy_uses_llm_for_ambiguous_conditional_process():
+    ai_service = FakeAIService()
+    service = ProcessService(db=None, ai_service=ai_service)
+    description = (
+        "Our team handles customer requests using different rules depending on customer risk "
+        "and contract value. Some requests require multiple approval levels before notifying the customer."
+    )
+
+    result = service.analyze(description)
+
+    assert result["llmUsed"] is True
+    assert ai_service.calls == 1
+    assert result["routingDecision"]["selectedEngine"] == "llm"
+    assert "conditional_logic" in result["routingDecision"]["complexityFlags"]
+
+
+def test_rules_strategy_never_calls_llm_even_for_complex_process():
+    ai_service = FakeAIService()
+    service = ProcessService(db=None, ai_service=ai_service)
+    description = (
+        "Our team handles customer requests using different rules depending on customer risk "
+        "and contract value. Some requests require multiple approval levels before notifying the customer."
+    )
+
+    result = service.analyze(description, strategy="rules")
+
+    assert result["llmUsed"] is False
+    assert ai_service.calls == 0
+    assert result["routingDecision"]["selectedEngine"] == "rules"
+    assert result["routingDecision"]["requestedStrategy"] == "rules"
+
+
+def test_llm_strategy_falls_back_when_api_key_is_missing():
+    service = ProcessService(db=None, ai_service=AIService(api_key=""))
+
+    result = service.analyze(SAMPLE_PROCESS, strategy="llm")
+
+    assert result["llmUsed"] is False
+    assert result["routingDecision"]["selectedEngine"] == "rules"
+    assert result["routingDecision"]["llmAvailable"] is False
+    assert "not configured" in result["routingDecision"]["reason"]
