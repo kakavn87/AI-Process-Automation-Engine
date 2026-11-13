@@ -84,3 +84,41 @@ def test_pull_request_preview_never_inherits_production_rag_or_qdrant():
     assert settings.RAG_ENABLED is False
     assert settings.QDRANT_URL == ""
     assert settings.QDRANT_API_KEY == ""
+
+
+def test_postgres_urls_are_normalized_for_psycopg_v3():
+    standard = Settings(
+        _env_file=None,
+        DATABASE_URL="postgres://flowpilot:secret@db.example.com:5432/flowpilot",
+    )
+    sqlalchemy_url = Settings(
+        _env_file=None,
+        DATABASE_URL="postgresql://flowpilot:secret@db.example.com:5432/flowpilot",
+    )
+    explicit = Settings(
+        _env_file=None,
+        DATABASE_URL="postgresql+psycopg://flowpilot:secret@db.example.com:5432/flowpilot",
+    )
+
+    assert standard.sqlalchemy_database_url == (
+        "postgresql+psycopg://flowpilot:secret@db.example.com:5432/flowpilot"
+    )
+    assert sqlalchemy_url.sqlalchemy_database_url == (
+        "postgresql+psycopg://flowpilot:secret@db.example.com:5432/flowpilot"
+    )
+    assert explicit.sqlalchemy_database_url == (
+        "postgresql+psycopg://flowpilot:secret@db.example.com:5432/flowpilot"
+    )
+
+
+def test_preview_postgres_url_is_normalized_without_using_production_database():
+    settings = Settings(
+        _env_file=None,
+        IS_PULL_REQUEST=True,
+        DATABASE_URL="postgres://production:secret@db.example.com/production",
+        PREVIEW_DATABASE_URL="postgres://preview:secret@db.example.com/preview",
+    )
+
+    assert settings.sqlalchemy_database_url == (
+        "postgresql+psycopg://preview:secret@db.example.com/preview"
+    )

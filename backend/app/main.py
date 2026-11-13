@@ -1,18 +1,21 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import settings
-from app.core.database import Base, engine
-from app.models.execution import ApprovalExecution  # noqa: F401 - registers the table
-from app.models.workflow_session import AIUsageEvent, WorkflowSession  # noqa: F401 - register tables
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
+    # Run versioned schema changes before the API accepts traffic. This also
+    # protects Render services whose dashboard start command predates this
+    # repository's updated render.yaml.
+    backend_dir = Path(__file__).resolve().parents[1]
+    alembic_config = Config(str(backend_dir / "alembic.ini"))
+    command.upgrade(alembic_config, "head")
     yield
 
 

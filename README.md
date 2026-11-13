@@ -16,7 +16,7 @@ AI Process Optimierung is a portfolio MVP that turns natural-language business p
 - **Python tabular-data engine** for in-memory CSV/XLSX profiling, missing-value detection, numeric summaries, duplicate removal, and cleaned previews without LLM API usage.
 - **Connector boundaries** for Outlook, document parsing, spreadsheets, and Teams. These are planned integrations, not live connections.
 
-> This is a portfolio MVP, not a production-ready automation platform. Authentication/authorization, durable production database migrations, and live connector implementations must be added before real business processes are used.
+> This is a portfolio MVP, not yet a production-ready multi-tenant automation platform. Authentication/authorization, tenant isolation, production database provisioning and live connector implementations must be completed before real customer business processes are used.
 
 ## LLM configuration
 
@@ -191,6 +191,7 @@ python -m venv .venv
 # Windows PowerShell: .venv\\Scripts\\Activate.ps1
 pip install -r requirements.txt
 cp .env.example .env  # Windows: copy .env.example .env
+alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -217,7 +218,17 @@ pytest
 
 The root `render.yaml` defines the FastAPI backend and Angular static frontend. The frontend's production environment points to the deployed backend URL; the backend CORS allow-list includes the deployed frontend URL.
 
-The current Free service uses SQLite for the approval demo. SQLite data on an ephemeral web-service filesystem is not a durable production store. Use managed PostgreSQL and migration tooling before storing important business records.
+The current Render demo still uses SQLite on an ephemeral web-service filesystem; it is not durable production storage. The backend is now migration-managed with Alembic and accepts managed PostgreSQL URLs using psycopg v3. The Render start command runs `alembic upgrade head` before starting FastAPI.
+
+To move the deployment to PostgreSQL:
+1. Provision a managed PostgreSQL database in the intended region and configure its private connection URL as the Backend service's secret `DATABASE_URL` (prefer the internal URL).
+2. Keep `PREVIEW_DATABASE_URL` empty until a separate preview database exists. A PR preview refuses to reuse the Production PostgreSQL URL.
+3. Deploy the backend. Alembic creates the schema before FastAPI starts.
+4. Existing SQLite rows are **not** copied automatically when changing `DATABASE_URL`. Export/import the records that must be retained and verify them before switching customer traffic.
+
+For local PostgreSQL, the Compose file already provides a database on `127.0.0.1:5432`. Start it with `docker compose -f infrastructure/docker/docker-compose.yml up -d postgres`, then set a private local `DATABASE_URL` such as `postgresql+psycopg://app:app@localhost:5432/process_automation` and run `alembic upgrade head` from `backend/`.
+
+The initial Alembic revision is a compatibility baseline: it uses SQLAlchemy metadata with `checkfirst` so existing demo tables are not recreated, while a fresh PostgreSQL database receives the complete current schema. New schema changes should be added as explicit Alembic revisions. Do not run a downgrade against a database containing records you need to keep.
 
 ## Project structure
 
