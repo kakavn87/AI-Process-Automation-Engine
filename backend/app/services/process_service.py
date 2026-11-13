@@ -1,3 +1,4 @@
+import copy
 import logging
 import re
 
@@ -120,6 +121,191 @@ class ProcessService:
         if telemetry:
             localized["_aiUsageTelemetry"] = telemetry
         return localized
+
+
+    def optimize_after_clarification(
+        self,
+        analysis: dict,
+        description: str,
+        questions: list[dict],
+        answers: dict,
+        strategy: str = "auto",
+        language: str = "de",
+    ) -> dict:
+        """Run the second LLM pass after all required clarification answers are available."""
+        optimized = copy.deepcopy(analysis)
+        original_workflow = copy.deepcopy(optimized.get("proposedWorkflow") or {})
+        optimized["originalWorkflow"] = original_workflow
+
+        should_use_llm = (
+            strategy != "rules"
+            and bool(optimized.get("llmUsed"))
+            and self.ai_service.is_configured
+        )
+        if not should_use_llm:
+            if strategy == "rules":
+                note = (
+                    "Der Python-Regelmodus wurde gewählt. Die Antworten wurden deterministisch übernommen; "
+                    "eine zusätzliche LLM-Optimierung wurde bewusst nicht aufgerufen."
+                    if language == "de"
+                    else "Python rules mode was selected. Answers were applied deterministically; no additional LLM optimization was called."
+                )
+                status = "rules_only"
+            else:
+                note = (
+                    "Für die erste Analyse wurde kein LLM-Ergebnis verwendet. Die Antworten wurden mit Python geprüft; "
+                    "für eine KI-Optimierung ist eine erfolgreiche LLM-Analyse mit aktivem API-Zugang erforderlich."
+                    if language == "de"
+                    else "The first analysis did not use an LLM result. Python validated the answers; AI optimization requires a successful first-stage LLM analysis and an active API connection."
+                )
+                status = "unavailable"
+            optimized["optimization"] = {
+                "status": status,
+                "engine": "python",
+                "summary": note,
+                "designPrinciples": [],
+                "recommendedChanges": [],
+                "expectedBenefits": [],
+                "model": None,
+            }
+            return optimized
+
+        try:
+            ai_result = self.ai_service.optimize_process(
+                description=description,
+                analysis=optimized,
+                questions=questions,
+                answers=answers,
+                language=language,
+            )
+            self._apply_optimization_result(optimized, ai_result)
+            telemetry = getattr(self.ai_service, "last_call_telemetry", None)
+            if telemetry:
+                optimized["_optimizationUsageTelemetry"] = telemetry
+            return optimized
+        except Exception as error:
+            logger.exception("Second-stage AI process optimization failed; retaining the original workflow.")
+            note = self._llm_fallback_reason(error, language)
+            optimized["optimization"] = {
+                "status": "fallback",
+                "engine": "python",
+                "summary": note,
+                "designPrinciples": [],
+                "recommendedChanges": [],
+                "expectedBenefits": [],
+                "model": getattr(self.ai_service, "model", None),
+            }
+            telemetry = getattr(self.ai_service, "last_call_telemetry", None)
+            if telemetry:
+                optimized["_optimizationUsageTelemetry"] = telemetry
+            return optimized
+
+    def _apply_optimization_result(self, analysis: dict, result: dict) -> None:
+        """Apply and validate the LLM target design; calculate evidence-backed deltas in Python."""
+        raw_specification = result.get("process_specification") or {}
+        detected_details = analysis.setdefault("detectedDetails", {})
+        domain = (raw_specification.get("business_domain") or detected_details.get("businessDomain") or "general")
+        domain = re.sub(r"[^a-z0-9]+", "_", domain.strip().lower()).strip("_")[:80] or "general"
+        domain_label = (
+            raw_specification.get("business_domain_label")
+            or detected_details.get("businessDomainLabel")
+            or domain.replace("_", " ").title()
+        )
+        detected_details["businessDomain"] = domain
+        detected_details["businessDomainLabel"] = domain_label
+
+        analysis["processSpecification"] = {
+            "schemaVersion": "1.0",
+            "businessDomain": domain,
+            "businessDomainLabel": domain_label,
+            "goal": raw_specification.get("process_goal", ""),
+            "actors": raw_specification.get("actors", []),
+            "inputs": raw_specification.get("inputs", []),
+            "systems": raw_specification.get("systems", []),
+            "businessRules": raw_specification.get("business_rules", []),
+            "exceptionPaths": raw_specification.get("exception_paths", []),
+            "outputs": raw_specification.get("outputs", []),
+            "successMetrics": raw_specification.get("success_metrics", []),
+        }
+
+        steps = []
+        for index, item in enumerate(result.get("workflow_steps") or [], start=1):
+            config = {"requiresApproval": bool(item.get("requires_approval"))}
+            connector = (item.get("connector") or "").strip()
+            if connector:
+                config["connector"] = connector
+            steps.append({
+                "id": f"step-{index}",
+                "type": item["type"],
+                "name": item["name"],
+                "description": item["description"],
+                "config": config,
+            })
+
+        workflow = {
+            "name": result.get("workflow_name") or "Optimized process workflow",
+            "trigger": result.get("workflow_trigger") or "Start when the agreed trigger occurs.",
+            "steps": steps,
+        }
+        self._ensure_approval_gate(
+            workflow,
+            force_approval=bool(result.get("human_approval_required")),
+        )
+        validate(workflow)
+
+        benefits = []
+        for item in result.get("expected_benefits") or []:
+            benefit = {
+                "metric": item.get("metric", ""),
+                "description": item.get("description", ""),
+                "baselineValue": item.get("baseline_value"),
+                "targetValue": item.get("target_value"),
+                "unit": item.get("unit", ""),
+                "direction": item.get("direction", "not_applicable"),
+                "confidence": item.get("confidence", "low"),
+                "basis": item.get("basis", ""),
+                "changePercent": None,
+            }
+            baseline = benefit["baselineValue"]
+            target = benefit["targetValue"]
+            direction = benefit["direction"]
+            if baseline is not None and target is not None and float(baseline) != 0:
+                if direction == "lower_is_better":
+                    benefit["changePercent"] = round((float(baseline) - float(target)) / abs(float(baseline)) * 100, 1)
+                elif direction == "higher_is_better":
+                    benefit["changePercent"] = round((float(target) - float(baseline)) / abs(float(baseline)) * 100, 1)
+            benefits.append(benefit)
+
+        telemetry = getattr(self.ai_service, "last_call_telemetry", None) or {}
+        analysis["optimization"] = {
+            "status": "completed",
+            "engine": "llm",
+            "model": telemetry.get("model") or getattr(self.ai_service, "model", None),
+            "summary": result.get("optimization_summary", ""),
+            "designPrinciples": result.get("design_principles") or [],
+            "recommendedChanges": result.get("recommended_changes") or [],
+            "expectedBenefits": benefits,
+            "automationPotentialScore": max(0, min(100, int(result.get("automation_potential_score") or 0))),
+            "automationPotentialReason": result.get("automation_potential_reason", ""),
+        }
+        analysis["automationOpportunities"] = result.get("automation_opportunities") or analysis.get("automationOpportunities", [])
+        analysis["integrations"] = [
+            {**item, "status": "planned_not_connected"}
+            for item in (result.get("integrations") or analysis.get("integrations", []))
+        ]
+        analysis["risks"] = list(dict.fromkeys([*(analysis.get("risks") or []), *(result.get("risks") or [])]))
+        analysis["assumptions"] = list(dict.fromkeys([*(analysis.get("assumptions") or []), *(result.get("assumptions") or [])]))
+        analysis["humanApproval"] = {
+            "required": bool(result.get("human_approval_required")) or any(
+                step.get("type") in OUTBOUND_STEP_TYPES for step in workflow["steps"]
+            ),
+            "reason": result.get("human_approval_reason", ""),
+            "gateBefore": next(
+                (step.get("name", "") for step in workflow["steps"] if step.get("type") in OUTBOUND_STEP_TYPES),
+                "",
+            ),
+        }
+        analysis["proposedWorkflow"] = workflow
 
     @staticmethod
     def _llm_fallback_reason(error: Exception, language: str) -> str:
