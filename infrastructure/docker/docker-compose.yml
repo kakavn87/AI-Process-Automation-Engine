@@ -6,9 +6,14 @@ services:
       POSTGRES_USER: app
       POSTGRES_PASSWORD: app
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d process_automation"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   # Optional local AI platform: start with --profile ai-platform.
   # The gateway and web portal are bound to localhost by default.
@@ -18,6 +23,9 @@ services:
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     env_file:
       - .env.ai-platform
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "127.0.0.1:4000:4000"
     volumes:
