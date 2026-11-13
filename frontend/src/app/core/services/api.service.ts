@@ -99,6 +99,12 @@ export class ApiService {
     );
   }
 
+  retryWorkflowOptimization(id: string) {
+    return this.request('/processes/sessions/' + encodeURIComponent(id) + '/optimize', url =>
+      this.http.post<WorkflowSession>(url, {})
+    );
+  }
+
   createSessionExecution(id: string) {
     return this.request('/processes/sessions/' + encodeURIComponent(id) + '/execute', url =>
       this.http.post<{ session: WorkflowSession; execution: ApprovalExecution }>(url, {})
