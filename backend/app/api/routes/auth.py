@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.dependencies.auth import TenantContext, get_tenant_context, require_roles
-from app.schemas.auth import InvitationAcceptRequest, InvitationCreateRequest, LoginRequest
+from app.schemas.auth import InvitationAcceptRequest, InvitationCreateRequest, LoginRequest, WorkspaceCreateRequest
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -40,6 +40,20 @@ def get_current_account(context: TenantContext = Depends(get_tenant_context)):
         "tenant": {"id": context.tenant_id, "name": context.tenant_name},
         "role": context.role,
     }
+
+
+@router.post("/workspaces")
+def create_workspace(
+    request: WorkspaceCreateRequest,
+    context: TenantContext = Depends(get_tenant_context),
+    db: Session = Depends(get_db),
+):
+    if not settings.AUTH_ENABLED or not context.authenticated or not context.user_id:
+        raise HTTPException(status_code=401, detail="Sign in before creating a workspace.")
+    try:
+        return AuthService(db).create_workspace(context.user_id, request.name)
+    except ValueError as error:
+        raise HTTPException(status_code=403, detail=str(error)) from error
 
 
 @router.post("/invitations")
