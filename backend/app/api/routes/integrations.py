@@ -29,7 +29,10 @@ def _safe_http_url(value: str) -> str | None:
 def get_integration_readiness():
     """Expose non-secret integration state for the Step 6 setup dashboard."""
     base_url = settings.OPENAI_BASE_URL.strip()
-    is_litellm = "litellm" in base_url.lower()
+    is_litellm = (
+        settings.AI_GATEWAY_PROVIDER.strip().lower() == "litellm"
+        or "litellm" in base_url.lower()
+    )
     gateway_provider = (
         "LiteLLM" if is_litellm
         else "OpenAI-compatible gateway" if base_url

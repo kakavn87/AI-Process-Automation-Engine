@@ -80,6 +80,9 @@ class AIService:
     @staticmethod
     def _provider_name() -> str:
         base_url = settings.OPENAI_BASE_URL.strip().lower()
+        configured_provider = settings.AI_GATEWAY_PROVIDER.strip().lower()
+        if configured_provider in {"litellm", "openai_compatible"}:
+            return configured_provider
         if "litellm" in base_url:
             return "litellm"
         return "openai_compatible" if base_url else "openai"

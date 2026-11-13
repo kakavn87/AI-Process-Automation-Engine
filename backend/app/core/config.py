@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     PREVIEW_OPENAI_API_KEY: str = ""
     OPENAI_BASE_URL: str = ""
+    AI_GATEWAY_PROVIDER: str = ""
     PREVIEW_OPENAI_BASE_URL: str = ""
     OPENAI_MODEL: str = "gpt-6-luna"
     OPENAI_VISION_MODEL: str = ""
@@ -47,6 +48,7 @@ class Settings(BaseSettings):
         if self.IS_PULL_REQUEST:
             self.OPENAI_API_KEY = self.PREVIEW_OPENAI_API_KEY.strip()
             self.OPENAI_BASE_URL = self.PREVIEW_OPENAI_BASE_URL.strip()
+            self.AI_GATEWAY_PROVIDER = ""
             self.OPENWEBUI_URL = self.PREVIEW_OPENWEBUI_URL.strip()
             self.OPENAI_VISION_MODEL = ""
             self.OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
