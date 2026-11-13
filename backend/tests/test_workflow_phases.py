@@ -14,6 +14,132 @@ from app.services.question_service import QuestionService
 from app.services.workflow_session_service import WorkflowSessionService
 
 
+
+
+class FakeOptimizationAIService:
+    model = "test-optimizer"
+
+    def __init__(self, fail_first: bool = False):
+        self.calls = []
+        self.last_call_telemetry = None
+        self.fail_first = fail_first
+
+    def optimize_process(self, analysis, answers, questions, language):
+        self.calls.append({
+            "analysis": analysis,
+            "answers": answers,
+            "questions": questions,
+            "language": language,
+        })
+        if self.fail_first and len(self.calls) == 1:
+            self.last_call_telemetry = {
+                "provider": "openai",
+                "model": self.model,
+                "task": "process_optimization",
+                "status": "fallback",
+                "inputTokens": 20,
+                "outputTokens": 0,
+                "totalTokens": 20,
+                "durationMs": 10,
+                "errorType": "RuntimeError",
+            }
+            raise RuntimeError("temporary model error")
+
+        self.last_call_telemetry = {
+            "provider": "openai",
+            "model": self.model,
+            "task": "process_optimization",
+            "status": "success",
+            "inputTokens": 100,
+            "outputTokens": 200,
+            "totalTokens": 300,
+            "durationMs": 25,
+        }
+        return {
+            "summary": "Automate document intake and validation, then route only exceptions for review.",
+            "optimized_process": [
+                "Collect source documents automatically.",
+                "Extract and normalize the relevant fields.",
+                "Validate required data and route exceptions.",
+                "Generate the reviewed output.",
+                "Obtain human approval before distribution.",
+            ],
+            "changes": [
+                {
+                    "current_step": "Employees manually download and copy document data.",
+                    "optimized_step": "Documents are collected and extracted automatically.",
+                    "reason": "Avoid duplicate manual data entry.",
+                    "expected_benefit": "Less handling time and fewer transcription errors.",
+                }
+            ],
+            "opportunities": [
+                {
+                    "title": "Automated document intake",
+                    "description": "Extract standard fields from uploaded documents.",
+                    "priority": "high",
+                    "implementation_effort": "medium",
+                    "expected_benefit": "Reduce repetitive manual work.",
+                }
+            ],
+            "automation_potential_score": 84,
+            "optimized_workflow_name": "Optimized maintenance reporting",
+            "optimized_workflow_trigger": "Start when a new report arrives.",
+            "optimized_workflow_steps": [
+                {
+                    "type": "trigger",
+                    "name": "New report received",
+                    "description": "Start when a new report arrives.",
+                    "connector": "",
+                    "requires_approval": False,
+                },
+                {
+                    "type": "extract",
+                    "name": "Extract report data",
+                    "description": "Extract structured data from the source document.",
+                    "connector": "document_parser",
+                    "requires_approval": False,
+                },
+                {
+                    "type": "validate",
+                    "name": "Validate extracted data",
+                    "description": "Check required fields and exceptions.",
+                    "connector": "",
+                    "requires_approval": False,
+                },
+                {
+                    "type": "generate",
+                    "name": "Prepare report",
+                    "description": "Generate the report from validated data.",
+                    "connector": "",
+                    "requires_approval": False,
+                },
+                {
+                    "type": "email",
+                    "name": "Send report",
+                    "description": "Send the approved report.",
+                    "connector": "microsoft_outlook",
+                    "requires_approval": False,
+                },
+            ],
+            "metrics": [
+                {
+                    "name": "Bearbeitungszeit pro Bericht",
+                    "current_value": 12,
+                    "proposed_value": 4,
+                    "unit": "Minuten",
+                    "direction": "lower_is_better",
+                    "rationale": "The target is an explicit model estimate based on automatic intake.",
+                    "evidence_basis": "model_estimate",
+                    "confidence": "medium",
+                }
+            ],
+            "remaining_questions": [],
+            "risks": ["Unleserliche Dokumente müssen manuell geprüft werden."],
+            "assumptions": ["Die Quelldokumente besitzen eine ausreichend einheitliche Struktur."],
+            "implementation_notes": ["Document parser and source connector need configuration."],
+        }
+
+
 def test_question_service_builds_stable_typed_questions():
     service = QuestionService()
     questions = service.build([
@@ -98,7 +224,8 @@ def test_workflow_session_saves_partial_answers_then_prepares():
     }
 
     with Session(engine) as db:
-        service = WorkflowSessionService(db)
+        ai_service = FakeOptimizationAIService()
+        service = WorkflowSessionService(db, ai_service=ai_service)
         created = service.create(
             description="Prepare a maintenance report and ask for missing information.",
             analysis=analysis,
@@ -125,10 +252,25 @@ def test_workflow_session_saves_partial_answers_then_prepares():
 
         assert prepared["status"] == "ready_for_approval"
         assert prepared["openQuestions"] == []
-        assert prepared["analysis"]["processingResult"]["engine"] == "deterministic_python"
+        assert prepared["analysis"]["processingResult"]["engine"] == "openai_llm_and_deterministic_python"
         assert prepared["analysis"]["processingResult"]["externalActionsExecuted"] is False
         assert len(prepared["analysis"]["proposedWorkflow"]["confirmedContext"]) == 2
         assert prepared["answers"][second_question["id"]] is False
+        assert len(ai_service.calls) == 1
+        assert ai_service.calls[0]["answers"] == prepared["answers"]
+        assert prepared["analysis"]["currentWorkflow"]["name"] == "Maintenance review"
+        assert prepared["analysis"]["proposedWorkflow"]["name"] == "Optimized maintenance reporting"
+        assert prepared["analysis"]["processOptimization"]["llmUsed"] is True
+        metric = prepared["analysis"]["processOptimization"]["metrics"][0]
+        assert metric["absoluteChange"] == -8
+        assert metric["improvementPercent"] == 66.67
+        assert metric["isEstimate"] is True
+        workflow_types = [step["type"] for step in prepared["analysis"]["proposedWorkflow"]["steps"]]
+        assert workflow_types.index("approval") < workflow_types.index("email")
+        assert prepared["analysis"]["proposedWorkflow"]["steps"][workflow_types.index("email")]["config"]["requiresApproval"] is True
+        usage_events = db.query(AIUsageEvent).filter(AIUsageEvent.task == "process_optimization").all()
+        assert len(usage_events) == 1
+        assert usage_events[0].total_tokens == 300
 
         approval_request = service.create_execution(created["id"])
         assert approval_request["session"]["status"] == "awaiting_approval"
@@ -336,3 +478,83 @@ def test_pull_request_settings_always_disable_live_webhooks():
     assert preview.WORKFLOW_WEBHOOK_URL == ""
     assert preview.WORKFLOW_WEBHOOK_BEARER_TOKEN == ""
     assert preview.WORKFLOW_LIVE_EXECUTION_TOKEN == ""
+
+
+def test_failed_second_pass_llm_optimization_can_be_retried():
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    ai_service = FakeOptimizationAIService(fail_first=True)
+    analysis = {
+        "questions": ["Which mailbox should receive the report?"],
+        "proposedWorkflow": {
+            "name": "Current workflow",
+            "trigger": "Manual",
+            "steps": [
+                {
+                    "id": "step-1",
+                    "type": "trigger",
+                    "name": "Start",
+                    "description": "Start manually",
+                    "config": {"requiresApproval": False},
+                }
+            ],
+        },
+    }
+
+    with Session(engine) as db:
+        service = WorkflowSessionService(db, ai_service=ai_service)
+        created = service.create(
+            description="Prepare and distribute a maintenance report.",
+            analysis=analysis,
+            language="de",
+        )
+        question = created["openQuestions"][0]
+        failed = service.submit_answers(created["id"], {question["id"]: "technik@example.de"})
+
+        assert failed["status"] == "failed"
+        assert failed["analysis"]["optimizationFailure"]["errorType"] == "RuntimeError"
+        assert len(ai_service.calls) == 1
+
+        retried = service.retry_optimization(created["id"])
+        assert retried["status"] == "ready_for_approval"
+        assert len(ai_service.calls) == 2
+        assert retried["analysis"]["processOptimization"]["llmUsed"] is True
+        assert db.query(AIUsageEvent).filter(AIUsageEvent.task == "process_optimization").count() == 2
+
+    Base.metadata.drop_all(bind=engine)
+    engine.dispose()
+
+
+def test_optimization_metrics_are_calculated_by_python_only():
+    result = WorkflowAutomationEngine._calculate_metrics([
+        {
+            "name": "Cycle time",
+            "current_value": 10,
+            "proposed_value": 5,
+            "unit": "minutes",
+            "direction": "lower_is_better",
+            "rationale": "Estimated from the proposed automation.",
+            "evidence_basis": "model_estimate",
+            "confidence": "low",
+        },
+        {
+            "name": "Accuracy",
+            "current_value": None,
+            "proposed_value": None,
+            "unit": "%",
+            "direction": "higher_is_better",
+            "rationale": "No baseline was provided.",
+            "evidence_basis": "not_available",
+            "confidence": "low",
+        },
+    ])
+
+    assert result[0]["improvementPercent"] == 50
+    assert result[0]["isEstimate"] is True
+    assert result[1]["improvementPercent"] is None
+    assert result[1]["absoluteChange"] is None
+
