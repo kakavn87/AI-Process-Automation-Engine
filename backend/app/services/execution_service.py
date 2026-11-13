@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.engine.execution.executor import WorkflowExecutor
 from app.engine.workflow.validator import validate
 from app.models.execution import ApprovalExecution
+from app.models.workflow_session import WorkflowSession
 
 
 class ExecutionService:
@@ -55,7 +56,7 @@ class ExecutionService:
         execution.status = result["status"]
         execution.decision_note = note
         execution.events = [
-            *execution.events,
+            *(execution.events or []),
             {
                 "event": "approval_granted",
                 "status": "approved",
@@ -64,6 +65,11 @@ class ExecutionService:
             *result["events"],
         ]
         execution.updated_at = datetime.now(timezone.utc)
+        self._sync_workflow_session(
+            execution.id,
+            "completed",
+            "Human approval was recorded and the workflow simulation completed.",
+        )
         self.db.commit()
         self.db.refresh(execution)
         return self._serialize(execution)
@@ -78,7 +84,7 @@ class ExecutionService:
         execution.status = "rejected"
         execution.decision_note = note
         execution.events = [
-            *execution.events,
+            *(execution.events or []),
             {
                 "event": "approval_rejected",
                 "status": "rejected",
@@ -90,9 +96,35 @@ class ExecutionService:
             },
         ]
         execution.updated_at = datetime.now(timezone.utc)
+        self._sync_workflow_session(
+            execution.id,
+            "rejected",
+            note or "The reviewer rejected the workflow. No workflow steps were executed.",
+        )
         self.db.commit()
         self.db.refresh(execution)
         return self._serialize(execution)
+
+    def _sync_workflow_session(self, execution_id: str, status: str, message: str) -> None:
+        session = (
+            self.db.query(WorkflowSession)
+            .filter(WorkflowSession.related_execution_id == execution_id)
+            .one_or_none()
+        )
+        if session is None:
+            return
+        session.status = status
+        session.events = [
+            *(session.events or []),
+            {
+                "event": "execution_" + status,
+                "status": status,
+                "message": message,
+                "executionId": execution_id,
+                "recordedAt": datetime.now(timezone.utc).isoformat(),
+            },
+        ]
+        session.updated_at = datetime.now(timezone.utc)
 
     @staticmethod
     def _serialize(execution: ApprovalExecution) -> dict:
