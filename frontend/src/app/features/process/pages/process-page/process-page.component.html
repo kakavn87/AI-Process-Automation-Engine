@@ -1,7 +1,7 @@
 <div class="app-frame" [attr.lang]="language()">
   <aside class="sidebar">
-    <a class="brand" href="#overview" aria-label="FlowPilot Startseite">
-      <span class="brand-mark"><span>F</span></span>
+    <a class="brand" href="#overview" aria-label="AI Process Optimierung Startseite">
+      <span class="brand-mark"><span>AI</span></span>
       <span class="brand-copy"><strong>{{ i18n.brand }}</strong><small>{{ i18n.product }}</small></span>
     </a>
 
@@ -24,13 +24,13 @@
 
     <div class="sidebar-bottom">
       <div class="workspace-health"><span class="health-dot"></span><span><strong>{{ i18n.systemReady }}</strong><small>{{ i18n.activeWorkspace }}</small></span></div>
-      <div class="sidebar-footer"><span class="avatar">AI</span><span><strong>FlowPilot Demo</strong><small>Portfolio workspace</small></span><span class="more-icon">···</span></div>
+      <div class="sidebar-footer"><span class="avatar">AI</span><span><strong>AI Process Optimierung Demo</strong><small>Portfolio workspace</small></span><span class="more-icon">···</span></div>
     </div>
   </aside>
 
   <div class="main-column">
     <header class="topbar">
-      <div class="breadcrumb"><span>FlowPilot</span><span class="crumb-separator">/</span><strong>{{ i18n.navOverview }}</strong></div>
+      <div class="breadcrumb"><span>AI Process Optimierung</span><span class="crumb-separator">/</span><strong>{{ i18n.navOverview }}</strong></div>
       <div class="topbar-actions">
         <span class="environment-label"><span class="health-dot"></span>{{ i18n.workspace }}</span>
         <div class="language-switch" role="group" [attr.aria-label]="i18n.language">
@@ -43,9 +43,9 @@
     <main class="page-content" id="overview">
       <section class="workspace-welcome" aria-labelledby="workspace-title">
         <div class="welcome-copy">
-          <div class="welcome-eyebrow"><span class="welcome-live-dot"></span>{{ language() === 'de' ? 'FLOWPILOT · PROZESS-WORKSPACE' : 'FLOWPILOT · PROCESS WORKSPACE' }}</div>
+          <div class="welcome-eyebrow"><span class="welcome-live-dot"></span>{{ language() === 'de' ? 'AI PROCESS OPTIMIERUNG · PROZESS-WORKSPACE' : 'AI PROCESS OPTIMIERUNG · PROCESS WORKSPACE' }}</div>
           <h1 id="workspace-title">{{ language() === 'de' ? 'Aus manueller Arbeit wird ein klarer Workflow.' : 'Turn manual work into a clear workflow.' }}</h1>
-          <p>{{ language() === 'de' ? 'Beschreiben Sie Ihren heutigen Ablauf. FlowPilot strukturiert Aufgaben, Daten, Ausnahmen und Freigaben – damit Sie sehen, was sich sinnvoll automatisieren lässt.' : 'Describe the way work happens today. FlowPilot maps tasks, data, exceptions and approvals so you can see what is worth automating.' }}</p>
+          <p>{{ language() === 'de' ? 'Beschreiben Sie Ihren heutigen Ablauf. AI Process Optimierung strukturiert Aufgaben, Daten, Ausnahmen und Freigaben – damit Sie sehen, was sich sinnvoll automatisieren lässt.' : 'Describe the way work happens today. AI Process Optimierung maps tasks, data, exceptions and approvals so you can see what is worth automating.' }}</p>
           <div class="welcome-pills">
             <span><b>AI</b> {{ language() === 'de' ? 'Prozessverständnis' : 'Process understanding' }}</span>
             <span><b>PY</b> {{ language() === 'de' ? 'Daten & Regeln' : 'Data & rules' }}</span>
@@ -53,7 +53,7 @@
           </div>
         </div>
         <div class="welcome-status">
-          <div class="welcome-mark">F</div>
+          <div class="welcome-mark">AI</div>
           <div class="welcome-status-copy">
             <small>{{ language() === 'de' ? 'IHR WORKSPACE' : 'YOUR WORKSPACE' }}</small>
             <strong>{{ i18n.systemReady }}</strong>
@@ -141,7 +141,7 @@
           <aside class="builder-aside">
             <div class="aside-card aside-highlight">
               <span class="aside-illustration">✦</span>
-              <div class="section-kicker">{{ language() === 'de' ? 'WAS FLOWPILOT ERKENNT' : 'WHAT FLOWPILOT DETECTS' }}</div>
+              <div class="section-kicker">{{ language() === 'de' ? 'WAS AI PROCESS OPTIMIERUNG ERKENNT' : 'WHAT AI PROCESS OPTIMIERUNG DETECTS' }}</div>
               <h3>{{ language() === 'de' ? 'Aus Beschreibung wird Struktur.' : 'Turn descriptions into structure.' }}</h3>
               <ul>
                 <li><span>✓</span>{{ language() === 'de' ? 'Manuelle und wiederkehrende Schritte' : 'Manual and repetitive activities' }}</li>
@@ -310,7 +310,7 @@
         }
       </section>
 
-      <footer class="page-footer"><span><strong>FlowPilot</strong> · {{ i18n.product }}</span><span>{{ i18n.footer }}</span></footer>
+      <footer class="page-footer"><span><strong>AI Process Optimierung</strong> · {{ i18n.product }}</span><span>{{ i18n.footer }}</span></footer>
     </main>
   </div>
 </div>
