@@ -72,6 +72,8 @@ async def analyze_process_with_documents(
     if not isinstance(selected_ids, list) or any(not isinstance(value, str) for value in selected_ids):
         raise HTTPException(status_code=422, detail="document_ids must be a JSON array of document IDs.")
     selected_ids = list(dict.fromkeys(selected_ids))[:30]
+    if selected_ids and not settings.KNOWLEDGE_PERSISTENCE_ENABLED:
+        raise HTTPException(status_code=403, detail="Saved knowledge is disabled on this instance.")
 
     # Public previews remain memory-only because they have no authenticated workspace.
     # Enable persistence only on a private/self-hosted instance with access control.

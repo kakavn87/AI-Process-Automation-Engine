@@ -88,7 +88,7 @@ Open WebUI connects to LiteLLM through the OpenAI-compatible API. Use it as an i
 3. Start the profile from the repository root using the Docker Compose file in infrastructure/docker and the environment file just created.
 4. Create separate LiteLLM virtual keys for the FlowPilot backend and Open WebUI. Do not use the master key for application traffic.
 5. For a backend running on the host, configure OPENAI_BASE_URL=http://localhost:4000/v1, OPENAI_MODEL=process-analysis, OPENAI_VISION_MODEL=process-vision, OPENAI_EMBEDDING_MODEL=process-embeddings, and OPENWEBUI_URL=http://localhost:3000.
-6. Enable KNOWLEDGE_PERSISTENCE_ENABLED=true only on a private, authenticated instance with pgvector available.
+6. Set DATABASE_URL to postgresql+psycopg://app:YOUR_APP_DB_PASSWORD@localhost:5432/process_automation and APP_DB_PASSWORD to the same local secret used by Compose. Enable KNOWLEDGE_PERSISTENCE_ENABLED=true only on a private, authenticated instance with pgvector available.
 
 Local endpoints: Open WebUI at localhost:3000, LiteLLM at localhost:4000, PostgreSQL at localhost:5432, and FlowPilot API documentation at localhost:8000/docs.
 
