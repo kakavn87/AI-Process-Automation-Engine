@@ -330,7 +330,7 @@ Workflow constraints:
                     {
                         "role": "user",
                         "content": (
-                            "Optimize the process using this complete context:\\n"
+                            "Optimize the process using this complete context:\n"
                             + json.dumps(context, ensure_ascii=False, default=str)
                         ),
                     },
