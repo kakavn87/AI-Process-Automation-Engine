@@ -28,7 +28,7 @@ export interface ProcessAnalysis {
   automationScore: number;
   signals: string[];
   description: string;
-  analysisMode: string;
+  analysisMode: 'openai_llm' | 'rules_fallback' | string;
   analysisNote: string;
   summary: string;
   currentProcess: string[];
@@ -43,4 +43,27 @@ export interface ProcessAnalysis {
   assumptions: string[];
   questions: string[];
   proposedWorkflow: ProposedWorkflow;
+}
+
+export type ExecutionStatus = 'awaiting_approval' | 'approved_ready' | 'rejected';
+
+export interface ExecutionStepRecord {
+  id: string;
+  type: string;
+  name: string;
+  description: string;
+  status: string;
+  position: number;
+}
+
+export interface ExecutionRecord {
+  id: number;
+  workflowName: string;
+  status: ExecutionStatus;
+  workflow: ProposedWorkflow;
+  decisionNote: string;
+  createdAt: string | null;
+  decidedAt: string | null;
+  steps: ExecutionStepRecord[];
+  executionNote: string;
 }
