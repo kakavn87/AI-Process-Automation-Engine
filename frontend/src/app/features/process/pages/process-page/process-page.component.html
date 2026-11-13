@@ -376,11 +376,22 @@
             </div>
 
             <div class="builder-submit-row">
-              <span class="field-hint">{{ language() === 'de' ? 'Analyse dauert normalerweise nur wenige Sekunden.' : 'Analysis usually takes only a few seconds.' }}</span>
+              <span class="field-hint">{{ language() === 'de' ? 'Die Dauer hängt vom Umfang der Beschreibung und den verwendeten Dokumenten ab.' : 'Processing time depends on the description and attached documents.' }}</span>
               <button class="button-primary analyze-button" type="button" (click)="analyze()" [disabled]="store.loading() || (description.trim().length < 3 && processFiles.length === 0) || !!processFileError()">
-                {{ store.loading() ? i18n.analyzing : i18n.analyze }} <span>→</span>
+                @if (store.loading()) { <span class="ai-inline-spinner" aria-hidden="true"></span> }
+                {{ store.loading() ? i18n.analyzing : i18n.analyze }}
+                @if (!store.loading()) { <span>→</span> }
               </button>
             </div>
+            @if (store.loading()) {
+              <div class="ai-loading-panel" role="status" aria-live="polite" aria-busy="true">
+                <span class="ai-loading-spinner" aria-hidden="true"></span>
+                <div>
+                  <strong>{{ language() === 'de' ? 'KI analysiert Ihren Prozess …' : 'AI is analyzing your process …' }}</strong>
+                  <p>{{ language() === 'de' ? 'Geschäftsablauf, Automatisierungspotenziale, Systeme und Workflow werden ausgewertet. Bitte lassen Sie dieses Fenster geöffnet.' : 'The business process, automation opportunities, systems and workflow are being assessed. Please keep this window open.' }}</p>
+                </div>
+              </div>
+            }
           </section>
 
           <aside class="builder-aside">
