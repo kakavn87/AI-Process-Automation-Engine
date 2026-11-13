@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,6 +12,13 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:4200"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @field_validator("OPENAI_INPUT_USD_PER_1M", "OPENAI_OUTPUT_USD_PER_1M", mode="before")
+    @classmethod
+    def empty_price_is_unconfigured(cls, value):
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
     @property
     def cors_origin_list(self) -> list[str]:
