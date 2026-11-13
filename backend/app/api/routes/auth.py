@@ -62,6 +62,8 @@ def create_invitation(
     context: TenantContext = Depends(require_roles("owner", "admin")),
     db: Session = Depends(get_db),
 ):
+    if not settings.AUTH_ENABLED or not context.authenticated or not context.user_id:
+        raise HTTPException(status_code=409, detail="Workspace invitations require enabled authentication.")
     try:
         return AuthService(db).create_invitation(
             request,
