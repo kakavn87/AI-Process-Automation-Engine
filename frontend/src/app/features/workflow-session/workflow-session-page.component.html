@@ -79,7 +79,7 @@
         [class.is-pending]="stepState(3, current.status) === 'pending'"
         [class.is-error]="stepState(3, current.status) === 'error'">
         <span class="session-progress-number">03</span>
-        <div><strong>{{ isGerman ? 'Python-Verarbeitung' : 'Python processing' }}</strong><small>{{ stepDescription(3, current.status) }}</small></div>
+        <div><strong>{{ isGerman ? 'KI-Optimierung' : 'AI optimization' }}</strong><small>{{ stepDescription(3, current.status) }}</small></div>
         <span class="session-progress-mark">{{ stepState(3, current.status) === 'complete' ? '✓' : '3' }}</span>
       </article>
       <article id="workflow-step-4" class="session-progress-step"
@@ -282,7 +282,7 @@
               <div>
                 <strong>{{ step.name }}</strong>
                 <p>{{ step.description }}</p>
-                <small>{{ step.type }}</small>
+                <small>{{ workflowStepTypeLabel(step.type) }}</small>
               </div>
             </article>
           }
