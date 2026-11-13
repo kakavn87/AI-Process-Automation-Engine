@@ -65,7 +65,7 @@ class KnowledgeBaseService:
                 "collection": settings.QDRANT_COLLECTION,
                 "embeddingModel": settings.RAG_EMBEDDING_MODEL,
                 "scope": "process_session",
-                "message": "RAG is disabled. Enable it only after configuring an isolated knowledge store.",
+                "message": "Die Wissenssuche ist deaktiviert. Aktivieren Sie sie erst nach Einrichtung eines getrennten Vektorspeichers.",
             }
 
         if not settings.QDRANT_URL.strip() or not settings.OPENAI_API_KEY.strip():
@@ -77,7 +77,7 @@ class KnowledgeBaseService:
                 "collection": settings.QDRANT_COLLECTION,
                 "embeddingModel": settings.RAG_EMBEDDING_MODEL,
                 "scope": "process_session",
-                "message": "Configure QDRANT_URL and a server-side embedding API key.",
+                "message": "Hinterlegen Sie QDRANT_URL und einen serverseitigen API-Schlüssel für das Einbettungsmodell.",
             }
 
         try:
@@ -95,7 +95,7 @@ class KnowledgeBaseService:
                 "collection": settings.QDRANT_COLLECTION,
                 "embeddingModel": settings.RAG_EMBEDDING_MODEL,
                 "scope": "process_session",
-                "message": "Qdrant is reachable. Documents are isolated by process session ID.",
+                "message": "Qdrant ist erreichbar. Dokumente werden getrennt nach Prozesssitzung gespeichert.",
             }
         except Exception:
             return {
@@ -106,7 +106,7 @@ class KnowledgeBaseService:
                 "collection": settings.QDRANT_COLLECTION,
                 "embeddingModel": settings.RAG_EMBEDDING_MODEL,
                 "scope": "process_session",
-                "message": "Qdrant is configured but could not be reached. Document analysis will use extracted text without vector retrieval.",
+                "message": "Qdrant ist konfiguriert, aber nicht erreichbar. Die Dokumentenanalyse verwendet weiterhin den extrahierten Text, jedoch ohne Vektorsuche.",
             }
 
     def _ensure_collection(self) -> None:
