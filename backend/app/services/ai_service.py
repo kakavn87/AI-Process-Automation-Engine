@@ -28,7 +28,21 @@ class WorkflowStepOutput(BaseModel):
     requires_approval: bool
 
 
+class ProcessSpecificationOutput(BaseModel):
+    business_domain: str
+    business_domain_label: str
+    process_goal: str
+    actors: list[str]
+    inputs: list[str]
+    systems: list[str]
+    business_rules: list[str]
+    exception_paths: list[str]
+    outputs: list[str]
+    success_metrics: list[str]
+
+
 class AIProcessAnalysisOutput(BaseModel):
+    process_specification: ProcessSpecificationOutput
     summary: str
     current_process: list[str]
     automation_opportunities: list[AutomationOpportunityOutput]
@@ -78,6 +92,13 @@ separately by the application and must not be changed.
 Identify the actual current steps, repetitive/manual work, automation opportunities, likely integrations,
 assumptions, risks, and unanswered implementation questions. Do not invent exact schedules, mailbox names,
 channel names, business rules, or data fields when the description does not specify them.
+
+Build a universal process specification, not an industry-specific template. Infer the business domain from
+the description and return a concise snake_case domain identifier plus a human-readable label. The domain is
+open-ended: it may be a niche industry, public-sector function, internal operation, or a new area not present
+in any example gallery. Also identify the process goal, actors, inputs, systems, business rules, exception
+paths, outputs, and success metrics. Use empty arrays when the description does not provide enough evidence.
+Keep inferred facts separate from assumptions and questions.
 
 Create an ordered workflow that starts with a trigger and ends with a meaningful process outcome.
 Use only the allowed step types. Prefer trigger, collect, extract, transform, validate, generate, approval,
