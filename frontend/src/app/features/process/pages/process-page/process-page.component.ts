@@ -1,9 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../../core/services/api.service';
-import { ApprovalExecution, TabularDataResult } from '../../../../core/models/api.models';
+import { TabularDataResult } from '../../../../core/models/api.models';
 import { ProcessStore } from '../../process.store';
 import { ProcessService } from '../../process.service';
+import { WorkflowSessionPageComponent } from '../../../workflow-session/workflow-session-page.component';
 
 type AppLanguage = 'de' | 'en';
 type AnalysisStrategy = 'auto' | 'rules' | 'llm';
@@ -22,7 +23,7 @@ interface Industry {
 @Component({
   selector: 'app-process-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, WorkflowSessionPageComponent],
   templateUrl: './process-page.component.html'
 })
 export class ProcessPageComponent {
@@ -32,9 +33,6 @@ export class ProcessPageComponent {
 
   readonly language = signal<AppLanguage>('de');
   readonly selectedDomain = signal('general');
-  readonly execution = signal<ApprovalExecution | null>(null);
-  readonly executionLoading = signal(false);
-  readonly executionError = signal<string | null>(null);
   readonly dataResult = signal<TabularDataResult | null>(null);
   readonly dataProcessing = signal(false);
   readonly dataError = signal<string | null>(null);
@@ -305,7 +303,6 @@ export class ProcessPageComponent {
     this.selectedDomain.set(industry.id);
     this.description = this.language() === 'de' ? industry.sampleDe : industry.sampleEn;
     this.dataError.set(null);
-    this.execution.set(null);
   }
 
   useFreeDescription() {
@@ -345,66 +342,8 @@ export class ProcessPageComponent {
   }
 
   analyze() {
-    this.execution.set(null);
-    this.executionError.set(null);
     this.store.setDescription(this.description);
     this.service.analyze(this.description, this.analysisStrategy, this.language(), this.selectedDomain());
-  }
-
-  startExecution() {
-    const workflow = this.store.analysis()?.proposedWorkflow;
-    if (!workflow || this.executionLoading()) return;
-
-    this.executionLoading.set(true);
-    this.executionError.set(null);
-    this.api.startExecution(workflow).subscribe({
-      next: result => {
-        this.execution.set(result);
-        this.executionLoading.set(false);
-      },
-      error: error => {
-        this.executionError.set(this.i18n.errorRequest);
-        this.executionLoading.set(false);
-      }
-    });
-  }
-
-  approveExecution() {
-    const current = this.execution();
-    if (!current || current.status !== 'awaiting_approval' || this.executionLoading()) return;
-
-    this.executionLoading.set(true);
-    this.executionError.set(null);
-    const note = this.language() === 'de' ? 'Über AI Process Optimierung freigegeben.' : 'Approved from AI Process Optimierung.';
-    this.api.approveExecution(current.id, note).subscribe({
-      next: result => {
-        this.execution.set(result);
-        this.executionLoading.set(false);
-      },
-      error: error => {
-        this.executionError.set(this.i18n.errorApprove);
-        this.executionLoading.set(false);
-      }
-    });
-  }
-
-  rejectExecution() {
-    const current = this.execution();
-    if (!current || current.status !== 'awaiting_approval' || this.executionLoading()) return;
-
-    this.executionLoading.set(true);
-    this.executionError.set(null);
-    const note = this.language() === 'de' ? 'Über AI Process Optimierung abgelehnt.' : 'Rejected from AI Process Optimierung.';
-    this.api.rejectExecution(current.id, note).subscribe({
-      next: result => {
-        this.execution.set(result);
-        this.executionLoading.set(false);
-      },
-      error: error => {
-        this.executionError.set(this.i18n.errorReject);
-        this.executionLoading.set(false);
-      }
-    });
   }
 
   formatNumber(value: number): string {
