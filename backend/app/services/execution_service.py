@@ -16,14 +16,22 @@ from app.models.workflow_session import WorkflowSession
 
 
 class ExecutionService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, tenant_id: str | None = None):
         self.db = db
+        self.tenant_id = tenant_id
         self.executor = WorkflowExecutor()
+
+    def _query_execution(self, execution_id: str):
+        query = self.db.query(ApprovalExecution).filter(ApprovalExecution.id == execution_id)
+        if self.tenant_id is not None:
+            query = query.filter(ApprovalExecution.tenant_id == self.tenant_id)
+        return query.one_or_none()
 
     def create(self, workflow: dict) -> dict:
         validate(workflow)
         execution = ApprovalExecution(
             id=str(uuid4()),
+            tenant_id=self.tenant_id,
             workflow_name=workflow.get("name", "Untitled workflow"),
             workflow_definition=workflow,
             status="awaiting_approval",
@@ -39,13 +47,15 @@ class ExecutionService:
         return self._serialize(execution)
 
     def get(self, execution_id: str) -> dict | None:
-        execution = self.db.get(ApprovalExecution, execution_id)
+        execution = self._query_execution(execution_id)
         return self._serialize(execution) if execution else None
 
     def list(self, limit: int = 20) -> list[dict]:
+        query = self.db.query(ApprovalExecution)
+        if self.tenant_id is not None:
+            query = query.filter(ApprovalExecution.tenant_id == self.tenant_id)
         items = (
-            self.db.query(ApprovalExecution)
-            .order_by(ApprovalExecution.created_at.desc())
+            query.order_by(ApprovalExecution.created_at.desc())
             .limit(limit)
             .all()
         )
@@ -307,6 +317,11 @@ class ExecutionService:
         session = (
             self.db.query(WorkflowSession)
             .filter(WorkflowSession.related_execution_id == execution_id)
+            .filter(
+                WorkflowSession.tenant_id == self.tenant_id
+                if self.tenant_id is not None
+                else True
+            )
             .one_or_none()
         )
         if session is None:
