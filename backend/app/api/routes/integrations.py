@@ -26,6 +26,22 @@ def _safe_http_url(value: str) -> str | None:
     return candidate.rstrip("/")
 
 
+def _rag_readiness() -> dict:
+    try:
+        return KnowledgeBaseService().readiness()
+    except Exception:
+        return {
+            "enabled": settings.RAG_ENABLED,
+            "configured": False,
+            "connected": False,
+            "status": "unavailable",
+            "collection": settings.QDRANT_COLLECTION,
+            "embeddingModel": settings.RAG_EMBEDDING_MODEL,
+            "scope": "process_session",
+            "message": "The configured vector store could not be initialized. Check the server-side Qdrant settings.",
+        }
+
+
 @router.get("/readiness")
 def get_integration_readiness():
     """Expose non-secret integration state for the Step 6 setup dashboard."""
@@ -49,7 +65,7 @@ def get_integration_readiness():
             "embeddingModel": settings.RAG_EMBEDDING_MODEL,
             "status": "ready" if settings.OPENAI_API_KEY.strip() else "not_configured",
         },
-        "rag": KnowledgeBaseService().readiness(),
+        "rag": _rag_readiness(),
         "openWebUI": {
             "configured": open_webui_url is not None,
             "url": open_webui_url,
