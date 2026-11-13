@@ -49,7 +49,7 @@ class ProcessService:
         if routing["selectedEngine"] == "llm":
             try:
                 ai_result = self.ai_service.analyze_process(description, analysis["signals"], language=language)
-                self._apply_ai_result(analysis, ai_result)
+                self._apply_ai_result(analysis, ai_result, business_domain=business_domain)
                 analysis["llmUsed"] = True
                 analysis["llmModel"] = self.ai_service.model
                 analysis["analysisMode"] = "openai_responses"
