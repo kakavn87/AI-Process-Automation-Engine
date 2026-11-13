@@ -88,6 +88,23 @@ TEXT_DE = {
     "Generate report": "Bericht erstellen",
     "Create the report or document from validated data and agreed business rules.": "Den Bericht oder das Dokument anhand validierter Daten und vereinbarter Geschäftsregeln erstellen.",
     "Generate invoice": "Rechnung erstellen",
+    "Normalize and consolidate data": "Daten normalisieren und zusammenführen",
+    "Standardize field names and values, then combine records into a consistent dataset.": "Feldnamen und Werte standardisieren und Datensätze in einem einheitlichen Datenbestand zusammenführen.",
+    "Validate source data": "Quelldaten validieren",
+    "Check required fields, duplicates, invalid values, and unresolved exceptions.": "Pflichtfelder, Duplikate, ungültige Werte und offene Ausnahmen prüfen.",
+    "Calculate process results": "Prozessergebnisse berechnen",
+    "Apply the agreed calculations to validated records.": "Die vereinbarten Berechnungen auf validierte Datensätze anwenden.",
+    "Collect email attachments": "E-Mail-Anhänge erfassen",
+    "Find matching messages and download supported attachments.": "Passende Nachrichten finden und unterstützte Anhänge herunterladen.",
+    "Generate report": "Bericht erstellen",
+    "Create the report or document from validated data and agreed business rules.": "Den Bericht oder das Dokument anhand validierter Daten und vereinbarter Geschäftsregeln erstellen.",
+    "Generate invoice": "Rechnung erstellen",
+    "Prepare the invoice output from validated source data.": "Die Rechnungsausgabe anhand validierter Quelldaten vorbereiten.",
+    "Notify through Microsoft Teams": "Über Microsoft Teams benachrichtigen",
+    "Notify through Slack": "Über Slack benachrichtigen",
+    "Publish the approved report or result to the configured Teams channel after approval.": "Den freigegebenen Bericht oder das Ergebnis nach der Freigabe im konfigurierten Teams-Kanal veröffentlichen.",
+    "Post the approved result to the configured Slack destination after approval.": "Das freigegebene Ergebnis nach der Freigabe im konfigurierten Slack-Ziel veröffentlichen.",
+    "Deliver the approved result through the configured {channel} destination after approval.": "Das freigegebene Ergebnis nach der Freigabe über den konfigurierten Kanal {channel} übermitteln.",
     "Prepare the invoice output from validated source data.": "Die Rechnungsausgabe anhand validierter Quelldaten vorbereiten.",
     "Prepare process output": "Prozessausgabe vorbereiten",
     "Pause until an authorized person reviews and approves the prepared output.": "Anhalten, bis eine berechtigte Person die vorbereitete Ausgabe geprüft und freigegeben hat.",
@@ -126,6 +143,11 @@ def translate_text(value: str, language: str = "de") -> str:
         return "Der Prozess umfasst " + ", ".join(translated) + "."
     if value.startswith("Collect inputs from "):
         return "Eingaben aus " + value[len("Collect inputs from "):] + " erfassen"
+    if value.startswith("Notify through "):
+        return "Über " + value[len("Notify through "):] + " benachrichtigen"
+    if value.startswith("Deliver the approved result through the configured ") and value.endswith(" destination after approval."):
+        channel = value[len("Deliver the approved result through the configured "):-len(" destination after approval.")]
+        return f"Das freigegebene Ergebnis nach der Freigabe über {channel} übermitteln."
     if value.startswith("Read supported ") and " files and map the required fields" in value:
         formats = value[len("Read supported "):].split(" files and map the required fields", 1)[0]
         return f"Unterstützte {formats}-Dateien auslesen und die erforderlichen Felder strukturierten Datensätzen zuordnen."
