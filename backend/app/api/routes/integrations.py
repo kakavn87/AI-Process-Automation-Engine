@@ -63,13 +63,13 @@ def get_integration_readiness():
             "model": settings.OPENAI_MODEL,
             "visionModel": settings.OPENAI_VISION_MODEL.strip() or settings.OPENAI_MODEL,
             "embeddingModel": settings.RAG_EMBEDDING_MODEL,
-            "status": "ready" if settings.OPENAI_API_KEY.strip() else "not_configured",
+            "status": "configured" if settings.OPENAI_API_KEY.strip() else "not_configured",
         },
         "rag": _rag_readiness(),
         "openWebUI": {
             "configured": open_webui_url is not None,
             "url": open_webui_url,
-            "status": "ready" if open_webui_url else "not_configured",
+            "status": "configured" if open_webui_url else "not_configured",
         },
         "businessConnectors": [
             {
