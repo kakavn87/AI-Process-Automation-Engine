@@ -11,12 +11,17 @@ export class ProcessService {
     description: string,
     analysisStrategy: 'auto' | 'rules' | 'llm' = 'auto',
     language: 'de' | 'en' = 'de',
-    businessDomain = 'general'
+    businessDomain = 'general',
+    files: File[] = []
   ): void {
     this.store.setLoading(true);
     this.store.setError(null);
 
-    this.api.analyzeProcess(description, analysisStrategy, language, businessDomain).subscribe({
+    const request = files.length
+      ? this.api.analyzeProcessWithDocuments(description, files, analysisStrategy, language, businessDomain)
+      : this.api.analyzeProcess(description, analysisStrategy, language, businessDomain);
+
+    request.subscribe({
       next: result => {
         this.store.setAnalysis(result);
         this.store.setLoading(false);
