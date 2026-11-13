@@ -1,6 +1,6 @@
 import re
 
-from pydantic import field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,7 +16,8 @@ class Settings(BaseSettings):
     WEBHOOK_EXECUTION_ENABLED: bool = False
     WORKFLOW_WEBHOOK_URL: str = ""
     WORKFLOW_WEBHOOK_BEARER_TOKEN: str = ""
-    WORKFLOW_WEBHOOK_TIMEOUT_SECONDS: float = 10.0
+    WORKFLOW_LIVE_EXECUTION_TOKEN: str = ""
+    WORKFLOW_WEBHOOK_TIMEOUT_SECONDS: float = Field(default=10.0, gt=0, le=60)
     CORS_ORIGINS: str = "http://localhost:4200"
     IS_PULL_REQUEST: bool = False
     RENDER_EXTERNAL_HOSTNAME: str = ""
@@ -40,6 +41,7 @@ class Settings(BaseSettings):
             self.WEBHOOK_EXECUTION_ENABLED = False
             self.WORKFLOW_WEBHOOK_URL = ""
             self.WORKFLOW_WEBHOOK_BEARER_TOKEN = ""
+            self.WORKFLOW_LIVE_EXECUTION_TOKEN = ""
         return self
 
     @property
