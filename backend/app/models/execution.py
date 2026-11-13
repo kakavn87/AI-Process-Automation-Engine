@@ -1,7 +1,11 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, JSON, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+if TYPE_CHECKING:
+    from app.models.execution_step import ExecutionStep
 
 from app.core.database import Base
 
@@ -10,6 +14,10 @@ class Execution(Base):
     __tablename__ = "executions"
     id: Mapped[int] = mapped_column(primary_key=True)
     status: Mapped[str] = mapped_column(String(50))
+    steps: Mapped[list["ExecutionStep"]] = relationship(
+        back_populates="execution",
+        cascade="all, delete-orphan",
+    )
 
 
 class ApprovalExecution(Base):
