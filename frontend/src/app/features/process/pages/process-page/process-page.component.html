@@ -5,6 +5,117 @@
     <p class="hero-copy">Turn manual business processes into structured, controlled automation workflows.</p>
   </header>
 
+  <section class="upload-panel">
+    <div class="upload-heading">
+      <div>
+        <p class="eyebrow">PYTHON DATA PROCESSING</p>
+        <h2>Upload a CSV or Excel file</h2>
+        <p class="upload-copy">Analyze columns, missing values and duplicates, then preview a cleaned dataset. This step uses Python only — no LLM credits.</p>
+      </div>
+      <span class="mode-label">No API cost</span>
+    </div>
+    <div class="upload-controls">
+      <div class="file-picker">
+        <label for="data-file">Choose data file</label>
+        <input
+          id="data-file"
+          type="file"
+          accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          (change)="onDataFileSelected($event)"
+        />
+        <span class="field-hint">CSV or XLSX · maximum 10 MB · first worksheet for Excel</span>
+      </div>
+      <button (click)="uploadDataFile()" [disabled]="!selectedDataFile || dataProcessing()">
+        {{ dataProcessing() ? 'Processing file...' : 'Analyze data file' }}
+      </button>
+    </div>
+    @if (selectedDataFile) {
+      <p class="selected-file">Selected: {{ selectedDataFile.name }} ({{ (selectedDataFile.size / 1024 / 1024).toFixed(2) }} MB)</p>
+    }
+  </section>
+
+  @if (dataError(); as error) {
+    <div class="error-panel" role="alert">{{ error }}</div>
+  }
+
+  @if (dataResult(); as data) {
+    <section class="data-results">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">DATA QUALITY REPORT</p>
+          <h2>{{ data.fileName }}</h2>
+          <p class="field-hint">{{ data.fileType }}{{ data.sheetName ? ' · Worksheet: ' + data.sheetName : '' }}</p>
+        </div>
+        <span class="mode-label">{{ data.dataQualityScore }} / 100 quality score</span>
+      </div>
+
+      <div class="data-metrics">
+        <article class="data-metric"><span class="card-label">Rows read</span><strong>{{ data.totalRows.toLocaleString() }}</strong></article>
+        <article class="data-metric"><span class="card-label">Clean rows</span><strong>{{ data.processedRows.toLocaleString() }}</strong></article>
+        <article class="data-metric"><span class="card-label">Columns</span><strong>{{ data.totalColumns }}</strong></article>
+        <article class="data-metric"><span class="card-label">Duplicates removed</span><strong>{{ data.duplicateRows }}</strong></article>
+        <article class="data-metric"><span class="card-label">Empty rows skipped</span><strong>{{ data.emptyRowsRemoved }}</strong></article>
+      </div>
+
+      @if (data.truncated) {
+        <div class="setup-hint">The file contains more than the 20,000-row processing limit. The report covers the first 20,000 non-empty rows.</div>
+      }
+
+      <article class="result-card data-profile-card">
+        <h3>Column profiles</h3>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Column</th><th>Detected type</th><th>Missing</th><th>Unique</th><th>Numeric summary</th></tr>
+            </thead>
+            <tbody>
+              @for (column of data.columns; track column.name) {
+                <tr>
+                  <td><strong>{{ column.name }}</strong></td>
+                  <td>{{ column.detectedType }}</td>
+                  <td>{{ column.missingCount }} ({{ column.missingPercent }}%)</td>
+                  <td>{{ column.uniqueCount }}</td>
+                  <td>
+                    @if (column.numericSummary; as stats) {
+                      Min {{ stats.min }} · Avg {{ stats.mean }} · Max {{ stats.max }}
+                    } @else { — }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="result-card data-preview-card">
+        <div class="card-heading-row">
+          <h3>Cleaned data preview</h3>
+          <span class="mode-label">First {{ data.preview.length }} rows</span>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>@for (column of data.columns; track column.name) { <th>{{ column.name }}</th> }</tr></thead>
+            <tbody>
+              @for (row of data.preview; track $index) {
+                <tr>
+                  @for (column of data.columns; track column.name) {
+                    <td>{{ row[column.name] ?? '—' }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="result-card processing-steps">
+        <h3>Processing log</h3>
+        <ul class="plain-list">@for (step of data.processingSteps; track $index) { <li>{{ step }}</li> }</ul>
+        <p class="muted">{{ data.notice }}</p>
+      </article>
+    </section>
+  }
+
   <section class="input-panel">
     <div class="analysis-controls">
       <div>
