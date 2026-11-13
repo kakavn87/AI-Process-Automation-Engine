@@ -1,12 +1,29 @@
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import settings
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Run versioned schema changes before the API accepts traffic. This also
+    # protects Render services whose dashboard start command predates this
+    # repository's updated render.yaml.
+    backend_dir = Path(__file__).resolve().parents[1]
+    alembic_config = Config(str(backend_dir / "alembic.ini"))
+    command.upgrade(alembic_config, "head")
+    yield
+
+
 app = FastAPI(
     title=settings.APP_NAME,
     description="Analyze business processes and prepare controlled automation workflows.",
     version="0.3.0",
+    lifespan=lifespan,
 )
 
 cors_options = {
