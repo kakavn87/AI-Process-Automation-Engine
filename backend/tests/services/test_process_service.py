@@ -43,10 +43,23 @@ class FakeAIService:
 
     def __init__(self):
         self.calls = 0
+        self.business_domain = "finance"
 
     def analyze_process(self, description, signals, language="en"):
         self.calls += 1
         return {
+            "process_specification": {
+                "business_domain": self.business_domain,
+                "business_domain_label": self.business_domain.replace("_", " ").title(),
+                "process_goal": "Prepare and distribute a reliable recurring report.",
+                "actors": ["Finance team", "Manager"],
+                "inputs": ["Excel reports", "PDF attachments"],
+                "systems": ["Microsoft Outlook", "Microsoft Teams"],
+                "business_rules": ["Validate source values before calculation."],
+                "exception_paths": ["Route missing values for manual review."],
+                "outputs": ["Approved summary report"],
+                "success_metrics": ["Processing time", "Data accuracy"],
+            },
             "summary": "AI-generated summary.",
             "current_process": ["Receive source data.", "Create report."],
             "automation_opportunities": [
@@ -101,17 +114,19 @@ def test_llm_result_is_used_and_backend_inserts_mandatory_approval_gate():
 
 
 
-def test_auto_strategy_uses_python_for_a_supported_process_even_when_llm_is_available():
+def test_auto_strategy_uses_llm_first_when_api_is_available_even_for_supported_process():
     ai_service = FakeAIService()
     service = ProcessService(db=None, ai_service=ai_service)
 
     result = service.analyze(SAMPLE_PROCESS)
 
-    assert result["llmUsed"] is False
-    assert ai_service.calls == 0
-    assert result["routingDecision"]["selectedEngine"] == "rules"
+    assert result["llmUsed"] is True
+    assert ai_service.calls == 1
+    assert result["routingDecision"]["selectedEngine"] == "llm"
     assert result["routingDecision"]["rulesSuitable"] is True
     assert result["routingDecision"]["ruleConfidence"] >= 70
+    assert result["processSpecification"]["schemaVersion"] == "1.0"
+    assert result["processSpecification"]["goal"] == "Prepare and distribute a reliable recurring report."
 
 
 def test_auto_strategy_uses_llm_for_ambiguous_conditional_process():
@@ -189,3 +204,21 @@ def test_explicit_industry_selection_is_respected_even_without_keywords():
     )
 
     assert result["detectedDetails"]["businessDomain"] == "legal_compliance"
+
+
+
+def test_ai_engine_supports_a_business_domain_outside_the_example_gallery():
+    ai_service = FakeAIService()
+    ai_service.business_domain = "renewable_energy"
+    service = ProcessService(db=None, ai_service=ai_service)
+
+    result = service.analyze(
+        "The energy team forecasts solar generation, compares output with grid demand, "
+        "and prepares a balancing report for the market operator."
+    )
+
+    assert result["llmUsed"] is True
+    assert result["detectedDetails"]["businessDomain"] == "renewable_energy"
+    assert result["detectedDetails"]["businessDomainLabel"] == "Renewable Energy"
+    assert result["processSpecification"]["businessDomain"] == "renewable_energy"
+    assert result["processSpecification"]["inputs"] == ["Excel reports", "PDF attachments"]
