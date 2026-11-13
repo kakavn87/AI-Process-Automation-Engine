@@ -202,3 +202,14 @@
   .session-card { padding: 19px; }
   .session-stat strong, .usage-grid strong { font-size: 22px; }
 }
+
+
+/* Keep the longer product name readable on the workflow-session header. */
+.session-brand strong {
+  font-size: 17px !important;
+  line-height: 1.25;
+}
+.session-brand-mark {
+  font-size: 14px !important;
+  font-weight: 800;
+}
