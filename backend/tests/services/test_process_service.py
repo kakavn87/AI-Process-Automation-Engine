@@ -60,6 +60,8 @@ class FakeAIService:
                 "outputs": ["Approved summary report"],
                 "success_metrics": ["Processing time", "Data accuracy"],
             },
+            "automation_potential_score": 82,
+            "automation_potential_reason": "Several repeatable data preparation and approval steps can be automated.",
             "summary": "AI-generated summary.",
             "current_process": ["Receive source data.", "Create report."],
             "automation_opportunities": [
@@ -108,6 +110,8 @@ def test_llm_result_is_used_and_backend_inserts_mandatory_approval_gate():
 
     assert result["llmUsed"] is True
     assert result["analysisMode"] == "openai_responses"
+    assert result["automationScore"] == 82
+    assert result["automationScoreNote"] == "Several repeatable data preparation and approval steps can be automated."
     assert result["detectedDetails"]["businessDomain"] == "finance"
     assert types.index("generate") < types.index("approval") < types.index("notify")
     assert steps[types.index("notify")]["config"]["requiresApproval"] is True
@@ -222,3 +226,45 @@ def test_ai_engine_supports_a_business_domain_outside_the_example_gallery():
     assert result["detectedDetails"]["businessDomainLabel"] == "Renewable Energy"
     assert result["processSpecification"]["businessDomain"] == "renewable_energy"
     assert result["processSpecification"]["inputs"] == ["Excel reports", "PDF attachments"]
+
+
+
+def test_python_fallback_does_not_return_zero_for_a_described_german_process():
+    service = ProcessService(db=None, ai_service=AIService(api_key=""))
+    description = (
+        "Die Mitarbeitenden prüfen eingehende Wartungsanfragen, priorisieren Störungen, "
+        "weisen Techniker zu und dokumentieren die Reparatur."
+    )
+
+    result = service.analyze(description, strategy="rules", language="de")
+
+    assert result["automationScore"] > 0
+
+
+def test_routing_does_not_mark_long_description_as_complexity_failure():
+    from app.engine.analyzer.routing_policy import ProcessRoutingPolicy
+
+    analysis = ProcessAnalyzer().analyze(SAMPLE_PROCESS)
+    result = ProcessRoutingPolicy().decide(
+        description=SAMPLE_PROCESS + (" Zusatzinformationen." * 120),
+        analysis=analysis,
+        requested_strategy="auto",
+        llm_available=True,
+    )
+
+    assert "long_description" not in result["complexityFlags"]
+
+
+def test_incomplete_llm_response_has_actionable_fallback_message():
+    error = ValueError("Invalid JSON: EOF while parsing an object")
+    message = ProcessService._llm_fallback_reason(error, "de")
+
+    assert "unvollständig" in message
+    assert "erneut" in message
+
+
+def test_exhausted_api_credits_have_specific_fallback_message():
+    error = RuntimeError("insufficient_quota: credit_balance_exhausted")
+    message = ProcessService._llm_fallback_reason(error, "de")
+
+    assert "API-Guthaben" in message
