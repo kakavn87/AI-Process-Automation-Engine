@@ -81,7 +81,13 @@ def upgrade() -> None:
             # SQLite cannot ALTER a table to add a foreign-key constraint.
             # Alembic's batch mode uses a safe copy-and-move table rebuild on
             # SQLite and a normal ALTER TABLE on PostgreSQL.
-            with op.batch_alter_table(table_name, recreate="always" if bind.dialect.name == "sqlite" else "auto") as batch_op:
+            with op.batch_alter_table(
+                table_name,
+                recreate="always" if bind.dialect.name == "sqlite" else "auto",
+                naming_convention={
+                    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+                },
+            ) as batch_op:
                 batch_op.add_column(
                     sa.Column(
                         "tenant_id",
