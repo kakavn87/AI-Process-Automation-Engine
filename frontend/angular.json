@@ -12,6 +12,13 @@
           "options": {
             "browser": "src/main.ts",
             "index": "src/index.html",
+            "assets": [
+              {
+                "glob": "runtime-config.js",
+                "input": "src",
+                "output": "/"
+              }
+            ],
             "styles": [
               "src/styles.scss"
             ],
