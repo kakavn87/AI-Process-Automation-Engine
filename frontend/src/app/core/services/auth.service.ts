@@ -112,6 +112,18 @@ export class AuthService {
     }));
   }
 
+  acceptInvitation(
+    token: string,
+    password: string,
+    fullName: string
+  ): Observable<{ accepted: boolean; email: string; tenant: { id: string; name: string } }> {
+    this.error.set(null);
+    return this.http.post<{ accepted: boolean; email: string; tenant: { id: string; name: string } }>(
+      this.url('/auth/invitations/accept'),
+      { token, password, full_name: fullName }
+    );
+  }
+
   logout(): void {
     this.clearToken();
     this.error.set(null);
