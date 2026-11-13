@@ -11,19 +11,19 @@ export class ExecutionService {
   create(workflow: ProposedWorkflow) {
     this.store.setLoading(true);
     this.store.setError(null);
-    this.api.createExecution(workflow).subscribe({
+    this.api.startExecution(workflow).subscribe({
       next: result => {
         this.store.setExecution(result);
         this.store.setLoading(false);
       },
-      error: () => {
-        this.store.setError('Could not create the approval request. Please try again.');
+      error: error => {
+        this.store.setError(error?.error?.detail ?? 'Could not create the approval request.');
         this.store.setLoading(false);
       },
     });
   }
 
-  approve(id: number, note = '') {
+  approve(id: string, note = '') {
     this.store.setLoading(true);
     this.store.setError(null);
     this.api.approveExecution(id, note).subscribe({
@@ -31,23 +31,23 @@ export class ExecutionService {
         this.store.setExecution(result);
         this.store.setLoading(false);
       },
-      error: () => {
-        this.store.setError('Could not approve this workflow. It may already have a decision.');
+      error: error => {
+        this.store.setError(error?.error?.detail ?? 'Could not approve this workflow.');
         this.store.setLoading(false);
       },
     });
   }
 
-  reject(id: number, reason: string) {
+  reject(id: string, note = '') {
     this.store.setLoading(true);
     this.store.setError(null);
-    this.api.rejectExecution(id, reason).subscribe({
+    this.api.rejectExecution(id, note).subscribe({
       next: result => {
         this.store.setExecution(result);
         this.store.setLoading(false);
       },
-      error: () => {
-        this.store.setError('Could not reject this workflow. Check the rejection reason and try again.');
+      error: error => {
+        this.store.setError(error?.error?.detail ?? 'Could not reject this workflow.');
         this.store.setLoading(false);
       },
     });
