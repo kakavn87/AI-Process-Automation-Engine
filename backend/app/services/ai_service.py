@@ -84,7 +84,8 @@ class OptimizationMetricOutput(BaseModel):
     unit: str
     direction: Literal["lower_is_better", "higher_is_better"]
     rationale: str
-    evidence_basis: Literal["user_input", "document", "model_estimate", "not_available"]
+    current_value_source: Literal["user_input", "document", "not_available"] = "not_available"
+    proposed_value_source: Literal["user_input", "document", "model_estimate", "not_available"] = "not_available"
     confidence: Literal["high", "medium", "low"]
 
 
