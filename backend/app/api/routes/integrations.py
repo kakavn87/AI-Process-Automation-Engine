@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.core.config import settings
 from app.services.execution_service import ExecutionService
+from app.services.knowledge_base_service import KnowledgeBaseService
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
 
@@ -29,7 +30,7 @@ def _safe_http_url(value: str) -> str | None:
 def get_integration_readiness():
     """Expose non-secret integration state for the Step 6 setup dashboard."""
     base_url = settings.OPENAI_BASE_URL.strip()
-    is_litellm = "litellm" in base_url.lower()
+    is_litellm = settings.AI_GATEWAY_PROVIDER.strip().lower() == "litellm"
     gateway_provider = (
         "LiteLLM" if is_litellm
         else "OpenAI-compatible gateway" if base_url
@@ -44,8 +45,11 @@ def get_integration_readiness():
             "configured": bool(settings.OPENAI_API_KEY.strip()),
             "baseUrlConfigured": bool(base_url),
             "model": settings.OPENAI_MODEL,
+            "visionModel": settings.OPENAI_VISION_MODEL.strip() or settings.OPENAI_MODEL,
+            "embeddingModel": settings.RAG_EMBEDDING_MODEL,
             "status": "ready" if settings.OPENAI_API_KEY.strip() else "not_configured",
         },
+        "rag": KnowledgeBaseService().readiness(),
         "openWebUI": {
             "configured": open_webui_url is not None,
             "url": open_webui_url,
