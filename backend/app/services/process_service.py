@@ -62,8 +62,9 @@ class ProcessService:
                     "The workflow is a proposal; integrations are not connected and execution is simulated."
                 )
                 localized = localize_process_analysis(analysis, language)
-                if self.ai_service.last_call_telemetry:
-                    localized["_aiUsageTelemetry"] = self.ai_service.last_call_telemetry
+                telemetry = getattr(self.ai_service, "last_call_telemetry", None)
+                if telemetry:
+                    localized["_aiUsageTelemetry"] = telemetry
                 return localized
             except Exception as error:
                 logger.exception("OpenAI process analysis failed; using the deterministic fallback.")
@@ -84,7 +85,9 @@ class ProcessService:
                     if language == "de"
                     else "Fallback estimate based on detected process steps and data context."
                 )
-                analysis["_aiUsageTelemetry"] = self.ai_service.last_call_telemetry
+                telemetry = getattr(self.ai_service, "last_call_telemetry", None)
+                if telemetry:
+                    analysis["_aiUsageTelemetry"] = telemetry
         else:
             analysis["analysisNote"] = (
                 routing["reason"]
