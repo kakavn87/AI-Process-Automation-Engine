@@ -98,8 +98,8 @@ export class ProcessPageComponent implements OnInit {
 
     if (step === 2) {
       if (status === 'needs_input') return 'active';
-      if (['processing', 'ready_for_approval', 'awaiting_approval', 'completed', 'rejected'].includes(status)) return 'complete';
-      return status === 'failed' ? 'error' : 'pending';
+      if (['processing', 'ready_for_approval', 'awaiting_approval', 'completed', 'rejected', 'failed'].includes(status)) return 'complete';
+      return 'pending';
     }
     if (step === 3) {
       if (status === 'processing') return 'active';
