@@ -15,7 +15,7 @@ class ActionExecutor:
                 raise ValueError("Outbound actions must require explicit human approval.")
             status = "simulated"
             message = (
-                "External action simulated. No email, Teams message, HTTP request, "
+                "External action simulated. no email, Teams message, HTTP request, "
                 "or other external side effect was performed."
             )
         elif step_type == "approval":
