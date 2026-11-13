@@ -359,17 +359,81 @@
     <section class="session-card live-execution-card">
       <div class="session-card-header">
         <div>
-          <div class="session-eyebrow">STEP 6 · LIVE EXECUTION</div>
-          <h2>{{ isGerman ? 'Externe Prozessausführung' : 'Real process execution' }}</h2>
+          <div class="session-eyebrow">STEP 6 · INTEGRATION CENTER</div>
+          <h2>{{ isGerman ? 'Systeme verbinden & Automatisierung aktivieren' : 'Connect systems & activate automation' }}</h2>
           <p>{{ isGerman
-            ? 'Die Freigabe hat bisher eine sichere Simulation ausgeführt. Über einen administrativ konfigurierten Webhook kann der freigegebene Workflow anschließend an ein externes System übergeben werden.'
-            : 'Approval has so far run a safe simulation. A separately configured webhook can now hand the approved workflow to an external system.' }}</p>
+            ? 'Verwalten Sie die AI-Plattform und prüfen Sie, welche externen Systeme für den freigegebenen Workflow vorbereitet sind.'
+            : 'Review the AI platform and check which external systems are configured for the approved workflow.' }}</p>
         </div>
         <span class="live-readiness-badge" [attr.data-ready]="liveReadiness()?.ready ? 'true' : 'false'">
           {{ liveReadiness()?.ready
             ? (isGerman ? 'Webhook verbunden' : 'Webhook connected')
             : (isGerman ? 'Einrichtung erforderlich' : 'Setup required') }}
         </span>
+      </div>
+
+      @if (integrationReadiness(); as platform) {
+        <div class="integration-platform-grid">
+          <article class="integration-tile">
+            <div class="integration-tile-top">
+              <strong>LLM Gateway</strong>
+              <span class="integration-status" [attr.data-status]="platform.aiGateway.status">
+                {{ platform.aiGateway.configured ? (isGerman ? 'Konfiguriert' : 'Configured') : (isGerman ? 'Nicht konfiguriert' : 'Not configured') }}
+              </span>
+            </div>
+            <h3>{{ platform.aiGateway.provider }}</h3>
+            <p>{{ isGerman ? 'Aktives Modell' : 'Active model' }}: <strong>{{ platform.aiGateway.model }}</strong></p>
+            <small>{{ platform.aiGateway.baseUrlConfigured ? (isGerman ? 'OpenAI-kompatible Gateway-URL gesetzt.' : 'OpenAI-compatible gateway URL is set.') : (isGerman ? 'Direkte Provider-Verbindung oder lokale Standardkonfiguration.' : 'Direct provider connection or default local configuration.') }}</small>
+          </article>
+
+          <article class="integration-tile">
+            <div class="integration-tile-top">
+              <strong>OpenWebUI</strong>
+              <span class="integration-status" [attr.data-status]="platform.openWebUI.status">
+                {{ platform.openWebUI.configured ? (isGerman ? 'Verbunden' : 'Configured') : (isGerman ? 'Optional' : 'Optional') }}
+              </span>
+            </div>
+            <h3>{{ isGerman ? 'AI Assistant Portal' : 'AI assistant portal' }}</h3>
+            <p>{{ isGerman ? 'Eigenständige Chat- und Assistant-Oberfläche.' : 'Separate chat and assistant workspace.' }}</p>
+            @if (platform.openWebUI.url) {
+              <a class="integration-open-link" [href]="platform.openWebUI.url" target="_blank" rel="noopener noreferrer">
+                {{ isGerman ? 'OpenWebUI öffnen' : 'Open OpenWebUI' }} →
+              </a>
+            } @else {
+              <small>{{ isGerman ? 'OPENWEBUI_URL im Backend setzen, um das Portal hier zu verlinken.' : 'Set OPENWEBUI_URL in the backend to show the portal link here.' }}</small>
+            }
+          </article>
+
+          <article class="integration-tile integration-connectors">
+            <div class="integration-tile-top">
+              <strong>{{ isGerman ? 'Business-Systeme' : 'Business systems' }}</strong>
+              <span class="integration-status" data-status="planned">{{ isGerman ? 'Connector-Katalog' : 'Connector catalog' }}</span>
+            </div>
+            <div class="integration-connector-list">
+              @for (connector of platform.businessConnectors; track connector.id) {
+                <div class="integration-connector-row">
+                  <div><strong>{{ connector.name }}</strong><small>{{ connector.description }}</small></div>
+                  <span class="integration-status" [attr.data-status]="connector.status">
+                    {{ connector.status === 'ready' ? (isGerman ? 'Bereit' : 'Ready') : connector.status === 'planned' ? (isGerman ? 'Geplant' : 'Planned') : (isGerman ? 'Einrichtung nötig' : 'Setup needed') }}
+                  </span>
+                </div>
+              }
+            </div>
+          </article>
+
+          <article class="integration-tile integration-safety-tile">
+            <div class="integration-tile-top"><strong>{{ isGerman ? 'Sicherheit & Zugriff' : 'Security & access' }}</strong><span>✓</span></div>
+            <p>{{ platform.securityNote }}</p>
+            <small>{{ isGerman ? 'API-Schlüssel werden nur serverseitig verwendet. Geplante Connectoren sind noch nicht aktiv.' : 'API keys stay server-side. Planned connectors are not active yet.' }}</small>
+          </article>
+        </div>
+      } @else {
+        <p class="session-muted">{{ isGerman ? 'Der Integrationsstatus konnte nicht geladen werden.' : 'Integration readiness could not be loaded.' }}</p>
+      }
+
+      <div class="integration-webhook-heading">
+        <strong>{{ isGerman ? 'Freigegebenen Workflow extern übergeben' : 'Dispatch the approved workflow' }}</strong>
+        <span>{{ isGerman ? 'HTTPS Webhook' : 'HTTPS webhook' }}</span>
       </div>
 
       @if (liveReadiness(); as readiness) {
