@@ -165,7 +165,6 @@ class WorkflowSessionService:
                     "recordedAt": datetime.now(timezone.utc).isoformat(),
                 },
             ]
-            raise
 
     @staticmethod
     def serialize(session: WorkflowSession) -> dict:
