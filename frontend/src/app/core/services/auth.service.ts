@@ -112,6 +112,18 @@ export class AuthService {
     }));
   }
 
+  createWorkspace(name: string): Observable<AuthLoginResponse> {
+    return this.http.post<AuthLoginResponse>(this.url('/auth/workspaces'), { name: name.trim() }).pipe(tap(response => {
+      if (response.access_token && response.user) {
+        this.storeToken(response.access_token);
+        this.user.set(response.user);
+        this.workspaces.set([]);
+        this.isAuthenticated.set(true);
+        this.ready.set(true);
+      }
+    }));
+  }
+
   acceptInvitation(
     token: string,
     password: string,
