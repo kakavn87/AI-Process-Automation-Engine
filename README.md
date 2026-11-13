@@ -53,6 +53,8 @@ Save the environment changes to trigger a redeploy. The frontend never receives 
 - `GET /api/executions/{id}` — retrieve one execution record.
 - `POST /api/executions/{id}/approve` — record approval and an optional note; run the workflow in simulation mode.
 - `POST /api/executions/{id}/reject` — reject the request and record an optional note.
+- `GET /api/executions/live-readiness` — check whether the administrator-configured webhook is ready.
+- `POST /api/executions/{id}/live` — dispatch the approved workflow to that webhook after separate explicit confirmation.
 
 Execution states:
 - `awaiting_approval`
