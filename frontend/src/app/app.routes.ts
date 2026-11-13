@@ -6,5 +6,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/process/pages/process-page/process-page.component')
         .then(m => m.ProcessPageComponent)
-  }
+  },
+  {
+    path: 'sessions/:sessionId',
+    loadComponent: () =>
+      import('./features/workflow-session/workflow-session-page.component')
+        .then(m => m.WorkflowSessionPageComponent)
+  },
+  { path: '**', redirectTo: '' }
 ];
