@@ -169,11 +169,6 @@ class ExecutionService:
     def run_live(self, execution_id: str, confirmed: bool, confirmation_token: str) -> dict:
         if confirmed is not True:
             raise ValueError("Explicit confirmation is required before sending data to the configured webhook.")
-        expected_token = settings.WORKFLOW_LIVE_EXECUTION_TOKEN.strip()
-        supplied_token = (confirmation_token or "").strip()
-        if not expected_token or not compare_digest(supplied_token, expected_token):
-            raise ValueError("A valid operator confirmation token is required before live execution.")
-
         execution = self.db.get(ApprovalExecution, execution_id)
         if execution is None:
             raise KeyError("Execution was not found.")
@@ -201,6 +196,11 @@ class ExecutionService:
         readiness = self.live_execution_readiness()
         if not readiness["ready"]:
             raise ValueError(readiness["message"])
+
+        expected_token = settings.WORKFLOW_LIVE_EXECUTION_TOKEN.strip()
+        supplied_token = (confirmation_token or "").strip()
+        if not expected_token or not compare_digest(supplied_token, expected_token):
+            raise ValueError("A valid operator confirmation token is required before live execution.")
 
         endpoint = self._validate_webhook_url(settings.WORKFLOW_WEBHOOK_URL.strip())
         workflow = execution.workflow_definition or {}
