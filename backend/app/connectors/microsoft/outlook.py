@@ -1,0 +1,2 @@
+class OutlookConnector:
+    pass

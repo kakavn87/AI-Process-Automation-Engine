@@ -1,0 +1,2 @@
+class TeamsConnector:
+    pass

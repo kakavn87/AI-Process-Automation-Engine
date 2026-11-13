@@ -1,0 +1,25 @@
+<main>
+  <h1>AI Process Automation Engine</h1>
+
+  <textarea
+    [(ngModel)]="description"
+    rows="8"
+    placeholder="Describe a business process..."
+  ></textarea>
+
+  <button (click)="analyze()" [disabled]="store.loading()">
+    {{ store.loading() ? 'Analyzing...' : 'Analyze Process' }}
+  </button>
+
+  @if (store.error(); as error) {
+    <p>{{ error }}</p>
+  }
+
+  @if (store.analysis(); as analysis) {
+    <section>
+      <h2>Analysis</h2>
+      <p>Automation score: {{ store.automationScore() }}%</p>
+      <p>Signals: {{ analysis.signals.join(', ') }}</p>
+    </section>
+  }
+</main>
