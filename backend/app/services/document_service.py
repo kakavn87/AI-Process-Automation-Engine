@@ -3,8 +3,15 @@ from __future__ import annotations
 import base64
 import io
 import zipfile
+import base64
+import re
+import zlib
+from html import unescape
 from pathlib import PurePath
 from typing import Any
+from urllib.parse import unquote
+
+from defusedxml import ElementTree as SafeET
 
 import pypdfium2 as pdfium
 from pypdf import PdfReader
@@ -24,7 +31,7 @@ MAX_IMAGES = 8
 MAX_ARCHIVE_UNCOMPRESSED_BYTES = 80 * 1024 * 1024
 SUPPORTED_EXTENSIONS = {
     ".pdf", ".docx", ".pptx", ".xlsx", ".csv", ".txt", ".md",
-    ".png", ".jpg", ".jpeg", ".webp",
+    ".png", ".jpg", ".jpeg", ".webp", ".drawio", ".bpmn", ".xml",
 }
 
 
@@ -76,6 +83,8 @@ class DocumentProcessingService:
                 extracted_text = self._extract_pptx(content, image_data_urls)
             elif suffix == ".xlsx":
                 extracted_text = self._extract_xlsx(content)
+            elif suffix in {".drawio", ".bpmn", ".xml"}:
+                extracted_text = self._extract_xml_diagram(filename, content, suffix)
             elif suffix in {".csv", ".txt", ".md"}:
                 extracted_text = self._decode_text(content)
             else:
