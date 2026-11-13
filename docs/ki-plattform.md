@@ -34,7 +34,7 @@ FastAPI-Backend ----------------------> Qdrant (RAG / Vektorsuche)
    cp .env.ai-platform.example .env.ai-platform
    ```
 
-3. Tragen Sie in `.env.ai-platform` Ihren Provider-Schlüssel und ein langes, zufälliges LiteLLM-Administrationsgeheimnis ein. Die Platzhalter für `LITELLM_WEBUI_KEY` und `LITELLM_BACKEND_KEY` werden später durch getrennte virtuelle Schlüssel ersetzt.
+3. Tragen Sie in `.env.ai-platform` Ihren Provider-Schlüssel, ein langes, zufälliges LiteLLM-Administrationsgeheimnis und einen separaten, zufälligen Salt-Schlüssel ein. Bewahren Sie `LITELLM_SALT_KEY` dauerhaft sicher auf und ändern Sie ihn nicht, nachdem Provider-Zugangsdaten in LiteLLM gespeichert wurden. Die Platzhalter für `LITELLM_WEBUI_KEY` und `LITELLM_BACKEND_KEY` werden später durch getrennte virtuelle Schlüssel ersetzt.
 4. Starten Sie zunächst Datenbank, Gateway und Vektorspeicher:
 
    ```bash
@@ -103,6 +103,7 @@ Aktivieren Sie `RAG_ENABLED=true` erst, wenn Qdrant erreichbar ist und das Einbe
 ## Sicherheit und Kostenkontrolle
 
 - Provider-Schlüssel gehören ausschließlich in die LiteLLM-Umgebung.
+- `LITELLM_SALT_KEY` verschlüsselt gespeicherte Provider-Zugangsdaten. Sichern Sie ihn dauerhaft und ändern Sie ihn nach dem ersten Speichern von Zugangsdaten nicht.
 - Das FastAPI-Backend erhält einen eigenen virtuellen Schlüssel mit minimalen Modellrechten.
 - Open WebUI erhält einen separaten virtuellen Schlüssel. Verwenden Sie nicht den Master-Schlüssel in einer Benutzeroberfläche.
 - Niemals API-Schlüssel in Angular, im Browser-Speicher, in Git oder in öffentliche Protokolle schreiben.
