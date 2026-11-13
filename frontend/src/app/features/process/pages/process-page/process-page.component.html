@@ -34,7 +34,9 @@
           <p class="eyebrow">ANALYSIS RESULT</p>
           <h2>Process assessment</h2>
         </div>
-        <span class="mode-label">{{ analysis.analysisMode === 'openai_llm' ? 'OpenAI LLM analysis' : 'Rules-based fallback' }}</span>
+        <span class="mode-label" [class.ai-mode]="analysis.llmUsed">
+          {{ analysis.llmUsed ? 'OpenAI LLM · ' + analysis.llmModel : 'Rules fallback' }}
+        </span>
       </div>
 
       <div class="overview-grid">
@@ -42,7 +44,7 @@
           <span class="card-label">Automation potential</span>
           <div class="score-value">{{ analysis.automationScore }}<span>%</span></div>
           <div class="score-track"><div class="score-fill" [style.width.%]="analysis.automationScore"></div></div>
-          <p>Estimated potential, not a measured savings KPI.</p>
+          <p>Estimated from detected process characteristics.</p>
         </article>
         <article class="summary-card">
           <span class="card-label">Process summary</span>
@@ -57,6 +59,12 @@
           </div>
         </article>
       </div>
+
+      @if (!analysis.llmUsed) {
+        <div class="setup-hint">
+          <strong>LLM not active:</strong> add OPENAI_API_KEY to the backend service environment on Render. The application is using its rules-based fallback until then.
+        </div>
+      }
 
       <div class="content-grid">
         <article class="result-card">
@@ -147,61 +155,6 @@
         </article>
       </div>
 
-      <article class="result-card approval-workbench">
-        <div class="card-heading-row">
-          <div>
-            <p class="eyebrow">HUMAN-IN-THE-LOOP</p>
-            <h3>Workflow approval</h3>
-          </div>
-          @if (executionStore.execution(); as execution) {
-            <span class="approval-status" [class.approval-required]="execution.status === 'approved_ready'">
-              {{ execution.status.replace('_', ' ') }}
-            </span>
-          }
-        </div>
-
-        @if (executionStore.error(); as error) {
-          <div class="error-panel" role="alert">{{ error }}</div>
-        }
-
-        @if (!executionStore.execution()) {
-          <p>Create an approval request to save this workflow and pause it at the human review gate.</p>
-          <button (click)="createApprovalRequest()" [disabled]="executionStore.loading()">
-            {{ executionStore.loading() ? 'Creating request...' : 'Create approval request' }}
-          </button>
-        } @else {
-          @if (executionStore.execution(); as execution) {
-            <p><strong>Execution #{{ execution.id }}:</strong> {{ execution.workflowName }}</p>
-            <ol class="execution-steps">
-              @for (step of execution.steps; track step.id) {
-                <li>
-                  <span>{{ step.name }}</span>
-                  <span class="status-tag">{{ step.status.replace('_', ' ') }}</span>
-                </li>
-              }
-            </ol>
-
-            @if (execution.status === 'awaiting_approval') {
-              <label for="approval-note">Approval note (optional)</label>
-              <textarea id="approval-note" rows="2" [(ngModel)]="approvalNote" placeholder="Reviewed the proposed workflow..."></textarea>
-              <div class="decision-actions">
-                <button (click)="approveExecution()" [disabled]="executionStore.loading()">Approve workflow</button>
-              </div>
-              <label for="rejection-reason">Rejection reason</label>
-              <textarea id="rejection-reason" rows="2" [(ngModel)]="rejectionReason" placeholder="Explain what needs to change before this can proceed..."></textarea>
-              <div class="decision-actions">
-                <button class="button-danger" (click)="rejectExecution()" [disabled]="executionStore.loading() || rejectionReason.trim().length < 3">Reject workflow</button>
-              </div>
-            }
-
-            @if (execution.status === 'approved_ready' || execution.status === 'rejected') {
-              <p class="decision-note"><strong>Decision note:</strong> {{ execution.decisionNote || 'No note provided.' }}</p>
-              <p class="analysis-disclaimer">{{ execution.executionNote }}</p>
-            }
-          }
-        }
-      </article>
-
       <div class="content-grid">
         <article class="result-card">
           <h3>Risks and controls</h3>
@@ -231,6 +184,64 @@
           </ul>
         </article>
       }
+
+      <article class="result-card execution-panel">
+        <div class="card-heading-row">
+          <div>
+            <p class="eyebrow">CONTROLLED EXECUTION</p>
+            <h3>Human approval workflow</h3>
+          </div>
+          <span class="mode-label">Simulation only</span>
+        </div>
+        <p class="execution-copy">Create an execution request to persist this workflow. Nothing runs until a reviewer approves it.</p>
+
+        @if (!execution()) {
+          <button (click)="startExecution()" [disabled]="executionLoading()">
+            {{ executionLoading() ? 'Creating request...' : 'Create approval request' }}
+          </button>
+        }
+
+        @if (execution(); as currentExecution) {
+          <div class="execution-meta">
+            <div><span class="card-label">Execution ID</span><code>{{ currentExecution.id }}</code></div>
+            <span class="execution-status" [class.status-awaiting]="currentExecution.status === 'awaiting_approval'" [class.status-completed]="currentExecution.status === 'completed'" [class.status-rejected]="currentExecution.status === 'rejected'">
+              {{ currentExecution.status.replace('_', ' ') }}
+            </span>
+          </div>
+
+          @if (currentExecution.status === 'awaiting_approval') {
+            <p class="muted">Review the proposed workflow above. Approving will run a simulation, not contact external systems.</p>
+            <div class="decision-actions">
+              <button (click)="approveExecution()" [disabled]="executionLoading()">Approve &amp; run simulation</button>
+              <button class="secondary-button" (click)="rejectExecution()" [disabled]="executionLoading()">Reject</button>
+            </div>
+          }
+
+          @if (currentExecution.status === 'completed') {
+            <p class="success-copy">Approval recorded. All workflow steps were simulated successfully. No external message was sent.</p>
+          }
+          @if (currentExecution.status === 'rejected') {
+            <p class="muted">The request was rejected. No workflow steps were executed.</p>
+          }
+
+          <div class="event-list">
+            @for (event of currentExecution.events; track $index) {
+              <div class="event-item">
+                <span class="event-dot"></span>
+                <div>
+                  <strong>{{ event.step || event.event || 'Execution event' }}</strong>
+                  <p>{{ event.message }}</p>
+                  <span class="step-type">{{ event.status }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        @if (executionError(); as error) {
+          <div class="error-panel" role="alert">{{ error }}</div>
+        }
+      </article>
 
       <p class="analysis-disclaimer">{{ analysis.analysisNote }}</p>
     </section>
