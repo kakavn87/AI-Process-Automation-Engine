@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-6-luna"
     OPENAI_INPUT_USD_PER_1M: float | None = None
     OPENAI_OUTPUT_USD_PER_1M: float | None = None
+    WEBHOOK_EXECUTION_ENABLED: bool = False
+    WORKFLOW_WEBHOOK_URL: str = ""
+    WORKFLOW_WEBHOOK_BEARER_TOKEN: str = ""
+    WORKFLOW_WEBHOOK_TIMEOUT_SECONDS: float = 10.0
     CORS_ORIGINS: str = "http://localhost:4200"
     IS_PULL_REQUEST: bool = False
     RENDER_EXTERNAL_HOSTNAME: str = ""
