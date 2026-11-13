@@ -1,3 +1,3 @@
-export interface ExecutionState {
-  status: 'idle' | 'running' | 'awaiting_approval' | 'completed' | 'failed';
-}
+import { ExecutionRecord, ExecutionStatus, ExecutionStepRecord } from '../../core/models/api.models';
+
+export type { ExecutionRecord, ExecutionStatus, ExecutionStepRecord };
