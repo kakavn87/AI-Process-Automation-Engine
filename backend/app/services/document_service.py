@@ -28,6 +28,7 @@ MAX_CONTEXT_CHARS = 32_000
 MAX_FILE_TEXT_CHARS = 14_000
 MAX_IMAGES = 8
 MAX_ARCHIVE_UNCOMPRESSED_BYTES = 80 * 1024 * 1024
+MAX_XML_DIAGRAM_UNCOMPRESSED_BYTES = 20 * 1024 * 1024
 SUPPORTED_EXTENSIONS = {
     ".pdf", ".docx", ".pptx", ".xlsx", ".csv", ".txt", ".md",
     ".png", ".jpg", ".jpeg", ".webp", ".drawio", ".bpmn", ".xml", ".svg",
@@ -229,6 +230,17 @@ class DocumentProcessingService:
 
 
     @staticmethod
+    def _decode_compressed_drawio(content: bytes) -> str:
+        decoder = zlib.decompressobj(-15)
+        expanded = decoder.decompress(content, MAX_XML_DIAGRAM_UNCOMPRESSED_BYTES + 1)
+        if len(expanded) > MAX_XML_DIAGRAM_UNCOMPRESSED_BYTES or decoder.unconsumed_tail:
+            raise ValueError("The expanded Draw.io diagram exceeds the 20 MB limit.")
+        expanded += decoder.flush()
+        if len(expanded) > MAX_XML_DIAGRAM_UNCOMPRESSED_BYTES:
+            raise ValueError("The expanded Draw.io diagram exceeds the 20 MB limit.")
+        return unquote(expanded.decode("utf-8"))
+
+    @staticmethod
     def _extract_xml_diagram(filename: str, content: bytes, suffix: str) -> str:
         """Extract labels and flow edges from Draw.io, BPMN, SVG and XML diagrams."""
         try:
@@ -245,8 +257,7 @@ class DocumentProcessingService:
                 if match:
                     try:
                         compressed = base64.b64decode(match.group(1).strip(), validate=True)
-                        expanded = zlib.decompress(compressed, -15)
-                        decoded_xml = unquote(expanded.decode("utf-8"))
+                        decoded_xml = DocumentProcessingService._decode_compressed_drawio(compressed)
                         root = SafeET.fromstring(decoded_xml)
                     except Exception as error:
                         raise ValueError(f"{filename}: the compressed Draw.io diagram could not be decoded.") from error
@@ -269,8 +280,7 @@ class DocumentProcessingService:
                 if diagram is not None:
                     try:
                         compressed = base64.b64decode(diagram.text.strip(), validate=True)
-                        expanded = zlib.decompress(compressed, -15)
-                        decoded_xml = unquote(expanded.decode("utf-8"))
+                        decoded_xml = DocumentProcessingService._decode_compressed_drawio(compressed)
                         root = SafeET.fromstring(decoded_xml)
                         cells = [
                             element for element in root.iter()
