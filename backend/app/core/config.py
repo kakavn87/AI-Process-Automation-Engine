@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "AI Process Automation Engine"
+    APP_NAME: str = "AI Engine"
     DATABASE_URL: str = "sqlite:///./process_automation.db"
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-6-luna"
