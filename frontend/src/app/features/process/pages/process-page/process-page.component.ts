@@ -272,7 +272,7 @@ export class ProcessPageComponent {
     uploadSelected: 'Selected file', domainGeneral: 'General process'
   };
 
-  get i18n(): Record<string, string> {
+  get i18n() {
     return this.language() === 'de' ? this.de : this.en;
   }
 
