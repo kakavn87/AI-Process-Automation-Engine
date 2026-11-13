@@ -422,7 +422,7 @@
       <section class="section-block data-section" id="integrations">
         <div class="section-header">
           <div>
-            <div class="section-kicker">SETTINGS · AI ORCHESTRATION & INTEGRATIONS</div>
+            <div class="section-kicker">{{ language() === 'de' ? 'EINSTELLUNGEN · KI-STEUERUNG & INTEGRATIONEN' : 'SETTINGS · AI ORCHESTRATION & INTEGRATIONS' }}</div>
             <h2>{{ language() === 'de' ? 'KI-Plattform & Integrationen' : 'AI platform & integrations' }}</h2>
             <p>{{ language() === 'de' ? 'Zentraler Überblick über Modell-Gateway, Open WebUI, Wissensbasis und angebundene Geschäftsprozesse.' : 'Central overview of the model gateway, Open WebUI, knowledge base and business integrations.' }}</p>
           </div>
@@ -441,8 +441,8 @@
           <div class="result-two-column">
             <article class="result-panel">
               <div class="result-panel-heading">
-                <div><div class="section-kicker">AI GATEWAY</div><h3>{{ readiness.aiGateway.provider }}</h3></div>
-                <span class="planned-pill">{{ readiness.aiGateway.status }}</span>
+                <div><div class="section-kicker">{{ language() === 'de' ? 'KI-GATEWAY' : 'AI GATEWAY' }}</div><h3>{{ readiness.aiGateway.provider }}</h3></div>
+                <span class="planned-pill">{{ integrationStatusLabel(readiness.aiGateway.status) }}</span>
               </div>
               <div class="detected-grid">
                 <div><small>{{ language() === 'de' ? 'Prozessanalyse' : 'Process analysis' }}</small><strong>{{ readiness.aiGateway.model }}</strong></div>
@@ -453,8 +453,8 @@
             </article>
             <article class="result-panel">
               <div class="result-panel-heading">
-                <div><div class="section-kicker">OPEN WEBUI</div><h3>AI Workspace</h3></div>
-                <span class="planned-pill">{{ readiness.openWebUI.status }}</span>
+                <div><div class="section-kicker">OPEN WEBUI</div><h3>{{ language() === 'de' ? 'KI-Arbeitsbereich' : 'AI Workspace' }}</h3></div>
+                <span class="planned-pill">{{ integrationStatusLabel(readiness.openWebUI.status) }}</span>
               </div>
               <p class="plain-copy">{{ readiness.openWebUI.configured ? (language() === 'de' ? 'Open WebUI ist als optionaler AI Workspace konfiguriert.' : 'Open WebUI is configured as an optional AI workspace.') : (language() === 'de' ? 'Open WebUI ist optional und nicht konfiguriert.' : 'Open WebUI is optional and not configured.') }}</p>
               @if (readiness.openWebUI.url) {
@@ -466,7 +466,7 @@
           <article class="result-panel">
             <div class="result-panel-heading">
               <div><div class="section-kicker">RAG · VECTOR KNOWLEDGE</div><h3>{{ language() === 'de' ? 'Prozessbezogene Wissensbasis' : 'Session-scoped knowledge base' }}</h3></div>
-              <span class="planned-pill">{{ readiness.rag.status }}</span>
+              <span class="planned-pill">{{ integrationStatusLabel(readiness.rag.status) }}</span>
             </div>
             <div class="detected-grid">
               <div><small>{{ language() === 'de' ? 'Aktiviert' : 'Enabled' }}</small><strong>{{ readiness.rag.enabled ? 'Yes' : 'No' }}</strong></div>
@@ -480,18 +480,18 @@
 
           <div class="result-two-column">
             <article class="result-panel">
-              <div class="result-panel-heading"><h3>{{ language() === 'de' ? 'Business Connectors' : 'Business connectors' }}</h3><span class="panel-count">{{ readiness.businessConnectors.length }}</span></div>
+              <div class="result-panel-heading"><h3>{{ language() === 'de' ? 'Geschäftssysteme & Schnittstellen' : 'Business connectors' }}</h3><span class="panel-count">{{ readiness.businessConnectors.length }}</span></div>
               <div class="integration-list">
                 @for (connector of readiness.businessConnectors; track connector.id) {
                   <div class="integration-item">
                     <div><strong>{{ connector.name }}</strong><p>{{ connector.description }}</p></div>
-                    <span class="planned-pill">{{ connector.status }}</span>
+                    <span class="planned-pill">{{ integrationStatusLabel(connector.status) }}</span>
                   </div>
                 }
               </div>
             </article>
             <article class="result-panel">
-              <div class="result-panel-heading"><h3>{{ language() === 'de' ? 'Live-Webhook' : 'Live webhook' }}</h3><span class="planned-pill">{{ readiness.liveWebhook.status }}</span></div>
+              <div class="result-panel-heading"><h3>{{ language() === 'de' ? 'Live-Webhook' : 'Live webhook' }}</h3><span class="planned-pill">{{ integrationStatusLabel(readiness.liveWebhook.status) }}</span></div>
               <p class="plain-copy">{{ readiness.liveWebhook.message }}</p>
               <p class="muted-note">{{ language() === 'de' ? 'Externe Aktionen bleiben standardmäßig deaktiviert. Eine Freigabe startet zunächst nur die Simulation.' : 'External actions remain disabled by default. Approval starts simulation mode only.' }}</p>
             </article>
