@@ -410,3 +410,145 @@ button:disabled { cursor: not-allowed; opacity: .52; }
   .builder-card-title small { font-size: 8px; }
   .textarea-footer { align-items: flex-start; flex-direction: column; }
 }
+
+/* Accessible typography: keep secondary labels readable without changing the layout hierarchy. */
+:root { font-size: 16px; }
+body { font-size: 15px; line-height: 1.55; }
+
+.brand-copy small,
+.workspace-switcher small,
+.workspace-health small,
+.sidebar-footer small,
+.nav-label,
+.environment-label,
+.language-switch button,
+.hero-tag,
+.hero-pills span,
+.visual-caption,
+.section-kicker,
+.industry-card-footer,
+.builder-step,
+.required-label,
+.textarea-footer,
+.field-hint,
+.required-label,
+.engine-badge,
+.draft-badge,
+.no-cost-badge,
+.panel-count,
+.impact-pill,
+.planned-pill,
+.approval-pill,
+.draft-badge,
+.step-type,
+.connector-pill,
+.approval-mark,
+.execution-status,
+.execution-meta small,
+.event-item small,
+.analysis-disclaimer,
+.upload-text small,
+.upload-action-row > span,
+.quality-ring small,
+.type-pill {
+  font-size: 12px !important;
+}
+
+.nav-link,
+.workspace-switcher strong,
+.workspace-health strong,
+.sidebar-footer strong,
+.breadcrumb,
+.language-switch button,
+.button-primary,
+.button-secondary,
+.button-quiet,
+.industry-card > strong,
+.builder-card-title strong,
+.selected-domain-label,
+.selected-domain-chip,
+.small-text-button,
+.textarea-label,
+.strategy-field label,
+.strategy-field select,
+.tag-row span,
+.signal-list span,
+.routing-panel strong,
+.result-panel-heading h3,
+.result-panel h3,
+.detected-grid strong,
+.opportunity-item strong,
+.integration-item strong,
+.timeline-title strong,
+.trigger-box strong,
+.approval-gate strong,
+.execution-meta code,
+.upload-text strong,
+.data-table th,
+.data-table td {
+  font-size: 14px !important;
+}
+
+.hero-content > p,
+.capability-item strong,
+.section-header p,
+.industry-card > p,
+.builder-card-title small,
+.builder-card textarea,
+.strategy-explainer,
+.aside-highlight li,
+.aside-security strong,
+.aside-security p,
+.summary-text,
+.detected-lists p,
+.numbered-list,
+.bullet-list,
+.opportunity-item p,
+.integration-item p,
+.timeline-content p,
+.plain-copy,
+.success-copy,
+.event-item strong,
+.event-item p,
+.upload-text p,
+.data-report-heading p,
+.data-metrics small,
+.page-footer,
+.specification-goal p,
+.specification-grid li {
+  font-size: 14px !important;
+}
+
+.hero-content h1 { font-size: clamp(32px, 3.3vw, 44px); }
+.section-header h2 { font-size: clamp(23px, 2.2vw, 27px); }
+.data-report-heading h3 { font-size: 20px; }
+.data-metrics strong { font-size: 21px; }
+.score-number { font-size: 43px; }
+.brand-copy strong { font-size: 19px; }
+.nav-label { letter-spacing: .1em; }
+.hero-pills span { padding: 7px 10px; }
+.button-primary, .button-secondary { min-height: 43px; padding-inline: 16px; }
+.builder-card textarea { min-height: 165px; line-height: 1.7; }
+.result-panel { padding: 20px; }
+.detected-grid { gap: 13px; padding: 16px; }
+.detected-lists { gap: 16px; }
+.numbered-list, .bullet-list { line-height: 1.75; }
+.timeline-content p, .opportunity-item p, .integration-item p { line-height: 1.7; }
+.data-table th, .data-table td { padding: 12px 14px; }
+.page-footer { color: #68748b; }
+.analysis-disclaimer, .muted-note { color: #68748b; font-size: 12px !important; line-height: 1.6; }
+
+.specification-panel { margin-top: 13px; }
+.specification-goal { padding: 14px 16px; border-radius: 11px; background: #f7f8fc; }
+.specification-goal small, .specification-grid small { color: #596782; font-size: 12px; font-weight: 800; }
+.specification-goal p { margin: 6px 0 0; color: #34415b; line-height: 1.7; }
+.specification-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 17px; margin-top: 17px; }
+.specification-grid > div { display: grid; align-content: start; gap: 8px; min-width: 0; }
+.specification-grid .bullet-list { margin-top: 0; }
+
+@media (max-width: 700px) {
+  .specification-grid { grid-template-columns: 1fr; }
+  .hero-content > p { font-size: 14px !important; }
+  .industry-card > strong { font-size: 14px !important; }
+  .industry-card > p { font-size: 12px !important; }
+}
