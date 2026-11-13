@@ -1,9 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ApiService } from '../../../../core/services/api.service';
+import { ApprovalExecution } from '../../../../core/models/api.models';
 import { ProcessStore } from '../../process.store';
 import { ProcessService } from '../../process.service';
-import { ExecutionStore } from '../../../execution/execution.store';
-import { ExecutionService } from '../../../execution/execution.service';
 
 @Component({
   selector: 'app-process-page',
@@ -13,39 +13,73 @@ import { ExecutionService } from '../../../execution/execution.service';
 })
 export class ProcessPageComponent {
   readonly store = inject(ProcessStore);
-  readonly executionStore = inject(ExecutionStore);
   private readonly service = inject(ProcessService);
-  private readonly executionService = inject(ExecutionService);
+  private readonly api = inject(ApiService);
+
+  readonly execution = signal<ApprovalExecution | null>(null);
+  readonly executionLoading = signal(false);
+  readonly executionError = signal<string | null>(null);
 
   description = '';
-  approvalNote = '';
-  rejectionReason = '';
 
   analyze() {
+    this.execution.set(null);
+    this.executionError.set(null);
     this.store.setDescription(this.description);
-    this.executionStore.setExecution(null);
-    this.executionStore.setError(null);
     this.service.analyze(this.description);
   }
 
-  createApprovalRequest() {
-    const analysis = this.store.analysis();
-    if (analysis) {
-      this.executionService.create(analysis.proposedWorkflow);
-    }
+  startExecution() {
+    const workflow = this.store.analysis()?.proposedWorkflow;
+    if (!workflow || this.executionLoading()) return;
+
+    this.executionLoading.set(true);
+    this.executionError.set(null);
+    this.api.startExecution(workflow).subscribe({
+      next: result => {
+        this.execution.set(result);
+        this.executionLoading.set(false);
+      },
+      error: error => {
+        this.executionError.set(error?.error?.detail ?? 'Could not create the approval request.');
+        this.executionLoading.set(false);
+      }
+    });
   }
 
   approveExecution() {
-    const execution = this.executionStore.execution();
-    if (execution) {
-      this.executionService.approve(execution.id, this.approvalNote);
-    }
+    const current = this.execution();
+    if (!current || current.status !== 'awaiting_approval' || this.executionLoading()) return;
+
+    this.executionLoading.set(true);
+    this.executionError.set(null);
+    this.api.approveExecution(current.id, 'Approved from the process dashboard.').subscribe({
+      next: result => {
+        this.execution.set(result);
+        this.executionLoading.set(false);
+      },
+      error: error => {
+        this.executionError.set(error?.error?.detail ?? 'Could not approve this execution.');
+        this.executionLoading.set(false);
+      }
+    });
   }
 
   rejectExecution() {
-    const execution = this.executionStore.execution();
-    if (execution && this.rejectionReason.trim()) {
-      this.executionService.reject(execution.id, this.rejectionReason.trim());
-    }
+    const current = this.execution();
+    if (!current || current.status !== 'awaiting_approval' || this.executionLoading()) return;
+
+    this.executionLoading.set(true);
+    this.executionError.set(null);
+    this.api.rejectExecution(current.id, 'Rejected from the process dashboard.').subscribe({
+      next: result => {
+        this.execution.set(result);
+        this.executionLoading.set(false);
+      },
+      error: error => {
+        this.executionError.set(error?.error?.detail ?? 'Could not reject this execution.');
+        this.executionLoading.set(false);
+      }
+    });
   }
 }
