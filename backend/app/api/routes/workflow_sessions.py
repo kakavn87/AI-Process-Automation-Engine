@@ -135,7 +135,7 @@ def search_session_knowledge(
         ) from error
 
     for telemetry in knowledge.telemetry_events:
-        AIUsageService(db).record(session_id, telemetry)
+        AIUsageService(db, tenant_id=tenant_context.tenant_id).record(session_id, telemetry)
 
     return {
         "sessionId": session_id,
