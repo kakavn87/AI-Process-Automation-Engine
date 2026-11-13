@@ -85,6 +85,7 @@ def test_second_stage_optimization_uses_json_mode_and_validates_schema():
     assert fake_responses.kwargs["text"] == {"format": {"type": "json_object"}}
     assert "text_format" not in fake_responses.kwargs
     assert "JSON" in fake_responses.kwargs["input"][0]["content"]
+    assert '"automation_potential_score"' in fake_responses.kwargs["input"][0]["content"]
     assert service.last_call_telemetry["status"] == "success"
     assert service.last_call_telemetry["totalTokens"] == 1400
 
