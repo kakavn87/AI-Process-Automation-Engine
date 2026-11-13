@@ -4,6 +4,7 @@ import { ProcessStore } from '../../process.store';
 import { ProcessService } from '../../process.service';
 
 @Component({
+  selector: 'app-process-page',
   standalone: true,
   imports: [FormsModule],
   templateUrl: './process-page.component.html'
