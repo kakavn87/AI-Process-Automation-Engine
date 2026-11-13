@@ -418,13 +418,13 @@ class ProcessService:
             suffix = f" ({error_code})" if error_code else ""
             return (
                 f"Der KI-Anbieter hat die Optimierungsanfrage als ungültig abgelehnt (HTTP 400{suffix}). "
-                "Bitte Modell- und Structured-Output-Unterstützung prüfen."
+                "Bitte Modell- und JSON-Ausgabeunterstützung prüfen."
                 if language == "de"
                 else f"The AI provider rejected the optimization request as invalid (HTTP 400{suffix}). "
-                "Check model and structured-output support."
+                "Check model and JSON output support."
             )
 
-        detail = f"{type(error).__name__}"
+        detail = type(error).__name__
         if status_code:
             detail += f", HTTP {status_code}"
         return (
