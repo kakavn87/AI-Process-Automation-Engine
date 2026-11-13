@@ -5,6 +5,7 @@ import { ApiService } from '../../core/services/api.service';
 import {
   AIUsageSummary,
   ApprovalExecution,
+  IntegrationReadiness,
   LiveExecutionReadiness,
   WorkflowSession
 } from '../../core/models/api.models';
@@ -25,6 +26,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
   readonly execution = signal<ApprovalExecution | null>(null);
   readonly usage = signal<AIUsageSummary | null>(null);
   readonly liveReadiness = signal<LiveExecutionReadiness | null>(null);
+  readonly integrationReadiness = signal<IntegrationReadiness | null>(null);
   readonly liveConfirmed = signal(false);
   readonly liveToken = signal('');
   readonly liveLoading = signal(false);
@@ -63,6 +65,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       });
     }
     this.loadLiveReadiness();
+    this.loadIntegrationReadiness();
   }
 
   get isGerman(): boolean {
@@ -89,6 +92,13 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
           : 'Could not load the workflow session.');
         this.loading.set(false);
       }
+    });
+  }
+
+  loadIntegrationReadiness(): void {
+    this.api.getIntegrationReadiness().subscribe({
+      next: result => this.integrationReadiness.set(result),
+      error: () => this.integrationReadiness.set(null)
     });
   }
 
