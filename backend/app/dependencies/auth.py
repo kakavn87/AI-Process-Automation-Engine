@@ -97,6 +97,8 @@ def get_tenant_context(
 
 def require_roles(*allowed_roles: str) -> Callable:
     def dependency(context: TenantContext = Depends(get_tenant_context)) -> TenantContext:
+        if not settings.AUTH_ENABLED:
+            return context
         if not context.authenticated or context.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
