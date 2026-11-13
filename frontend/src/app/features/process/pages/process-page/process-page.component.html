@@ -66,6 +66,55 @@
         </div>
       }
 
+      @if (analysis.detectedDetails; as details) {
+        <article class="result-card detected-details-card">
+          <div class="card-heading-row">
+            <div>
+              <p class="eyebrow">RULE-BASED EXTRACTION</p>
+              <h3>Detected process data</h3>
+            </div>
+            <span class="mode-label">No API call</span>
+          </div>
+          <div class="detail-grid">
+            <div>
+              <span class="card-label">Business area</span>
+              <strong>{{ details.businessDomain.replace('_', ' ') }}</strong>
+            </div>
+            <div>
+              <span class="card-label">Frequency</span>
+              <strong>{{ details.cadence.frequency }}{{ details.cadence.day ? ' · ' + details.cadence.day : '' }}</strong>
+            </div>
+            <div>
+              <span class="card-label">Source channels</span>
+              <strong>{{ details.sourceChannels.length ? details.sourceChannels.join(', ') : 'Not detected' }}</strong>
+            </div>
+            <div>
+              <span class="card-label">Delivery channels</span>
+              <strong>{{ details.deliveryChannels.length ? details.deliveryChannels.join(', ') : 'Not detected' }}</strong>
+            </div>
+          </div>
+          <div class="detail-tags">
+            <span class="card-label">File formats</span>
+            <div class="signals-list">
+              @for (item of details.fileTypes; track item) { <span class="signal-chip">{{ item }}</span> }
+              @if (!details.fileTypes.length) { <span class="muted">None detected</span> }
+            </div>
+          </div>
+          <div class="detail-tags">
+            <span class="card-label">Detected activities</span>
+            <div class="signals-list">
+              @for (item of details.activityLabels; track item) { <span class="signal-chip">{{ item }}</span> }
+              @if (!details.activityLabels.length) { <span class="muted">No known activity detected</span> }
+            </div>
+          </div>
+          <div class="detail-tags">
+            <span class="card-label">Systems and roles</span>
+            <p>{{ details.systems.join(', ') || 'No systems detected' }} · {{ details.roles.join(', ') || 'No roles detected' }}</p>
+          </div>
+          <p class="muted">These are rule-based inferences from the description, not verified connections or extracted file contents.</p>
+        </article>
+      }
+
       <div class="content-grid">
         <article class="result-card">
           <h3>Current process</h3>

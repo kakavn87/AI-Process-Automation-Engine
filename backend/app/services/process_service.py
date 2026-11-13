@@ -49,7 +49,11 @@ class ProcessService:
                 "A deterministic rules-based fallback was used."
             )
 
-        workflow = self.workflow_generator.generate(description, analysis["signals"])
+        workflow = self.workflow_generator.generate(
+            description,
+            analysis["signals"],
+            analysis.get("detectedDetails"),
+        )
         self._ensure_approval_gate(workflow)
         validate(workflow)
         analysis["proposedWorkflow"] = workflow

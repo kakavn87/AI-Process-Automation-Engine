@@ -7,10 +7,31 @@ class ProcessAnalyzer:
     SIGNAL_RULES = (
         ("email", 20, ("email", "e-mail", "outlook", "mailbox")),
         ("pdf", 15, ("pdf",)),
-        ("excel", 15, ("excel", "spreadsheet", "xlsx", "spread sheet")),
+        ("excel", 15, ("excel", "spreadsheet", "xlsx", "spread sheet", "csv")),
         ("manual", 15, ("manual", "manually", "manuell", "manuelle", "by hand", "von hand")),
         ("teams", 10, ("teams", "microsoft teams")),
         ("weekly", 10, ("weekly", "every week", "each week", "every monday", "each monday", "wöchentlich", "jede woche", "jeden montag")),
+    )
+
+    ACTIVITY_RULES = (
+        ("collect_inputs", "Collect inputs", ("receive", "receives", "collect", "retrieve", "download", "import", "incoming", "erhalt", "empfang", "abruf", "herunterlad", "eingang")),
+        ("extract_data", "Extract data", ("extract", "parse", "read", "ocr", "ausles", "extrahier", "einles")),
+        ("transform_data", "Transform and consolidate data", ("combine", "consolidate", "merge", "normalize", "normalise", "map", "zusammenführ", "konsolidier", "normalisier", "vereinheitlich")),
+        ("validate_data", "Validate data", ("validate", "validation", "check", "verify", "missing", "quality", "prüf", "kontroll", "validier", "fehlend", "fehler")),
+        ("calculate_metrics", "Calculate results", ("calculate", "calculates", "compute", "sum", "total", "berechn", "kalkulier")),
+        ("generate_output", "Generate output", ("generate", "create", "prepare", "produce", "erstelle", "erstell", "generier", "vorbereit")),
+        ("approval", "Obtain human approval", ("approve", "approval", "manager", "sign off", "sign-off", "freigabe", "genehmig")),
+        ("notify", "Notify recipients", ("notify", "send", "distribute", "share", "publish", "benachrichtig", "verschick", "sende", "verteil")),
+        ("update_records", "Update system records", ("update", "save", "write to", "store", "aktualisier", "speicher", "eintrag")),
+    )
+
+    DOMAIN_RULES = (
+        ("finance", ("finance", "financial", "invoice", "payment", "accounting", "accounts payable", "accounts receivable", "expense", "finanz", "rechnung", "buchhaltung", "zahlung", "abrechnung")),
+        ("human_resources", ("human resources", "hr ", "employee", "payroll", "vacation", "leave request", "personalabteilung", "mitarbeiter", "gehaltsabrechnung", "lohn", "urlaub")),
+        ("sales", ("sales", "lead", "opportunity", "customer order", "vertrieb", "verkauf", "kundenauftrag")),
+        ("procurement", ("procurement", "purchase order", "supplier", "vendor", "bestellung", "lieferant", "einkauf")),
+        ("customer_support", ("customer support", "support ticket", "complaint", "service request", "kundenservice", "beschwerde")),
+        ("operations", ("inventory", "warehouse", "logistics", "stock", "lager", "bestand", "logistik")),
     )
 
     def analyze(self, description: str) -> dict:
@@ -23,16 +44,19 @@ class ProcessAnalyzer:
                 signals.append(signal)
                 score += points
 
-        has_approval = any(self._contains(text, term) for term in (
-            "approve", "approval", "review", "manager", "freigabe", "genehmig"
-        ))
-        has_report = any(self._contains(text, term) for term in (
-            "report", "summary", "management", "bericht", "auswertung"
-        ))
-        has_validation = any(self._contains(text, term) for term in (
-            "validate", "validation", "check", "missing", "quality", "prüf", "fehler"
-        ))
-        has_financial_data = any(term in text for term in ("finance", "financial", "invoice", "payment", "finanz", "rechnung"))
+        activities = self._detect_activities(text)
+        details = self._extract_process_details(text, signals, activities)
+
+        has_approval = "approval" in activities or any(
+            self._contains_variant(text, term)
+            for term in ("approve", "approval", "review", "manager", "freigabe", "genehmig")
+        )
+        has_report = any(
+            self._contains_variant(text, term)
+            for term in ("report", "summary", "management", "dashboard", "bericht", "auswertung")
+        )
+        has_validation = "validate_data" in activities
+        has_financial_data = details["businessDomain"] == "finance"
 
         current_process = self._current_process(signals, has_validation, has_report, has_approval)
         opportunities = self._opportunities(signals, has_validation, has_report)
@@ -49,15 +73,18 @@ class ProcessAnalyzer:
             risks.append("Do not send the final report until the designated manager has approved it.")
 
         assumptions = []
-        if "pdf" in signals or "excel" in signals:
+        if details["fileTypes"]:
             assumptions.append("Source files have reasonably consistent layouts that can be parsed reliably.")
         if approval_required:
             assumptions.append("A named manager or authorized role is available to review the generated output.")
 
-        questions = [
-            "Which mailbox or folder should the process monitor?",
-            "Which fields and validation rules are mandatory, and what should happen when data is missing?",
-        ]
+        questions = []
+        if details["sourceChannels"]:
+            questions.append("Which exact mailbox, folder, or source location should the process monitor?")
+        else:
+            questions.append("Where does the process receive its input data?")
+        if details["fileTypes"]:
+            questions.append("Which fields and validation rules are mandatory, and what should happen when data is missing?")
         if approval_required:
             questions.append("Who is the authorized approver, and where should the approval request appear?")
         if "teams" in signals:
@@ -68,7 +95,11 @@ class ProcessAnalyzer:
             "signals": signals,
             "description": description,
             "analysisMode": "deterministic_rules_v1",
-            "analysisNote": "Transparent rules-based baseline. No LLM is called and no business system is connected yet.",
+            "analysisNote": (
+                "Analyzed with deterministic Python rules. Process details are inferred from detected phrases; "
+                "external systems are not connected and workflow execution remains simulated."
+            ),
+            "detectedDetails": details,
             "summary": self._summary(signals, has_report, approval_required),
             "currentProcess": current_process,
             "automationOpportunities": opportunities,
@@ -86,6 +117,154 @@ class ProcessAnalyzer:
     @staticmethod
     def _contains(text: str, pattern: str) -> bool:
         return re.search(rf"(?<!\w){re.escape(pattern)}(?!\w)", text, flags=re.IGNORECASE) is not None
+
+    @staticmethod
+    def _contains_variant(text: str, pattern: str) -> bool:
+        """Match a whole word or a known stem, including common German word endings."""
+        return re.search(rf"(?<!\w){re.escape(pattern)}\w*", text, flags=re.IGNORECASE) is not None
+
+    @classmethod
+    def _has_any(cls, text: str, patterns: tuple[str, ...]) -> bool:
+        return any(cls._contains_variant(text, pattern) for pattern in patterns)
+
+    @classmethod
+    def _detect_activities(cls, text: str) -> list[str]:
+        return [
+            key
+            for key, _label, patterns in cls.ACTIVITY_RULES
+            if cls._has_any(text, patterns)
+        ]
+
+    @classmethod
+    def _extract_process_details(
+        cls,
+        text: str,
+        signals: list[str],
+        activities: list[str],
+    ) -> dict:
+        frequency = "manual"
+        day = None
+        if cls._has_any(text, ("weekly", "every week", "each week", "wöchentlich", "jede woche", "jeden montag")):
+            frequency = "weekly"
+            if cls._has_any(text, ("monday", "montag")):
+                day = "Monday"
+            elif cls._has_any(text, ("tuesday", "dienstag")):
+                day = "Tuesday"
+            elif cls._has_any(text, ("wednesday", "mittwoch")):
+                day = "Wednesday"
+            elif cls._has_any(text, ("thursday", "donnerstag")):
+                day = "Thursday"
+            elif cls._has_any(text, ("friday", "freitag")):
+                day = "Friday"
+        elif cls._has_any(text, ("daily", "every day", "each day", "täglich", "jeden tag")):
+            frequency = "daily"
+        elif cls._has_any(text, ("monthly", "every month", "each month", "monatlich", "jeden monat")):
+            frequency = "monthly"
+        elif "email" in signals:
+            frequency = "on_event"
+
+        source_channels = []
+        if "email" in signals:
+            source_channels.append("Microsoft Outlook")
+        if cls._has_any(text, ("sharepoint",)):
+            source_channels.append("SharePoint")
+        if cls._has_any(text, ("shared folder", "network drive", "gemeinsamer ordner", "netzlaufwerk")):
+            source_channels.append("Shared folder")
+        if cls._has_any(text, ("sftp", "ftp server")):
+            source_channels.append("SFTP")
+        if cls._has_any(text, ("api endpoint", "webhook", "rest api")):
+            source_channels.append("API")
+
+        file_types = []
+        if cls._has_any(text, ("pdf",)):
+            file_types.append("PDF")
+        if cls._has_any(text, ("excel", "xlsx", "spreadsheet", "spread sheet")):
+            file_types.append("Excel")
+        if cls._has_any(text, ("csv",)):
+            file_types.append("CSV")
+        if cls._has_any(text, ("word document", "docx", "microsoft word")):
+            file_types.append("Word")
+        if cls._has_any(text, ("json",)):
+            file_types.append("JSON")
+        if cls._has_any(text, ("xml",)):
+            file_types.append("XML")
+        if cls._has_any(text, ("scanned image", "image file", "jpg", "jpeg", "png", "scan")):
+            file_types.append("Image")
+
+        delivery_channels = []
+        if "teams" in signals:
+            delivery_channels.append("Microsoft Teams")
+        if cls._has_any(text, ("slack",)):
+            delivery_channels.append("Slack")
+        email_delivery = re.search(
+            r"(send|sent|deliver|email|e-mail|verschick|sende|versend)\w*.{0,50}(email|e-mail|outlook)"
+            r"|(?:per|via|über)\s+e-?mail\s+(?:versend|schick|send)",
+            text,
+            flags=re.IGNORECASE,
+        )
+        if email_delivery:
+            delivery_channels.append("Microsoft Outlook")
+
+        systems = list(dict.fromkeys(source_channels + delivery_channels))
+        for system, patterns in (
+            ("SAP", ("sap",)),
+            ("Salesforce", ("salesforce",)),
+            ("Microsoft Dynamics", ("dynamics 365", "microsoft dynamics")),
+            ("Google Drive", ("google drive",)),
+            ("Database", ("database", "sql database", "datenbank")),
+        ):
+            if cls._has_any(text, patterns) and system not in systems:
+                systems.append(system)
+
+        domain = "general"
+        for candidate, patterns in cls.DOMAIN_RULES:
+            if cls._has_any(text, patterns):
+                domain = candidate
+                break
+
+        outputs = []
+        if cls._has_any(text, ("report", "summary report", "dashboard", "bericht", "auswertung")):
+            outputs.append("report")
+        if cls._has_any(text, ("invoice", "rechnung")):
+            outputs.append("invoice")
+        if cls._has_any(text, ("spreadsheet", "excel file", "csv file", "master excel", "tabelle")):
+            outputs.append("spreadsheet")
+        if cls._has_any(text, ("database", "crm", "datensatz", "record")):
+            outputs.append("system_record")
+        if delivery_channels:
+            outputs.append("notification")
+        if not outputs:
+            outputs.append("process_output")
+
+        roles = []
+        if domain == "finance" and cls._has_any(text, ("finance team", "finance department", "finanzabteilung", "buchhaltung")):
+            roles.append("Finance team")
+        if cls._has_any(text, ("employee", "staff", "mitarbeiter", "sachbearbeiter")):
+            roles.append("Employee")
+        if cls._has_any(text, ("manager", "management", "team lead", "vorgesetzt", "leitung")):
+            roles.append("Manager")
+        if cls._has_any(text, ("customer", "client", "kunde")):
+            roles.append("Customer")
+
+        activity_labels = {
+            key: label for key, label, _patterns in cls.ACTIVITY_RULES
+        }
+        return {
+            "businessDomain": domain,
+            "cadence": {
+                "frequency": frequency,
+                "day": day,
+            },
+            "sourceChannels": source_channels,
+            "fileTypes": file_types,
+            "activities": activities,
+            "activityLabels": [activity_labels[key] for key in activities],
+            "deliveryChannels": delivery_channels,
+            "systems": systems,
+            "outputTypes": outputs,
+            "roles": roles,
+            "extractionMethod": "deterministic_rules",
+        }
 
     @staticmethod
     def _current_process(signals: list[str], has_validation: bool, has_report: bool, has_approval: bool) -> list[str]:

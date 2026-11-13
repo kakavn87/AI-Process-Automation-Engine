@@ -4,7 +4,7 @@ from app.services.process_service import ProcessService
 
 
 SAMPLE_PROCESS = """Every Monday, the finance team receives Excel and PDF reports from different departments by email.
-An employee manually downloads all attachments, extracts the relevant data, combines it into a master Excel
+An employee manually downloads all attachments, extracts the relevant data, combines them into a master Excel
 spreadsheet, checks for missing values, calculates weekly results, and creates a summary report.
 The report is sent to management via Microsoft Teams after a manager reviews and approves it."""
 
@@ -23,6 +23,7 @@ def test_process_service_falls_back_when_api_key_is_missing():
     assert result["analysisMode"] == "deterministic_rules_v1"
     assert result["automationScore"] == 85
     assert result["proposedWorkflow"]["steps"]
+    assert result["detectedDetails"]["businessDomain"] == "finance"
 
 
 def test_fallback_workflow_has_approval_after_report_generation():
@@ -33,6 +34,7 @@ def test_fallback_workflow_has_approval_after_report_generation():
 
     assert types.index("generate") < types.index("approval") < types.index("notify")
     assert steps[types.index("notify")]["config"]["requiresApproval"] is True
+    assert result["proposedWorkflow"]["name"] == "Weekly Finance Reporting"
 
 
 class FakeAIService:
@@ -89,5 +91,6 @@ def test_llm_result_is_used_and_backend_inserts_mandatory_approval_gate():
 
     assert result["llmUsed"] is True
     assert result["analysisMode"] == "openai_responses"
+    assert result["detectedDetails"]["businessDomain"] == "finance"
     assert types.index("generate") < types.index("approval") < types.index("notify")
     assert steps[types.index("notify")]["config"]["requiresApproval"] is True

@@ -18,6 +18,23 @@ export interface AutomationOpportunity {
   impact: 'high' | 'medium' | 'low' | string;
 }
 
+export interface DetectedProcessDetails {
+  businessDomain: string;
+  cadence: {
+    frequency: string;
+    day: string | null;
+  };
+  sourceChannels: string[];
+  fileTypes: string[];
+  activities: string[];
+  activityLabels: string[];
+  deliveryChannels: string[];
+  systems: string[];
+  outputTypes: string[];
+  roles: string[];
+  extractionMethod: string;
+}
+
 export interface ProposedWorkflow {
   name: string;
   trigger: string;
@@ -32,6 +49,7 @@ export interface ProcessAnalysis {
   analysisNote: string;
   llmUsed: boolean;
   llmModel: string | null;
+  detectedDetails: DetectedProcessDetails;
   summary: string;
   currentProcess: string[];
   automationOpportunities: AutomationOpportunity[];
