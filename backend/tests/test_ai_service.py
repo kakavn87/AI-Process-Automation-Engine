@@ -54,7 +54,7 @@ def _valid_optimization() -> dict:
     }
 
 
-def test_second_stage_optimization_uses_json_mode_and_validates_schema(monkeypatch):
+def test_second_stage_optimization_uses_json_mode_and_validates_schema():
     payload = _valid_optimization()
     response = SimpleNamespace(
         output_text=json.dumps(payload, ensure_ascii=False),
@@ -125,3 +125,39 @@ def test_fallback_message_identifies_rate_limit_instead_of_generic_openai_failur
 
     assert "HTTP 429" in message
     assert "Rate-Limit" in message
+
+
+
+def test_workflow_mapping_failure_is_not_reported_as_an_openai_request_failure():
+    class FakeAI:
+        is_configured = True
+        model = "test-optimization-model"
+        last_call_telemetry = {
+            "provider": "openai",
+            "model": model,
+            "task": "process_optimization",
+            "status": "success",
+        }
+
+        def optimize_process(self, **kwargs):
+            return _valid_optimization()
+
+    service = ProcessService(db=None, ai_service=FakeAI())
+
+    def fail_mapping(_analysis, _result):
+        raise ValueError("workflow validation failed")
+
+    service._apply_optimization_result = fail_mapping
+    result = service.optimize_after_clarification(
+        analysis={"llmUsed": True, "proposedWorkflow": {"steps": []}},
+        description="Rechnungen prüfen.",
+        questions=[],
+        answers={},
+        strategy="auto",
+        language="de",
+    )
+
+    assert result["optimization"]["status"] == "fallback"
+    assert "nicht in einen gültigen Workflow" in result["optimization"]["summary"]
+    assert "OpenAI-Anfrage fehlgeschlagen" not in result["optimization"]["summary"]
+    assert result["_optimizationUsageTelemetry"]["status"] == "success"
