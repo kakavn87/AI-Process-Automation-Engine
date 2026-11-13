@@ -213,3 +213,95 @@
   font-size: 14px !important;
   font-weight: 800;
 }
+
+
+/* Five-phase workflow progress — makes phases 2–5 visible after analysis. */
+.session-progress {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0 0 20px;
+}
+.session-progress-step {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+}
+.session-progress-number {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 9px;
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 10px;
+  font-weight: 800;
+}
+.session-progress-step > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.session-progress-step strong {
+  color: #1f2937;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.session-progress-step small {
+  color: #6b7280;
+  font-size: 9px;
+  line-height: 1.35;
+}
+.session-progress-mark {
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+.session-progress-step.is-complete {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+.session-progress-step.is-complete .session-progress-number,
+.session-progress-step.is-complete .session-progress-mark {
+  background: #dcfce7;
+  color: #166534;
+}
+.session-progress-step.is-active {
+  border-color: #a5b4fc;
+  background: #eef2ff;
+  box-shadow: inset 0 0 0 1px #c7d2fe;
+}
+.session-progress-step.is-active .session-progress-number,
+.session-progress-step.is-active .session-progress-mark {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+.session-progress-step.is-pending { background: #f9fafb; }
+.session-progress-step.is-available {
+  border-color: #dbeafe;
+  background: #eff6ff;
+}
+.session-progress-step.is-available .session-progress-number,
+.session-progress-step.is-available .session-progress-mark {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+@media (max-width: 980px) {
+  .session-progress { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .session-progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .session-progress-step { padding: 11px 9px; }
+  .session-progress-step strong { font-size: 10px; }
+}
+@media (max-width: 390px) {
+  .session-progress { grid-template-columns: 1fr; }
+}

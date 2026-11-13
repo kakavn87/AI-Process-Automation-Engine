@@ -5,7 +5,9 @@ from sqlalchemy.pool import StaticPool
 from app.core.database import Base
 from app.engine.execution.action_executor import ActionExecutor
 from app.engine.workflow.automation_engine import WorkflowAutomationEngine
+from app.models.execution import ApprovalExecution  # noqa: F401 - registers approval execution table
 from app.models.workflow_session import AIUsageEvent, WorkflowSession
+from app.services.execution_service import ExecutionService
 from app.services.question_service import QuestionService
 from app.services.workflow_session_service import WorkflowSessionService
 
@@ -22,6 +24,23 @@ def test_question_service_builds_stable_typed_questions():
     assert questions[0]["type"] == "text"
     assert questions[1]["type"] == "boolean"
     assert questions[1]["id"] == service.build(["Is manager approval required?"])[0]["id"]
+
+
+def test_german_customer_support_questions_are_renderable_and_typed():
+    questions = QuestionService().build([
+        "Welche Themen- und Dringlichkeitsklassen sollen verwendet werden?",
+        "Wie werden SLA-Fristen ermittelt und in Prioritäten übersetzt?",
+        "Welche Zuständigkeitsregeln bestimmen das Team?",
+        "In welchem System werden Anfragen nach der Zuordnung weiterbearbeitet?",
+        "Soll die Freigabe für alle Anfragen gelten oder nur für unklare Fälle?",
+    ])
+
+    assert len(questions) == 5
+    assert all(question["required"] for question in questions)
+    assert [question["type"] for question in questions] == [
+        "text", "text", "text", "text", "boolean"
+    ]
+    assert len({question["id"] for question in questions}) == 5
 
 
 def test_question_service_validates_boolean_and_required_text():
@@ -108,6 +127,19 @@ def test_workflow_session_saves_partial_answers_then_prepares():
         assert prepared["analysis"]["processingResult"]["externalActionsExecuted"] is False
         assert len(prepared["analysis"]["proposedWorkflow"]["confirmedContext"]) == 2
         assert prepared["answers"][second_question["id"]] is False
+
+        approval_request = service.create_execution(created["id"])
+        assert approval_request["session"]["status"] == "awaiting_approval"
+        assert approval_request["execution"]["status"] == "awaiting_approval"
+
+        approved = ExecutionService(db).approve(
+            approval_request["execution"]["id"],
+            "Reviewed in the workflow demo.",
+        )
+        completed = service.get(created["id"])
+        assert approved["status"] == "completed"
+        assert completed["status"] == "completed"
+        assert completed["events"][-1]["event"] == "execution_completed"
 
     Base.metadata.drop_all(bind=engine)
     engine.dispose()

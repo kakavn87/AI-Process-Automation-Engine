@@ -168,6 +168,44 @@ export class WorkflowSessionPageComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
+  stepState(step: number, status: string): 'complete' | 'active' | 'pending' {
+    if (step === 1) return 'complete';
+    if (step === 2) return status === 'needs_input' ? 'active' : 'complete';
+    if (step === 3) {
+      if (status === 'needs_input') return 'pending';
+      if (status === 'processing') return 'active';
+      return status === 'failed' ? 'pending' : 'complete';
+    }
+    if (step === 4) {
+      if (status === 'ready_for_approval' || status === 'awaiting_approval') return 'active';
+      if (status === 'completed' || status === 'rejected') return 'complete';
+      return 'pending';
+    }
+    return 'pending';
+  }
+
+  stepDescription(step: number, status: string): string {
+    if (step === 2) {
+      return this.isGerman
+        ? (status === 'needs_input' ? 'Ihre Angaben werden benötigt' : 'Klärung abgeschlossen')
+        : (status === 'needs_input' ? 'Your input is needed' : 'Clarification complete');
+    }
+    if (step === 3) {
+      if (status === 'needs_input') return this.isGerman ? 'Nach den Antworten' : 'After your answers';
+      if (status === 'processing') return this.isGerman ? 'Python prüft die Angaben' : 'Python validates the answers';
+      if (status === 'failed') return this.isGerman ? 'Verarbeitung fehlgeschlagen' : 'Processing failed';
+      return this.isGerman ? 'Workflow vorbereitet' : 'Workflow prepared';
+    }
+    if (step === 4) {
+      if (status === 'ready_for_approval') return this.isGerman ? 'Ihre Prüfung erforderlich' : 'Your review is required';
+      if (status === 'awaiting_approval') return this.isGerman ? 'Wartet auf Entscheidung' : 'Waiting for decision';
+      if (status === 'completed') return this.isGerman ? 'Simulation abgeschlossen' : 'Simulation completed';
+      if (status === 'rejected') return this.isGerman ? 'Anfrage abgelehnt' : 'Request rejected';
+      return this.isGerman ? 'Nach der Verarbeitung' : 'After processing';
+    }
+    return '';
+  }
+
   formatNumber(value: number | null | undefined): string {
     return new Intl.NumberFormat(this.isGerman ? 'de-DE' : 'en-US').format(value ?? 0);
   }

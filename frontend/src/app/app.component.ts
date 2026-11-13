@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import { ProcessPageComponent } from './features/process/pages/process-page/process-page.component';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [ProcessPageComponent],
-  template: '<app-process-page />'
+  imports: [RouterOutlet],
+  template: '<router-outlet />'
 })
 export class AppComponent {}
