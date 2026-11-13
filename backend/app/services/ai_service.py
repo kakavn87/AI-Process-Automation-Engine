@@ -331,7 +331,7 @@ Return exactly one valid JSON object matching the required optimization fields. 
                     {
                         "role": "user",
                         "content": (
-                            "Return the process optimization as one JSON object using this complete context:\\n"
+                            "Return the process optimization as one JSON object using this complete context:\n"
                             + json.dumps(context, ensure_ascii=False, default=str)
                         ),
                     },
