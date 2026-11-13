@@ -44,6 +44,16 @@ export class ProcessPageComponent implements OnInit {
   readonly integrationLoading = signal(false);
   readonly integrationError = signal<string | null>(null);
   readonly workflowSession = signal<WorkflowSession | null>(null);
+  readonly invitationLoading = signal(false);
+  readonly invitationError = signal<string | null>(null);
+  readonly invitationResult = signal<{
+    email: string;
+    role: string;
+    invitation_token: string;
+    expires_at: string;
+  } | null>(null);
+  workspaceInviteEmail = '';
+  workspaceInviteRole: 'admin' | 'member' | 'approver' = 'member';
 
   selectedDataFile: File | null = null;
   processFiles: File[] = [];
@@ -84,6 +94,36 @@ export class ProcessPageComponent implements OnInit {
             : 'Could not load integration status.'
         );
         this.integrationLoading.set(false);
+      }
+    });
+  }
+
+  canManageWorkspace(): boolean {
+    const role = this.auth.user()?.role;
+    return this.auth.isAuthenticated() && (role === 'owner' || role === 'admin');
+  }
+
+  createWorkspaceInvitation(): void {
+    const email = this.workspaceInviteEmail.trim().toLowerCase();
+    if (!email || this.invitationLoading() || !this.canManageWorkspace()) return;
+
+    this.invitationLoading.set(true);
+    this.invitationError.set(null);
+    this.invitationResult.set(null);
+    this.api.createWorkspaceInvitation(email, this.workspaceInviteRole).subscribe({
+      next: result => {
+        this.invitationResult.set(result);
+        this.workspaceInviteEmail = '';
+        this.invitationLoading.set(false);
+      },
+      error: response => {
+        const detail = response?.error?.detail;
+        this.invitationError.set(typeof detail === 'string'
+          ? detail
+          : (this.language() === 'de'
+            ? 'Die Einladung konnte nicht erstellt werden.'
+            : 'Could not create the invitation.'));
+        this.invitationLoading.set(false);
       }
     });
   }
