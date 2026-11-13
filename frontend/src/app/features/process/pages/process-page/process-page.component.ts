@@ -143,14 +143,14 @@ export class ProcessPageComponent {
   ];
 
   private readonly de = {
-    brand: 'FlowPilot', product: 'Workflow Automation',
+    brand: 'AI Process Optimierung', product: 'KI-gestützte Prozessoptimierung',
     workspace: 'DEMO-ARBEITSBEREICH', language: 'Sprache',
     navOverview: 'Start', navIndustries: 'Beispiele', navBuilder: 'Prozess erstellen',
     navData: 'Datenwerkstatt', navSecurity: 'Kontrolle & Freigaben',
     activeWorkspace: 'Arbeitsbereich aktiv', systemReady: 'System bereit',
     heroEyebrow: 'UNIVERSELLE KI-PROZESSAUTOMATISIERUNG',
     heroTitle: 'Ein KI-Kern. Jeder Prozess.',
-    heroCopy: 'Beschreiben Sie jeden Geschäftsprozess – auch Nischen- und Spezialabläufe. AI Engine versteht die Aufgabe, strukturiert den Workflow und nutzt Python für Daten, Regeln und sichere Ausführung.',
+    heroCopy: 'Beschreiben Sie jeden Geschäftsprozess – auch Nischen- und Spezialabläufe. AI Process Optimierung versteht die Aufgabe, strukturiert den Workflow und nutzt Python für Daten, Regeln und sichere Ausführung.',
     startAnalysis: 'Analyse starten', exploreAreas: 'Geschäftsbereiche entdecken',
     pillHybrid: 'Hybrid: Python + KI', pillApproval: 'Freigaben bleiben unter Kontrolle', pillNoCode: 'Ohne Programmierung starten',
     metricIndustries: 'Geschäftsbereiche', metricEngines: 'Analysemodi', metricData: 'Datenformate',
@@ -158,7 +158,7 @@ export class ProcessPageComponent {
     industriesCopy: 'Wählen Sie einen Bereich, um eine Beispielbeschreibung einzufügen. Sie können den Text anschließend frei anpassen.',
     selected: 'Ausgewählt', useExample: 'Beispiel verwenden', allAreas: 'Freie Beschreibung',
     builderEyebrow: 'SCHRITT 1 · PROZESS BESCHREIBEN', builderTitle: 'Welchen Prozess möchten Sie automatisieren?',
-    builderCopy: 'Beschreiben Sie den Ablauf in wenigen Sätzen. FlowPilot erkennt manuelle Schritte, Datenquellen und mögliche Automatisierungen und erstellt daraus einen prüfbaren Workflow-Entwurf.',
+    builderCopy: 'Beschreiben Sie den Ablauf in wenigen Sätzen. AI Process Optimierung erkennt manuelle Schritte, Datenquellen und mögliche Automatisierungen und erstellt daraus einen prüfbaren Workflow-Entwurf.',
     selectedArea: 'Geschäftsbereich', strategy: 'Analysemethode',
     strategyAuto: 'Automatisch · KI zuerst', strategyRules: 'Python-Regeln · kostenlos', strategyLlm: 'KI-Analyse · API-Guthaben',
     descriptionLabel: 'Wie läuft der Prozess heute ab?',
@@ -197,7 +197,7 @@ export class ProcessPageComponent {
     routePython: 'Python ausgewählt', routeLlm: 'KI ausgewählt', complexity: 'Hinweise für eine vertiefte Analyse',
     missingKey: 'API-Schlüssel fehlt', missingKeyText: 'KI-Analyse wurde angefordert, aber der Backend-API-Schlüssel ist nicht konfiguriert. Es wurden stattdessen Python-Regeln verwendet.',
     engineNote: 'Analysehinweis', impactHigh: 'Hohe Wirkung', impactMedium: 'Mittlere Wirkung', impactLow: 'Geringe Wirkung',
-    footer: 'AI Engine ist ein Portfolio-Prototyp. Integrationen sind derzeit nicht verbunden; Workflow-Ausführungen laufen ausschließlich im Simulationsmodus.',
+    footer: 'AI Process Optimierung ist ein Portfolio-Prototyp. Integrationen sind derzeit nicht verbunden; Workflow-Ausführungen laufen ausschließlich im Simulationsmodus.',
     errorAnalysis: 'Der Prozess konnte nicht analysiert werden. Bitte prüfen Sie die Backend-Verbindung.',
     errorUpload: 'Die Datei konnte nicht verarbeitet werden. Bitte prüfen Sie das Format.',
     errorRequest: 'Die Freigabeanfrage konnte nicht erstellt werden.',
@@ -208,14 +208,14 @@ export class ProcessPageComponent {
   };
 
   private readonly en = {
-    brand: 'FlowPilot', product: 'Workflow Automation',
+    brand: 'AI Process Optimierung', product: 'KI-gestützte Prozessoptimierung',
     workspace: 'DEMO WORKSPACE', language: 'Language',
     navOverview: 'Start', navIndustries: 'Examples', navBuilder: 'Process builder',
     navData: 'Data workspace', navSecurity: 'Governance & approvals',
     activeWorkspace: 'Workspace active', systemReady: 'System ready',
-    heroEyebrow: 'UNIVERSAL AI PROCESS AUTOMATION',
-    heroTitle: 'One AI engine. Every process.',
-    heroCopy: 'Describe any business process, including niche and specialist workflows. AI Engine understands the task, structures the workflow and uses Python for data, rules and safe execution.',
+    heroEyebrow: 'KI-GESTÜTZTE PROZESSOPTIMIERUNG',
+    heroTitle: 'Eine KI. Jeder Geschäftsprozess.',
+    heroCopy: 'Describe any business process, including niche and specialist workflows. AI Process Optimierung understands the task, structures the workflow and uses Python for data, rules and safe execution.',
     startAnalysis: 'Start analysis', exploreAreas: 'Explore business areas',
     pillHybrid: 'Hybrid: Python + AI', pillApproval: 'Human approvals stay in control', pillNoCode: 'Start without coding',
     metricIndustries: 'Business areas', metricEngines: 'Analysis modes', metricData: 'Data formats',
@@ -223,7 +223,7 @@ export class ProcessPageComponent {
     industriesCopy: 'Choose a business area to insert a sample description. You can then adapt the text to match your own process.',
     selected: 'Selected', useExample: 'Use example', allAreas: 'Free description',
     builderEyebrow: 'STEP 1 · DESCRIBE YOUR PROCESS', builderTitle: 'What process would you like to automate?',
-    builderCopy: 'Describe the current process in a few sentences. FlowPilot identifies manual steps, data sources and automation opportunities, then creates a workflow draft you can review.',
+    builderCopy: 'Describe the current process in a few sentences. AI Process Optimierung identifies manual steps, data sources and automation opportunities, then creates a workflow draft you can review.',
     selectedArea: 'Business area', strategy: 'Analysis strategy',
     strategyAuto: 'Automatic · AI first', strategyRules: 'Python rules · no API cost', strategyLlm: 'AI analysis · API credits',
     descriptionLabel: 'How does the process work today?',
@@ -262,7 +262,7 @@ export class ProcessPageComponent {
     routePython: 'Python selected', routeLlm: 'AI selected', complexity: 'Signals requiring deeper analysis',
     missingKey: 'API key missing', missingKeyText: 'AI analysis was requested, but the backend API key is not configured. Python rules were used instead.',
     engineNote: 'Analysis note', impactHigh: 'High impact', impactMedium: 'Medium impact', impactLow: 'Low impact',
-    footer: 'AI Engine is a portfolio prototype. Integrations are not connected yet; workflow execution runs in simulation mode only.',
+    footer: 'AI Process Optimierung is a portfolio prototype. Integrations are not connected yet; workflow execution runs in simulation mode only.',
     errorAnalysis: 'Could not analyze the process. Please check the backend connection.',
     errorUpload: 'Could not process this file. Please check its format.',
     errorRequest: 'Could not create the approval request.',
@@ -375,7 +375,7 @@ export class ProcessPageComponent {
 
     this.executionLoading.set(true);
     this.executionError.set(null);
-    const note = this.language() === 'de' ? 'Über AI Engine freigegeben.' : 'Approved from AI Engine.';
+    const note = this.language() === 'de' ? 'Über AI Process Optimierung freigegeben.' : 'Approved from AI Process Optimierung.';
     this.api.approveExecution(current.id, note).subscribe({
       next: result => {
         this.execution.set(result);
@@ -394,7 +394,7 @@ export class ProcessPageComponent {
 
     this.executionLoading.set(true);
     this.executionError.set(null);
-    const note = this.language() === 'de' ? 'Über AI Engine abgelehnt.' : 'Rejected from AI Engine.';
+    const note = this.language() === 'de' ? 'Über AI Process Optimierung abgelehnt.' : 'Rejected from AI Process Optimierung.';
     this.api.rejectExecution(current.id, note).subscribe({
       next: result => {
         this.execution.set(result);
