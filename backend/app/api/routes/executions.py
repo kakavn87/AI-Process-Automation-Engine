@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.dependencies.auth import TenantContext, get_tenant_context
+from app.dependencies.auth import TenantContext, get_tenant_context, require_roles
 from app.schemas.execution import (
     CreateExecutionRequest,
     ExecutionDecisionRequest,
@@ -55,7 +55,7 @@ def approve_execution(
     execution_id: str,
     request: ExecutionDecisionRequest,
     db: Session = Depends(get_db),
-    tenant_context: TenantContext = Depends(get_tenant_context),
+    tenant_context: TenantContext = Depends(require_roles("owner", "admin", "approver")),
 ):
     try:
         return ExecutionService(db, tenant_id=tenant_context.tenant_id).approve(execution_id, request.note)
@@ -70,7 +70,7 @@ def reject_execution(
     execution_id: str,
     request: ExecutionDecisionRequest,
     db: Session = Depends(get_db),
-    tenant_context: TenantContext = Depends(get_tenant_context),
+    tenant_context: TenantContext = Depends(require_roles("owner", "admin", "approver")),
 ):
     try:
         return ExecutionService(db, tenant_id=tenant_context.tenant_id).reject(execution_id, request.note)
@@ -85,7 +85,7 @@ def run_live_execution(
     execution_id: str,
     request: LiveExecutionRequest,
     db: Session = Depends(get_db),
-    tenant_context: TenantContext = Depends(get_tenant_context),
+    tenant_context: TenantContext = Depends(require_roles("owner", "admin")),
 ):
     try:
         return ExecutionService(db, tenant_id=tenant_context.tenant_id).run_live(
