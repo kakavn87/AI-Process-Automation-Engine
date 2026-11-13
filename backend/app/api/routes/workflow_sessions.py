@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.schemas.workflow_session import SubmitWorkflowAnswersRequest
 from app.services.workflow_session_service import WorkflowSessionService
+from app.services.ai_usage_service import AIUsageService
 from app.services.knowledge_base_service import KnowledgeBaseService
 from app.models.workflow_session import WorkflowSession
 
@@ -94,10 +95,15 @@ def search_session_knowledge(
     try:
         matches = knowledge.search(session_id, request.query, request.top_k)
     except Exception as error:
+        for telemetry in knowledge.telemetry_events:
+            AIUsageService(db).record(session_id, telemetry)
         raise HTTPException(
             status_code=503,
             detail="The session knowledge store could not complete the search.",
         ) from error
+
+    for telemetry in knowledge.telemetry_events:
+        AIUsageService(db).record(session_id, telemetry)
 
     return {
         "sessionId": session_id,
