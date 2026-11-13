@@ -193,6 +193,7 @@ class WorkflowSessionService:
             logger.exception("Could not persist process-optimization usage telemetry.")
 
     def _prepare(self, session: WorkflowSession) -> None:
+        usage_recorded = False
         try:
             optimization = self.ai_service.optimize_process(
                 analysis=session.analysis or {},
@@ -201,7 +202,6 @@ class WorkflowSessionService:
                 language=session.language,
             )
             telemetry = getattr(self.ai_service, "last_call_telemetry", None)
-            self._record_optimization_usage(session)
             prepared = self.automation_engine.prepare(
                 session.analysis or {},
                 session.answers or {},
@@ -210,6 +210,8 @@ class WorkflowSessionService:
             if telemetry:
                 prepared["processOptimization"]["model"] = telemetry.get("model")
                 prepared["processOptimization"]["provider"] = telemetry.get("provider")
+            self._record_optimization_usage(session)
+            usage_recorded = True
             session.analysis = prepared
             session.status = "ready_for_approval"
             session.events = [
@@ -232,7 +234,8 @@ class WorkflowSessionService:
                 },
             ]
         except Exception as error:
-            self._record_optimization_usage(session)
+            if not usage_recorded:
+                self._record_optimization_usage(session)
             logger.exception("Second-pass LLM process optimization failed.")
             detail = (
                 "Die KI-Optimierung ist fehlgeschlagen. Prüfen Sie API-Guthaben, Modellzugriff und Backend-Protokolle. Sie können den Schritt erneut versuchen."
