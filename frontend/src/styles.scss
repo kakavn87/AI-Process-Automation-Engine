@@ -82,3 +82,16 @@ h3 { margin: 0 0 16px; font-size: 17px; letter-spacing: -.02em; }
   .workflow-step { flex-wrap: wrap; }
   .approval-indicator { margin-left: 40px; }
 }
+
+
+.approval-workbench { margin-top: 16px; }
+.approval-workbench > p { color: #667085; font-size: 13px; line-height: 1.55; }
+.approval-workbench label { display: block; margin: 14px 0 7px; color: #344054; font-size: 12px; font-weight: 700; }
+.approval-workbench textarea { min-height: 64px; }
+.execution-steps { display: grid; gap: 8px; margin: 14px 0 18px; padding: 0; list-style: none; }
+.execution-steps li { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #edf0f5; padding: 8px 0; color: #475467; font-size: 12px; }
+.decision-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+.button-danger { background: #9a3535; }
+.button-danger:hover:not(:disabled) { background: #7f2929; }
+.decision-note { margin-top: 16px; color: #475467; font-size: 13px; }
+
