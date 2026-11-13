@@ -6,6 +6,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     APP_NAME: str = "AI Process Optimierung"
+    AUTH_ENABLED: bool = False
+    JWT_SECRET_KEY: str = ""
+    AUTH_ACCESS_TOKEN_MINUTES: int = Field(default=60, ge=5, le=1440)
+    BOOTSTRAP_ADMIN_EMAIL: str = ""
+    BOOTSTRAP_ADMIN_PASSWORD: str = ""
+    BOOTSTRAP_TENANT_NAME: str = "FlowPilot Workspace"
     DATABASE_URL: str = "sqlite:///./process_automation.db"
     PREVIEW_DATABASE_URL: str = ""
     OPENAI_API_KEY: str = ""
@@ -64,6 +70,13 @@ class Settings(BaseSettings):
             self.WORKFLOW_WEBHOOK_URL = ""
             self.WORKFLOW_WEBHOOK_BEARER_TOKEN = ""
             self.WORKFLOW_LIVE_EXECUTION_TOKEN = ""
+            # Previews must not inherit Production user credentials or signing keys.
+            self.AUTH_ENABLED = False
+            self.JWT_SECRET_KEY = ""
+            self.BOOTSTRAP_ADMIN_EMAIL = ""
+            self.BOOTSTRAP_ADMIN_PASSWORD = ""
+        if self.AUTH_ENABLED and len(self.JWT_SECRET_KEY.strip()) < 32:
+            raise ValueError("JWT_SECRET_KEY must contain at least 32 characters when AUTH_ENABLED is true.")
         return self
 
     @property
