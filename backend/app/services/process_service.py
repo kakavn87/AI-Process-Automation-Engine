@@ -75,7 +75,10 @@ class ProcessService:
             "trigger": ai_result["workflow_trigger"],
             "steps": workflow_steps,
         }
-        self._ensure_approval_gate(workflow)
+        self._ensure_approval_gate(
+            workflow,
+            force_approval=bool(ai_result["human_approval_required"]),
+        )
         validate(workflow)
 
         analysis.update({
@@ -100,11 +103,10 @@ class ProcessService:
         })
 
     @staticmethod
-    def _ensure_approval_gate(workflow: dict) -> None:
+    def _ensure_approval_gate(workflow: dict, force_approval: bool = False) -> None:
         steps = workflow.setdefault("steps", [])
         if not steps or steps[0].get("type") != "trigger":
             steps.insert(0, {
-                "id": "step-trigger",
                 "type": "trigger",
                 "name": "Start workflow",
                 "description": workflow.get("trigger", "Start the workflow manually."),
@@ -127,19 +129,27 @@ class ProcessService:
             i for i, step in enumerate(steps)
             if step.get("type") in OUTBOUND_STEP_TYPES
         ]
-        if not outbound_positions:
-            return
-
-        first_outbound = outbound_positions[0]
-        prior_approval = next(
-            (i for i, step in enumerate(steps[:first_outbound]) if step.get("type") == "approval"),
-            None,
-        )
-        if prior_approval is None:
-            steps.insert(first_outbound, {
+        must_approve = force_approval or bool(outbound_positions)
+        if must_approve:
+            # Place exactly one approval step after the last output-preparation step
+            # and before the first external notification.
+            first_outbound = outbound_positions[0] if outbound_positions else len(steps)
+            prior_steps = steps[:first_outbound]
+            last_preparation = max(
+                (i for i, step in enumerate(prior_steps)
+                 if step.get("type") in {"generate", "validate", "transform"}),
+                default=first_outbound - 1,
+            )
+            steps[:] = [step for step in steps if step.get("type") != "approval"]
+            first_outbound = next(
+                (i for i, step in enumerate(steps) if step.get("type") in OUTBOUND_STEP_TYPES),
+                len(steps),
+            )
+            insertion_index = min(last_preparation + 1, first_outbound)
+            steps.insert(insertion_index, {
                 "type": "approval",
                 "name": "Human approval",
-                "description": "Pause until an authorized person approves the output before distribution.",
+                "description": "Pause until an authorized person reviews and approves the output.",
                 "config": {"requiresApproval": False},
             })
 
