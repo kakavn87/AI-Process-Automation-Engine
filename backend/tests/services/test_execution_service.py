@@ -1,10 +1,10 @@
+import pytest
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
+from sqlalchemy.orm import Session
 
 from app.core.database import Base
-from app.models.execution import Execution
-from app.models.execution_step import ExecutionStep
 from app.services.execution_service import ExecutionService
 
 
@@ -41,11 +41,8 @@ def test_execution_waits_for_approval_and_approves_once():
         assert approved["decisionNote"] == "Reviewed the draft."
         assert next(step for step in approved["steps"] if step["type"] == "approval")["status"] == "approved"
 
-        try:
+        with pytest.raises(RuntimeError):
             service.reject(result["id"], "Too late")
-            assert False, "A decided execution must not accept a second decision."
-        except RuntimeError:
-            pass
     finally:
         session.close()
         engine.dispose()
