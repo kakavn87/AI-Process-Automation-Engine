@@ -552,3 +552,29 @@ body { font-size: 15px; line-height: 1.55; }
   .industry-card > strong { font-size: 14px !important; }
   .industry-card > p { font-size: 12px !important; }
 }
+
+/* Last-resort readable defaults for any new content rendered by the AI. */
+.page-content p,
+.page-content li,
+.page-content label,
+.page-content input,
+.page-content select,
+.page-content textarea {
+  font-size: 14px !important;
+}
+.page-content small {
+  color: #65728a !important;
+  font-size: 12px !important;
+}
+.page-content .section-kicker {
+  font-size: 11px !important;
+}
+.page-content .field-hint,
+.page-content .analysis-disclaimer,
+.page-content .muted-note {
+  color: #65728a !important;
+  font-size: 12px !important;
+}
+.page-content button {
+  line-height: 1.4;
+}
