@@ -17,6 +17,7 @@
       <a class="nav-link" href="#industries"><span class="nav-icon">▦</span>{{ i18n.navIndustries }}</a>
       <a class="nav-link" href="#builder"><span class="nav-icon">⌁</span>{{ i18n.navBuilder }}</a>
       <a class="nav-link" href="#data"><span class="nav-icon">▤</span>{{ i18n.navData }}</a>
+      <a class="nav-link" href="#integrations"><span class="nav-icon">⌘</span>{{ language() === 'de' ? 'KI-Plattform & Integrationen' : 'AI platform & integrations' }}</a>
 
       <span class="nav-label nav-label-spaced">GOVERNANCE</span>
       <a class="nav-link" href="#governance"><span class="nav-icon">◇</span>{{ i18n.navSecurity }}</a>
@@ -264,7 +265,7 @@
                 <span class="document-upload-icon">⇧</span>
                 <div>
                   <strong>{{ language() === 'de' ? 'Prozessdokumente oder Diagramme hinzufügen' : 'Add process documents or diagrams' }}</strong>
-                  <p>{{ language() === 'de' ? 'PDF, Word, PowerPoint, Excel, CSV, Text oder Bilder. Die Inhalte werden für diese Analyse verarbeitet und nicht dauerhaft gespeichert.' : 'PDF, Word, PowerPoint, Excel, CSV, text or images. Content is processed for this analysis and is not stored permanently.' }}</p>
+                  <p>{{ language() === 'de' ? 'PDF, Word, PowerPoint, Excel, CSV, Text oder Bilder. Ohne RAG werden Inhalte nur für diese Analyse verarbeitet. Wenn die optionale, sitzungsbezogene Wissensbasis aktiviert ist, werden Textausschnitte mit Quellenangaben bis zur Löschung der Sitzung im Vector Store gespeichert.' : 'PDF, Word, PowerPoint, Excel, CSV, text or images. Without RAG, content is processed only for this analysis. When the optional session-scoped knowledge base is enabled, text chunks and source references are stored in the vector store until the session is deleted.' }}</p>
                   <small>{{ language() === 'de' ? 'Bis zu 8 Dateien · 10 MB je Datei · 25 MB insgesamt' : 'Up to 8 files · 10 MB each · 25 MB combined' }}</small>
                   <small class="document-upload-warning">{{ language() === 'de' ? 'Bitte laden Sie in dieser öffentlichen Demo keine vertraulichen oder personenbezogenen Unternehmensdaten hoch.' : 'Please do not upload confidential or personal business data to this public demo.' }}</small>
                 </div>
@@ -358,6 +359,87 @@
             <article class="result-panel"><div class="result-panel-heading"><h3>{{ i18n.preview }}</h3><span class="panel-count">{{ data.preview.length }}</span></div><div class="table-scroll"><table class="data-table"><thead><tr>@for (column of data.columns; track column.name) { <th>{{ column.name }}</th> }</tr></thead><tbody>@for (row of data.preview; track $index) { <tr>@for (column of data.columns; track column.name) { <td>{{ formatValue(row[column.name]) }}</td> }</tr> }</tbody></table></div></article>
             <article class="result-panel"><h3>{{ i18n.processingLog }}</h3><ul class="bullet-list">@for (step of data.processingSteps; track $index) { <li>{{ step }}</li> }</ul><p class="muted-note">{{ data.notice }}</p></article>
           </div>
+        }
+      </section>
+
+      <section class="section-block data-section" id="integrations">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">STEP 6 · AI ORCHESTRATION & INTEGRATIONS</div>
+            <h2>{{ language() === 'de' ? 'KI-Plattform & Integrationen' : 'AI platform & integrations' }}</h2>
+            <p>{{ language() === 'de' ? 'Zentraler Überblick über Modell-Gateway, Open WebUI, Wissensbasis und angebundene Geschäftsprozesse.' : 'Central overview of the model gateway, Open WebUI, knowledge base and business integrations.' }}</p>
+          </div>
+          <button class="button-secondary" type="button" (click)="refreshIntegrationReadiness()" [disabled]="integrationLoading()">
+            {{ integrationLoading() ? (language() === 'de' ? 'Wird aktualisiert …' : 'Refreshing …') : (language() === 'de' ? 'Status aktualisieren' : 'Refresh status') }}
+          </button>
+        </div>
+
+        @if (integrationError(); as error) {
+          <div class="error-panel" role="alert">{{ error }}</div>
+        }
+        @if (integrationReadiness(); as readiness) {
+          <div class="result-two-column">
+            <article class="result-panel">
+              <div class="result-panel-heading">
+                <div><div class="section-kicker">AI GATEWAY</div><h3>{{ readiness.aiGateway.provider }}</h3></div>
+                <span class="planned-pill">{{ readiness.aiGateway.status }}</span>
+              </div>
+              <div class="detected-grid">
+                <div><small>{{ language() === 'de' ? 'Prozessanalyse' : 'Process analysis' }}</small><strong>{{ readiness.aiGateway.model }}</strong></div>
+                <div><small>{{ language() === 'de' ? 'Vision-Modell' : 'Vision model' }}</small><strong>{{ readiness.aiGateway.visionModel || readiness.aiGateway.model }}</strong></div>
+                <div><small>{{ language() === 'de' ? 'Embedding-Modell' : 'Embedding model' }}</small><strong>{{ readiness.aiGateway.embeddingModel || '—' }}</strong></div>
+                <div><small>{{ language() === 'de' ? 'API-Zugang' : 'API access' }}</small><strong>{{ readiness.aiGateway.configured ? (language() === 'de' ? 'Konfiguriert' : 'Configured') : (language() === 'de' ? 'Nicht konfiguriert' : 'Not configured') }}</strong></div>
+              </div>
+            </article>
+            <article class="result-panel">
+              <div class="result-panel-heading">
+                <div><div class="section-kicker">OPEN WEBUI</div><h3>AI Workspace</h3></div>
+                <span class="planned-pill">{{ readiness.openWebUI.status }}</span>
+              </div>
+              <p class="plain-copy">{{ readiness.openWebUI.configured ? (language() === 'de' ? 'Open WebUI ist als optionaler AI Workspace konfiguriert.' : 'Open WebUI is configured as an optional AI workspace.') : (language() === 'de' ? 'Open WebUI ist optional und nicht konfiguriert.' : 'Open WebUI is optional and not configured.') }}</p>
+              @if (readiness.openWebUI.url) {
+                <a class="button-secondary" [href]="readiness.openWebUI.url" target="_blank" rel="noopener noreferrer">Open WebUI ↗</a>
+              }
+            </article>
+          </div>
+
+          <article class="result-panel">
+            <div class="result-panel-heading">
+              <div><div class="section-kicker">RAG · VECTOR KNOWLEDGE</div><h3>{{ language() === 'de' ? 'Prozessbezogene Wissensbasis' : 'Session-scoped knowledge base' }}</h3></div>
+              <span class="planned-pill">{{ readiness.rag.status }}</span>
+            </div>
+            <div class="detected-grid">
+              <div><small>{{ language() === 'de' ? 'Aktiviert' : 'Enabled' }}</small><strong>{{ readiness.rag.enabled ? 'Yes' : 'No' }}</strong></div>
+              <div><small>{{ language() === 'de' ? 'Verbindung' : 'Connection' }}</small><strong>{{ readiness.rag.connected ? 'Connected' : 'Not connected' }}</strong></div>
+              <div><small>Vector collection</small><strong>{{ readiness.rag.collection }}</strong></div>
+              <div><small>{{ language() === 'de' ? 'Datenbereich' : 'Data scope' }}</small><strong>{{ readiness.rag.scope }}</strong></div>
+            </div>
+            <p class="muted-note">{{ readiness.rag.message }}</p>
+            <p class="muted-note">{{ language() === 'de' ? 'RAG ist standardmäßig deaktiviert. Vor einem produktiven Mehrbenutzerbetrieb sind Authentifizierung, Workspace-Isolation, Löschfristen und Zugriffskontrollen erforderlich.' : 'RAG is disabled by default. Multi-user production requires authentication, workspace isolation, retention/deletion controls and access policies.' }}</p>
+          </article>
+
+          <div class="result-two-column">
+            <article class="result-panel">
+              <div class="result-panel-heading"><h3>{{ language() === 'de' ? 'Business Connectors' : 'Business connectors' }}</h3><span class="panel-count">{{ readiness.businessConnectors.length }}</span></div>
+              <div class="integration-list">
+                @for (connector of readiness.businessConnectors; track connector.id) {
+                  <div class="integration-item">
+                    <div><strong>{{ connector.name }}</strong><p>{{ connector.description }}</p></div>
+                    <span class="planned-pill">{{ connector.status }}</span>
+                  </div>
+                }
+              </div>
+            </article>
+            <article class="result-panel">
+              <div class="result-panel-heading"><h3>{{ language() === 'de' ? 'Live-Webhook' : 'Live webhook' }}</h3><span class="planned-pill">{{ readiness.liveWebhook.status }}</span></div>
+              <p class="plain-copy">{{ readiness.liveWebhook.message }}</p>
+              <p class="muted-note">{{ language() === 'de' ? 'Externe Aktionen bleiben standardmäßig deaktiviert. Eine Freigabe startet zunächst nur die Simulation.' : 'External actions remain disabled by default. Approval starts simulation mode only.' }}</p>
+            </article>
+          </div>
+
+          <div class="setup-hint"><strong>{{ language() === 'de' ? 'Sicherheitshinweis' : 'Security note' }}:</strong> {{ readiness.securityNote }}</div>
+        } @else if (integrationLoading()) {
+          <div class="result-panel">{{ language() === 'de' ? 'Integrationsstatus wird geladen …' : 'Loading integration status …' }}</div>
         }
       </section>
 
