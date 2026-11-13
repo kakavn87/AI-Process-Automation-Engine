@@ -119,6 +119,22 @@
             <span class="engine-badge" [class.engine-ai]="analysis.llmUsed"><span></span>{{ analysis.llmUsed ? 'OpenAI · ' + analysis.llmModel : 'Python Rules · 0 API Credits' }}</span>
           </div>
 
+          @if (analysis.sourceDocuments?.length) {
+            <div class="source-document-results">
+              <strong>{{ language() === 'de' ? 'Berücksichtigte Quelldateien' : 'Source files used' }}</strong>
+              <div class="tag-row">
+                @for (file of analysis.sourceDocuments; track file.filename) {
+                  <span>{{ file.filename }} · {{ file.fileType }}</span>
+                }
+              </div>
+            </div>
+          }
+          @if (analysis.documentWarnings?.length) {
+            <div class="setup-hint">
+              @for (warning of analysis.documentWarnings; track warning) { <p>{{ warning }}</p> }
+            </div>
+          }
+
           <div class="result-summary-grid">
             <article class="result-panel score-panel">
               <div class="panel-topline"><span>{{ i18n.automationPotential }}</span><span class="tiny-icon">✦</span></div>
@@ -243,6 +259,36 @@
             ></textarea>
             <div class="textarea-footer"><span>{{ formatNumber(description.length) }} / 8.000 {{ i18n.chars }}</span><span class="privacy-note"><span>◈</span> {{ language() === 'de' ? 'Ihre Beschreibung wird nicht öffentlich angezeigt' : 'Your description is not shown publicly' }}</span></div>
 
+            <div class="document-upload-panel">
+              <div class="document-upload-copy">
+                <span class="document-upload-icon">⇧</span>
+                <div>
+                  <strong>{{ language() === 'de' ? 'Prozessdokumente oder Diagramme hinzufügen' : 'Add process documents or diagrams' }}</strong>
+                  <p>{{ language() === 'de' ? 'PDF, Word, PowerPoint, Excel, CSV, Text oder Bilder. Die Inhalte werden für diese Analyse verarbeitet und nicht dauerhaft gespeichert.' : 'PDF, Word, PowerPoint, Excel, CSV, text or images. Content is processed for this analysis and is not stored permanently.' }}</p>
+                  <small>{{ language() === 'de' ? 'Bis zu 8 Dateien · 10 MB je Datei · 25 MB insgesamt' : 'Up to 8 files · 10 MB each · 25 MB combined' }}</small>
+                  <small class="document-upload-warning">{{ language() === 'de' ? 'Bitte laden Sie in dieser öffentlichen Demo keine vertraulichen oder personenbezogenen Unternehmensdaten hoch.' : 'Please do not upload confidential or personal business data to this public demo.' }}</small>
+                </div>
+              </div>
+              <input id="process-files" type="file" multiple
+                accept=".pdf,.docx,.pptx,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                (change)="onProcessFilesSelected($event)" />
+              <label for="process-files" class="button-secondary file-label">{{ language() === 'de' ? 'Dateien auswählen' : 'Choose files' }}</label>
+              @if (processFiles.length > 0) {
+                <div class="process-file-list">
+                  @for (file of processFiles; track file.name + $index; let index = $index) {
+                    <div class="process-file-item">
+                      <span>▤</span><span class="process-file-name">{{ file.name }}</span>
+                      <small>{{ (file.size / 1024 / 1024).toFixed(1) }} MB</small>
+                      <button type="button" (click)="removeProcessFile(index)" [attr.aria-label]="language() === 'de' ? 'Datei entfernen' : 'Remove file'">×</button>
+                    </div>
+                  }
+                </div>
+              }
+              @if (processFileError(); as uploadError) {
+                <p class="document-upload-error" role="alert">{{ uploadError }}</p>
+              }
+            </div>
+
             <div class="builder-options">
               <div class="strategy-field">
                 <label for="analysis-strategy">{{ i18n.strategy }}</label>
@@ -257,7 +303,7 @@
 
             <div class="builder-submit-row">
               <span class="field-hint">{{ language() === 'de' ? 'Analyse dauert normalerweise nur wenige Sekunden.' : 'Analysis usually takes only a few seconds.' }}</span>
-              <button class="button-primary analyze-button" type="button" (click)="analyze()" [disabled]="store.loading() || description.trim().length < 3">
+              <button class="button-primary analyze-button" type="button" (click)="analyze()" [disabled]="store.loading() || (description.trim().length < 3 && processFiles.length === 0) || !!processFileError()">
                 {{ store.loading() ? i18n.analyzing : i18n.analyze }} <span>→</span>
               </button>
             </div>

@@ -6,7 +6,9 @@ AI Process Optimierung is a portfolio MVP that turns natural-language business p
 
 - **Python / FastAPI** backend organized by API routes, application services, a process-analysis engine, connector boundaries, schemas, and SQLAlchemy persistence models.
 - **Angular 19** standalone frontend using Angular Signals for process and execution state.
-- **OpenAI Responses API** with Pydantic Structured Outputs for LLM-based process understanding and workflow proposal generation.
+- **OpenAI Responses API or an OpenAI-compatible gateway** (including LiteLLM Proxy) with Pydantic Structured Outputs for LLM-based process understanding and workflow proposal generation.
+- **Document intake** for PDF, DOCX, PPTX, XLSX, CSV, TXT, Markdown and common images. Text is extracted in memory; diagrams and scanned PDF pages can be passed to a vision-capable model.
+- **Optional AI platform companion** using LiteLLM Proxy and OpenWebUI through a local Docker Compose profile.
 - **Rules-based fallback** so the demo remains available when an OpenAI API key is not configured or the API is temporarily unavailable.
 - **Human-in-the-loop approval lifecycle**: create an execution request, inspect workflow steps, approve or reject, and retain a decision note.
 - **Server-side safety validation** that requires a human approval step before outbound email, Teams, or notification steps.
@@ -18,7 +20,7 @@ AI Process Optimierung is a portfolio MVP that turns natural-language business p
 
 ## LLM configuration
 
-The backend uses the OpenAI **Responses API** and schema-constrained Pydantic output. The default model is `gpt-6-luna`, selected as a cost-sensitive model for focused, high-volume tasks. The model can be changed with `OPENAI_MODEL`.
+The backend uses the OpenAI **Responses API** and schema-constrained Pydantic output. The default model is `gpt-6-luna`; it can be changed with `OPENAI_MODEL`. Set optional `OPENAI_BASE_URL` to an OpenAI-compatible gateway such as LiteLLM Proxy. When a gateway is used, `OPENAI_API_KEY` must be a least-privilege virtual key issued by that gateway. The provider API key must never be sent to the browser.
 
 The deterministic analyzer continues to provide the baseline automation score and canonical signals. When the key is configured, the LLM generates the process summary, current process, automation opportunities, integrations, risks, assumptions, questions, and proposed workflow.
 
@@ -39,14 +41,18 @@ When `OPENAI_API_KEY` is empty, the API returns `llmUsed: false` and uses determ
 
 In the Render Dashboard, open the backend service's **Environment** page and add:
 
-- `OPENAI_API_KEY`: your OpenAI API key (secret)
-- `OPENAI_MODEL`: `gpt-6-luna` (optional; this is already the backend default)
+- `OPENAI_API_KEY`: your provider API key, or a least-privilege LiteLLM virtual key (secret)
+- `OPENAI_MODEL`: `gpt-6-luna` or the exact model alias exposed by your gateway
+- `OPENAI_BASE_URL`: optional private OpenAI-compatible gateway URL, e.g. LiteLLM's `https://gateway.example/v1`
+- `OPENWEBUI_URL`: optional URL of a separately deployed OpenWebUI portal
 
 Save the environment changes to trigger a redeploy. The frontend never receives the API key.
 
 ## API
 
-- `POST /api/processes/analyze` — analyze a business process and return the workflow proposal.
+- `POST /api/processes/analyze` — analyze a text business-process description.
+- `POST /api/processes/analyze-with-documents` — analyze a description plus up to 8 PDF, DOCX, PPTX, XLSX, CSV, TXT, Markdown, PNG, JPG or WEBP files (10 MB per file, 25 MB combined).
+- `GET /api/integrations/readiness` — return non-secret readiness for the AI gateway, optional OpenWebUI portal and business connector catalog.
 - `POST /api/data-processing/upload` — upload a CSV or XLSX file (max 10 MB) for in-memory data profiling and a cleaned preview.
 - `POST /api/executions/` — create an execution record and pause at human approval.
 - `GET /api/executions/` — list execution records.
@@ -109,7 +115,30 @@ The Backend also detects `IS_PULL_REQUEST`:
 
 Render service previews initially copy their base service settings, including environment variables. Do not add a persistent disk or shared Production datastore to a Preview service. These previews are temporary and are deleted when their PR is merged or closed. This application still has no authentication; do not enter real customer or confidential business data in a public Preview.
 
-## Step 6: opt-in live webhook dispatch
+## Step 1: document and diagram intake
+
+The process builder accepts optional source files alongside a short description. Text is extracted from PDF, DOCX, PPTX, XLSX, CSV, TXT and Markdown files. PNG/JPG/WEBP images, slide pictures, and PDF pages containing scanned or visual content are normalized and sent to a configured vision-capable model. Uploads are processed in memory; this MVP does not persist originals or expose a reusable per-workspace knowledge base. A scanned image-only submission requires a configured vision-capable model. The app displays source filenames and extraction warnings with the analysis.
+
+The upload limit is 8 files, 10 MB per file and 25 MB combined. Office archives are checked for expanded-size limits. All supplied document content is treated as untrusted input by the analysis prompt.
+
+**RAG / vector-store note:** reusable vector knowledge is deliberately not enabled yet. The public demo currently has no user authentication or workspace-level data isolation; persisting uploaded business documents in a shared vector collection could expose one visitor's information to another. Add authentication, tenant-scoped access, retention/deletion controls and a managed vector store (e.g. pgvector or Qdrant) before enabling persistent RAG for customer documents.
+
+## Optional local LiteLLM + OpenWebUI profile
+
+The backend can call LiteLLM Proxy through the same OpenAI-compatible Responses API client. OpenWebUI can use the same gateway for employee chat and assistant experiments. These are optional companion services and are not deployed automatically to the public Render demo.
+
+1. Copy `infrastructure/docker/.env.ai-platform.example` to `infrastructure/docker/.env.ai-platform` and set a provider API key plus a long random LiteLLM master key.
+2. Start LiteLLM:
+   `docker compose --env-file infrastructure/docker/.env.ai-platform -f infrastructure/docker/docker-compose.yml --profile ai-platform up -d litellm`
+3. Generate a least-privilege LiteLLM virtual key for OpenWebUI, then set it as `LITELLM_WEBUI_KEY` in the env file and start OpenWebUI:
+   `docker compose --env-file infrastructure/docker/.env.ai-platform -f infrastructure/docker/docker-compose.yml --profile ai-platform up -d open-webui`
+4. For a backend running on the host, set `OPENAI_BASE_URL=http://localhost:4000/v1`, `OPENAI_MODEL=process-analysis`, and `OPENAI_API_KEY` to a separate LiteLLM virtual key. Set `OPENWEBUI_URL=http://localhost:3000` to show the portal link in Step 6.
+
+The LiteLLM config exposes a process-analysis alias backed by `openai/gpt-4o-mini`. Change that mapping in `infrastructure/docker/litellm-config.yaml` when using another supported model. OpenWebUI is exposed only on localhost by default and requires login. Do not expose the LiteLLM master key or an admin gateway port publicly. For production, deploy these services on private infrastructure with TLS, authentication, persistent storage, monitoring and least-privilege keys. A Render deployment needs separately provisioned services and secrets; this repository change does not create billable services or copy secrets to Render.
+
+## Step 6: integration center and opt-in live webhook dispatch
+
+Step 6 now surfaces the configured AI model gateway (direct provider or LiteLLM), an optional OpenWebUI portal link, the configured webhook handoff and a catalog of future business connectors. Microsoft 365, SAP/ERP and per-workspace Custom REST connectors are displayed as planned, not as working connections. Their OAuth flows and customer-managed credential storage are not implemented yet.
 
 The approved workflow still completes in simulation mode first. A separate Step 6 can hand off the approved workflow structure to one administrator-configured HTTPS webhook. This is an integration boundary, not a built-in CRM, ticketing, email, or Teams connector.
 

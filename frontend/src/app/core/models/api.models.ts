@@ -80,11 +80,21 @@ export interface OpenQuestion {
   answered?: boolean;
 }
 
+export interface ProcessDocumentSource {
+  filename: string;
+  fileType: string;
+  extractedCharacters: number;
+  pages: number | null;
+  visualAssets: number;
+}
+
 export interface ProcessAnalysis {
   automationScore: number;
   automationScoreNote?: string;
   signals: string[];
   description: string;
+  sourceDocuments?: ProcessDocumentSource[];
+  documentWarnings?: string[];
   analysisMode: string;
   analysisNote: string;
   llmUsed: boolean;
@@ -201,6 +211,20 @@ export interface ExecutionEvent {
   message: string;
   recordedAt?: string;
   externalSideEffect?: boolean;
+}
+
+export interface IntegrationReadiness {
+  aiGateway: {
+    provider: string;
+    configured: boolean;
+    baseUrlConfigured: boolean;
+    model: string;
+    status: string;
+  };
+  openWebUI: { configured: boolean; url: string | null; status: string };
+  businessConnectors: Array<{ id: string; name: string; status: string; description: string }>;
+  liveWebhook: LiveExecutionReadiness;
+  securityNote: string;
 }
 
 export interface LiveExecutionReadiness {

@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import {
   AIUsageSummary,
   ApprovalExecution,
+  IntegrationReadiness,
   LiveExecutionReadiness,
   ProcessAnalysis,
   ProposedWorkflow,
@@ -50,6 +51,24 @@ export class ApiService {
       analysis_language: language,
       business_domain: businessDomain
     }));
+  }
+
+  analyzeProcessWithDocuments(
+    description: string,
+    files: File[],
+    analysisStrategy: 'auto' | 'rules' | 'llm' = 'auto',
+    language: 'de' | 'en' = 'de',
+    businessDomain = 'general'
+  ) {
+    const formData = new FormData();
+    if (description.trim()) formData.append('description', description.trim());
+    formData.append('analysis_strategy', analysisStrategy);
+    formData.append('analysis_language', language);
+    formData.append('business_domain', businessDomain);
+    files.forEach(file => formData.append('files', file, file.name));
+    return this.request('/processes/analyze-with-documents', url =>
+      this.http.post<ProcessAnalysis>(url, formData)
+    );
   }
 
   getWorkflowSession(id: string) {
@@ -99,6 +118,12 @@ export class ApiService {
   rejectExecution(id: string, note = '') {
     return this.request('/executions/' + encodeURIComponent(id) + '/reject', url =>
       this.http.post<ApprovalExecution>(url, { note })
+    );
+  }
+
+  getIntegrationReadiness() {
+    return this.request('/integrations/readiness', url =>
+      this.http.get<IntegrationReadiness>(url)
     );
   }
 

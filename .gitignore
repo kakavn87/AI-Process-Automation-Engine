@@ -6,3 +6,6 @@ process_automation.db
 node_modules/
 dist/
 .angular/
+
+# Local AI platform credentials (never commit)
+infrastructure/docker/.env.ai-platform
