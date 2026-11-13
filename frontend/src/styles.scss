@@ -2135,3 +2135,41 @@ body { background: #f3f5f9; color: #111827; }
   .workflow-stepper-copy strong { font-size: 10px; }
   .workflow-stepper-copy small { font-size: 8px; }
 }
+
+
+/* Authenticated workspace identity */
+.account-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.account-summary-copy {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+}
+.account-summary-copy strong {
+  color: #34405a;
+  font-size: 10px;
+}
+.account-summary-copy small {
+  color: #8791a4;
+  font-size: 9px;
+}
+.logout-button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid #e3e7ef;
+  border-radius: 8px;
+  color: #56627a;
+  background: #fff;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.logout-button:hover { background: #f6f7fb; }
+@media (max-width: 700px) {
+  .account-summary-copy { display: none; }
+  .logout-button { min-height: 29px; padding: 0 8px; }
+}
