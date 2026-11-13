@@ -12,7 +12,7 @@ services:
       - key: PYTHON_VERSION
         value: 3.12.7
       - key: CORS_ORIGINS
-        value: https://ai-process-automation-frontend.onrender.com,http://localhost:4200
+        value: https://ai-process-automation-frontend-4bsh.onrender.com,http://localhost:4200
       - key: DATABASE_URL
         value: sqlite:///./process_automation.db
 
