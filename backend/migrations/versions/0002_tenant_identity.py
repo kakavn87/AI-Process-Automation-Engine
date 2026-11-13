@@ -78,15 +78,18 @@ def upgrade() -> None:
     existing_tables = set(sa.inspect(bind).get_table_names())
     for table_name in ("workflow_sessions", "approval_executions", "ai_usage_events"):
         if table_name in existing_tables and not _has_column(bind, table_name, "tenant_id"):
-            op.add_column(
-                table_name,
-                sa.Column(
-                    "tenant_id",
-                    sa.String(36),
-                    sa.ForeignKey("tenants.id", ondelete="CASCADE"),
-                    nullable=True,
-                ),
-            )
+            # SQLite cannot ALTER a table to add a foreign-key constraint.
+            # Alembic's batch mode uses a safe copy-and-move table rebuild on
+            # SQLite and a normal ALTER TABLE on PostgreSQL.
+            with op.batch_alter_table(table_name, recreate="always" if bind.dialect.name == "sqlite" else "auto") as batch_op:
+                batch_op.add_column(
+                    sa.Column(
+                        "tenant_id",
+                        sa.String(36),
+                        sa.ForeignKey("tenants.id", ondelete="CASCADE"),
+                        nullable=True,
+                    )
+                )
 
     # Refresh after creating the identity tables so their indexes are included.
     existing_tables = set(sa.inspect(bind).get_table_names())
