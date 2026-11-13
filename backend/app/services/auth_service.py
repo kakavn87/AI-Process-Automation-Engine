@@ -108,8 +108,16 @@ class AuthService:
 
         if not memberships:
             raise ValueError("This account has no active workspace membership.")
+        if request.tenant_id and not memberships:
+            raise ValueError("The selected workspace is not available to this account.")
         if len(memberships) > 1 and not request.tenant_id:
-            raise ValueError("Choose a workspace before signing in.")
+            return {
+                "requires_workspace_selection": True,
+                "workspaces": [
+                    {"id": tenant.id, "name": tenant.name, "role": membership.role}
+                    for membership, tenant in memberships
+                ],
+            }
 
         membership, tenant = memberships[0]
         now = datetime.now(timezone.utc)
