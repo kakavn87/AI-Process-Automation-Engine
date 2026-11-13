@@ -1,6 +1,26 @@
-ALLOWED_STEP_TYPES = {"analyze", "approval", "email", "teams", "http"}
+ALLOWED_STEP_TYPES = {
+    "analyze", "approval", "email", "teams", "http",
+    "trigger", "collect", "extract", "transform", "validate", "generate", "notify",
+}
+
 
 def validate(workflow: dict) -> None:
-    for step in workflow.get("steps", []):
-        if step.get("type") not in ALLOWED_STEP_TYPES:
-            raise ValueError(f"Unsupported workflow step: {step.get('type')}")
+    steps = workflow.get("steps", [])
+    seen_ids = set()
+
+    for step in steps:
+        step_type = step.get("type")
+        if step_type not in ALLOWED_STEP_TYPES:
+            raise ValueError(f"Unsupported workflow step: {step_type}")
+        step_id = step.get("id")
+        if step_id:
+            if step_id in seen_ids:
+                raise ValueError(f"Duplicate workflow step id: {step_id}")
+            seen_ids.add(step_id)
+
+    for index, step in enumerate(steps):
+        config = step.get("config") or {}
+        if step.get("type") in {"notify", "email", "teams"} and config.get("requiresApproval"):
+            has_prior_approval = any(previous.get("type") == "approval" for previous in steps[:index])
+            if not has_prior_approval:
+                raise ValueError("An approval step must come before an outbound notification step.")
