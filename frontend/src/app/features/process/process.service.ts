@@ -17,7 +17,9 @@ export class ProcessService {
         this.store.setLoading(false);
       },
       error: () => {
-        this.store.setError('Could not analyze process. Please check that the backend is available and try again.');
+        this.store.setError(language === 'de'
+          ? 'Der Prozess konnte nicht analysiert werden. Bitte prüfen Sie die Backend-Verbindung.'
+          : 'Could not analyze the process. Please check the backend connection.');
         this.store.setLoading(false);
       }
     });
