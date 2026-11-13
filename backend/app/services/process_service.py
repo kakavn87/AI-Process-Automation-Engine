@@ -66,7 +66,8 @@ class ProcessService:
                 self._apply_ai_result(analysis, ai_result, business_domain=business_domain)
                 analysis["llmUsed"] = True
                 analysis["llmModel"] = self.ai_service.model
-                provider = self.ai_service._provider_name()
+                provider_detector = getattr(self.ai_service, "_provider_name", None)
+                provider = provider_detector() if callable(provider_detector) else "openai"
                 provider_label = (
                     "LiteLLM Gateway" if provider == "litellm"
                     else "OpenAI-compatible AI Gateway" if provider == "openai_compatible"
