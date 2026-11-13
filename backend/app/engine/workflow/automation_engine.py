@@ -134,8 +134,10 @@ class WorkflowAutomationEngine:
         """Calculate deltas in Python; never trust percentages supplied by the LLM."""
         calculated: list[dict] = []
         for item in raw_metrics:
-            current = item.get("current_value")
-            proposed = item.get("proposed_value")
+            current_source = item.get("current_value_source", "not_available")
+            proposed_source = item.get("proposed_value_source", "not_available")
+            current = item.get("current_value") if current_source in {"user_input", "document"} else None
+            proposed = item.get("proposed_value") if proposed_source in {"user_input", "document", "model_estimate"} else None
             change = None
             change_percent = None
 
@@ -163,8 +165,9 @@ class WorkflowAutomationEngine:
                 "absoluteChange": change,
                 "improvementPercent": change_percent,
                 "rationale": item.get("rationale", ""),
-                "evidenceBasis": item.get("evidence_basis", "not_available"),
+                "currentValueSource": current_source,
+                "proposedValueSource": proposed_source,
                 "confidence": item.get("confidence", "low"),
-                "isEstimate": item.get("evidence_basis") == "model_estimate",
+                "isEstimate": proposed_source == "model_estimate",
             })
         return calculated
