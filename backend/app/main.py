@@ -6,11 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.database import Base, engine
-import app.models  # noqa: F401 - registers SQLAlchemy models with Base.metadata
+from app.models.execution import ApprovalExecution  # noqa: F401 - registers the table
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     yield
 
@@ -35,11 +35,4 @@ app.include_router(api_router, prefix="/api")
 
 @app.get("/", tags=["system"])
 def root():
-    return {
-        "name": settings.APP_NAME,
-        "status": "running",
-        "version": "0.2.0",
-        "llmConfigured": bool(settings.OPENAI_API_KEY.strip()),
-        "llmModel": settings.OPENAI_MODEL,
-        "docs": "/docs",
-    }
+    return {"name": settings.APP_NAME, "status": "running", "docs": "/docs"}
