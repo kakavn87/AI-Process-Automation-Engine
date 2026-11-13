@@ -359,8 +359,8 @@ Workflow constraints:
 - Every external side-effect step (notify, email, teams, http) MUST have a preceding approval step and
   requires_approval=true. Never remove a required human review.
 - Use an empty connector when the target integration is unknown. Mark all integrations as planned, not connected.
-- Return no more than 12 workflow steps, 8 recommendations, 8 expected benefits, 8 design principles,
-  5 risks and 5 assumptions.
+- Return no more than 10 workflow steps, 6 recommendations, 5 expected benefits, 5 design principles,
+  4 risks and 4 assumptions.
 - Do not invent API credentials, mailbox names, Teams channels, ERP endpoints or execution capabilities.
 - The workflow is a proposal. Do not execute actions or claim the workflow has been deployed.
 Return exactly one valid JSON object matching the required optimization fields. Output JSON only, without Markdown fences or commentary.
@@ -407,7 +407,7 @@ The exact required JSON Schema is:
             usage = getattr(response, "usage", None) if response is not None else None
             self.last_call_telemetry = {
                 "provider": self._provider_name(),
-                "model": self.model,
+                "model": self.optimization_model,
                 "task": "process_optimization",
                 "status": "fallback",
                 "inputTokens": getattr(usage, "input_tokens", None) if usage else None,
