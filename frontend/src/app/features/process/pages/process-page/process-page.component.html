@@ -41,12 +41,50 @@
     </header>
 
     <main class="page-content" id="overview">
+      <section class="workspace-welcome" aria-labelledby="workspace-title">
+        <div class="welcome-copy">
+          <div class="welcome-eyebrow"><span class="welcome-live-dot"></span>{{ language() === 'de' ? 'FLOWPILOT · PROZESS-WORKSPACE' : 'FLOWPILOT · PROCESS WORKSPACE' }}</div>
+          <h1 id="workspace-title">{{ language() === 'de' ? 'Aus manueller Arbeit wird ein klarer Workflow.' : 'Turn manual work into a clear workflow.' }}</h1>
+          <p>{{ language() === 'de' ? 'Beschreiben Sie Ihren heutigen Ablauf. FlowPilot strukturiert Aufgaben, Daten, Ausnahmen und Freigaben – damit Sie sehen, was sich sinnvoll automatisieren lässt.' : 'Describe the way work happens today. FlowPilot maps tasks, data, exceptions and approvals so you can see what is worth automating.' }}</p>
+          <div class="welcome-pills">
+            <span><b>AI</b> {{ language() === 'de' ? 'Prozessverständnis' : 'Process understanding' }}</span>
+            <span><b>PY</b> {{ language() === 'de' ? 'Daten & Regeln' : 'Data & rules' }}</span>
+            <span><b>✓</b> {{ language() === 'de' ? 'Menschliche Freigabe' : 'Human approval' }}</span>
+          </div>
+        </div>
+        <div class="welcome-status">
+          <div class="welcome-mark">F</div>
+          <div class="welcome-status-copy">
+            <small>{{ language() === 'de' ? 'IHR WORKSPACE' : 'YOUR WORKSPACE' }}</small>
+            <strong>{{ i18n.systemReady }}</strong>
+            <span>{{ language() === 'de' ? 'Analyse & Simulation bereit' : 'Analysis & simulation ready' }}</span>
+          </div>
+          <span class="welcome-status-check">✓</span>
+        </div>
+      </section>
+
+      <section class="process-journey" aria-label="Process design steps">
+        <article class="journey-step journey-step-active">
+          <span class="journey-index">01</span>
+          <div><small>{{ language() === 'de' ? 'SCHRITT 1' : 'STEP 1' }}</small><strong>{{ language() === 'de' ? 'Beschreiben' : 'Describe' }}</strong><p>{{ language() === 'de' ? 'Den aktuellen Ablauf erfassen' : 'Capture the current process' }}</p></div>
+        </article>
+        <span class="journey-connector" aria-hidden="true"></span>
+        <article class="journey-step">
+          <span class="journey-index">02</span>
+          <div><small>{{ language() === 'de' ? 'SCHRITT 2' : 'STEP 2' }}</small><strong>{{ language() === 'de' ? 'Analysieren' : 'Analyze' }}</strong><p>{{ language() === 'de' ? 'Aufgaben und Regeln strukturieren' : 'Structure tasks and rules' }}</p></div>
+        </article>
+        <span class="journey-connector" aria-hidden="true"></span>
+        <article class="journey-step">
+          <span class="journey-index">03</span>
+          <div><small>{{ language() === 'de' ? 'SCHRITT 3' : 'STEP 3' }}</small><strong>{{ language() === 'de' ? 'Prüfen & freigeben' : 'Review & approve' }}</strong><p>{{ language() === 'de' ? 'Menschen behalten die Kontrolle' : 'People stay in control' }}</p></div>
+        </article>
+      </section>
 
       <section class="section-block builder-section" id="builder">
         <div class="section-header">
           <div>
-            <div class="section-kicker">{{ i18n.builderEyebrow }}</div>
-            <h2>{{ i18n.builderTitle }}</h2>
+            <div class="section-kicker">{{ language() === 'de' ? 'STARTEN SIE HIER · PROZESSEINGABE' : 'START HERE · PROCESS INPUT' }}</div>
+            <h2>{{ language() === 'de' ? 'Wie läuft der Prozess heute ab?' : 'How does the process work today?' }}</h2>
             <p>{{ i18n.builderCopy }}</p>
           </div>
           
