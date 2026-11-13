@@ -96,7 +96,10 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       simulated: 'Simuliert',
       recorded: 'Gespeichert',
       success: 'Erfolgreich',
-      error: 'Fehler'
+      error: 'Fehler',
+      llm_optimization_completed: 'KI-Optimierung abgeschlossen',
+      llm_optimization_failed: 'KI-Optimierung fehlgeschlagen',
+      optimization_retry_requested: 'KI-Optimierung wird erneut gestartet'
     };
     return labels[status] ?? status.replaceAll('_', ' ');
   }
@@ -202,6 +205,9 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
 
     this.submitting.set(true);
     this.error.set(null);
+    const processing: WorkflowSession = { ...current, status: 'processing' };
+    this.session.set(processing);
+    this.sessionChange.emit(processing);
     this.api.submitWorkflowAnswers(current.id, submitted).subscribe({
       next: result => {
         this.session.set(result);
@@ -214,6 +220,36 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
           ? 'Die Antworten konnten nicht gespeichert werden.'
           : 'Could not save the answers.'));
         this.submitting.set(false);
+        this.loadSession();
+      }
+    });
+  }
+
+  retryOptimization(): void {
+    const current = this.session();
+    if (!current || current.status !== 'failed' || this.submitting()) return;
+
+    this.submitting.set(true);
+    this.error.set(null);
+    const processing: WorkflowSession = {
+      ...current,
+      status: 'processing',
+      analysis: { ...current.analysis, optimizationFailure: undefined }
+    };
+    this.session.set(processing);
+    this.sessionChange.emit(processing);
+    this.api.retryWorkflowOptimization(current.id).subscribe({
+      next: result => {
+        this.session.set(result);
+        this.sessionChange.emit(result);
+        this.submitting.set(false);
+      },
+      error: error => {
+        this.error.set(error?.error?.detail || (this.isGerman
+          ? 'Die KI-Optimierung konnte nicht erneut gestartet werden.'
+          : 'Could not retry the AI optimization.'));
+        this.submitting.set(false);
+        this.loadSession();
       }
     });
   }
@@ -298,9 +334,9 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
     }
     if (step === 3) {
       if (status === 'needs_input') return this.isGerman ? 'Nach den Antworten' : 'After your answers';
-      if (status === 'processing') return this.isGerman ? 'Python prüft die Angaben' : 'Python validates the answers';
-      if (status === 'failed') return this.isGerman ? 'Verarbeitung fehlgeschlagen' : 'Processing failed';
-      return this.isGerman ? 'Workflow vorbereitet' : 'Workflow prepared';
+      if (status === 'processing') return this.isGerman ? 'LLM optimiert den Prozess; Python validiert' : 'LLM optimizes; Python validates';
+      if (status === 'failed') return this.isGerman ? 'Optimierung fehlgeschlagen – Wiederholung möglich' : 'Optimization failed – retry available';
+      return this.isGerman ? 'Optimierungsvorschlag bereit' : 'Optimization proposal ready';
     }
     if (step === 4) {
       if (status === 'ready_for_approval') return this.isGerman ? 'Ihre Prüfung erforderlich' : 'Your review is required';
@@ -330,5 +366,23 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       currency: 'USD',
       maximumFractionDigits: 6
     }).format(value);
+  }
+
+  formatMetric(value: number | null, unit: string): string {
+    if (value === null || value === undefined) {
+      return this.isGerman ? 'Keine belastbare Angabe' : 'Not quantified';
+    }
+    return this.formatNumber(value) + (unit ? ' ' + unit : '');
+  }
+
+  formatImprovement(value: number | null): string {
+    if (value === null || value === undefined) {
+      return this.isGerman ? 'Nicht berechenbar' : 'Not calculable';
+    }
+    const formatted = new Intl.NumberFormat(this.isGerman ? 'de-DE' : 'en-US', {
+      maximumFractionDigits: 2,
+      signDisplay: 'always'
+    }).format(value);
+    return formatted + '%';
   }
 }
