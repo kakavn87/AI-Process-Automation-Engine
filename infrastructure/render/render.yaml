@@ -3,6 +3,7 @@ services:
     name: ai-process-automation-backend
     runtime: python
     plan: free
+    region: frankfurt
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -14,3 +15,14 @@ services:
         value: https://ai-process-automation-frontend.onrender.com,http://localhost:4200
       - key: DATABASE_URL
         value: sqlite:///./process_automation.db
+
+  - type: web
+    name: ai-process-automation-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist/ai-process-automation-engine/browser
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
