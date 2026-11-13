@@ -225,7 +225,7 @@ export class WorkflowSessionPageComponent implements OnInit {
     if (step === 5) return status === 'completed' || status === 'rejected' ? 'complete' : 'pending';
     if (step === 6) {
       if (liveStatus === 'succeeded') return 'complete';
-      if (status === 'completed') return liveStatus === 'running' ? 'active' : 'active';
+      if (status === 'completed') return 'active';
       return 'pending';
     }
     return 'pending';
