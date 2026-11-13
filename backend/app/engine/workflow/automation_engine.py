@@ -33,9 +33,12 @@ class WorkflowAutomationEngine:
         updated["openQuestions"] = []
 
         if optimization is not None:
+            if not optimization.get("optimized_process"):
+                raise ValueError("The optimization model did not return an optimized process.")
             workflow = self._build_optimized_workflow(optimization)
             validate(workflow)
             metrics = self._calculate_metrics(optimization.get("metrics") or [])
+            updated.pop("optimizationFailure", None)
             updated["currentWorkflow"] = current_workflow
             updated["currentProcess"] = updated.get("currentProcess") or []
             updated["optimizedProcess"] = optimization.get("optimized_process") or []
@@ -43,8 +46,25 @@ class WorkflowAutomationEngine:
                 "status": "completed",
                 "llmUsed": True,
                 "summary": optimization.get("summary", ""),
-                "changes": optimization.get("changes") or [],
-                "opportunities": optimization.get("opportunities") or [],
+                "changes": [
+                    {
+                        "currentStep": item.get("current_step", ""),
+                        "optimizedStep": item.get("optimized_step", ""),
+                        "reason": item.get("reason", ""),
+                        "expectedBenefit": item.get("expected_benefit", ""),
+                    }
+                    for item in (optimization.get("changes") or [])
+                ],
+                "opportunities": [
+                    {
+                        "title": item.get("title", ""),
+                        "description": item.get("description", ""),
+                        "priority": item.get("priority", "medium"),
+                        "implementationEffort": item.get("implementation_effort", "medium"),
+                        "expectedBenefit": item.get("expected_benefit", ""),
+                    }
+                    for item in (optimization.get("opportunities") or [])
+                ],
                 "automationPotentialScore": optimization.get("automation_potential_score"),
                 "metrics": metrics,
                 "remainingQuestions": optimization.get("remaining_questions") or [],
