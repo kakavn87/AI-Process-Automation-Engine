@@ -1,11 +1,10 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import {
   AIUsageSummary,
   ApprovalExecution,
-  IntegrationReadiness,
   LiveExecutionReadiness,
   WorkflowSession
 } from '../../core/models/api.models';
@@ -26,7 +25,6 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
   readonly execution = signal<ApprovalExecution | null>(null);
   readonly usage = signal<AIUsageSummary | null>(null);
   readonly liveReadiness = signal<LiveExecutionReadiness | null>(null);
-  readonly integrationReadiness = signal<IntegrationReadiness | null>(null);
   readonly liveConfirmed = signal(false);
   readonly liveToken = signal('');
   readonly liveLoading = signal(false);
@@ -38,6 +36,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
 
   @Input() sessionId = '';
   @Input() embedded = false;
+  @Output() sessionChange = new EventEmitter<WorkflowSession | null>();
 
   private activeSessionId = '';
   private initialized = false;
@@ -47,6 +46,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
         this.sessionId !== this.activeSessionId) {
       this.activeSessionId = this.sessionId;
       this.session.set(null);
+      this.sessionChange.emit(null);
       this.execution.set(null);
       this.usage.set(null);
       this.loadSession();
@@ -65,7 +65,40 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       });
     }
     this.loadLiveReadiness();
-    this.loadIntegrationReadiness();
+  }
+
+  sessionStatusLabel(status: string): string {
+    if (!this.isGerman) return status.replaceAll('_', ' ');
+    const labels: Record<string, string> = {
+      needs_input: 'Angaben erforderlich',
+      processing: 'Wird verarbeitet',
+      ready_for_approval: 'Zur Freigabe bereit',
+      awaiting_approval: 'Wartet auf Freigabe',
+      completed: 'Abgeschlossen',
+      rejected: 'Abgelehnt',
+      failed: 'Fehlgeschlagen'
+    };
+    return labels[status] ?? status.replaceAll('_', ' ');
+  }
+
+  eventStatusLabel(status: string): string {
+    if (!this.isGerman) return status.replaceAll('_', ' ');
+    const labels: Record<string, string> = {
+      completed: 'Abgeschlossen',
+      succeeded: 'Erfolgreich',
+      failed: 'Fehlgeschlagen',
+      rejected: 'Abgelehnt',
+      pending: 'Ausstehend',
+      awaiting_approval: 'Wartet auf Freigabe',
+      needs_input: 'Angaben erforderlich',
+      processing: 'Wird verarbeitet',
+      ready_for_approval: 'Zur Freigabe bereit',
+      simulated: 'Simuliert',
+      recorded: 'Gespeichert',
+      success: 'Erfolgreich',
+      error: 'Fehler'
+    };
+    return labels[status] ?? status.replaceAll('_', ' ');
   }
 
   get isGerman(): boolean {
@@ -82,6 +115,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
     this.api.getWorkflowSession(this.activeSessionId).subscribe({
       next: result => {
         this.session.set(result);
+        this.sessionChange.emit(result);
         this.loading.set(false);
         this.updateUsageVisibility(result);
         if (result.relatedExecutionId) this.loadExecution(result.relatedExecutionId);
@@ -92,13 +126,6 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
           : 'Could not load the workflow session.');
         this.loading.set(false);
       }
-    });
-  }
-
-  loadIntegrationReadiness(): void {
-    this.api.getIntegrationReadiness().subscribe({
-      next: result => this.integrationReadiness.set(result),
-      error: () => this.integrationReadiness.set(null)
     });
   }
 
@@ -178,6 +205,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
     this.api.submitWorkflowAnswers(current.id, submitted).subscribe({
       next: result => {
         this.session.set(result);
+        this.sessionChange.emit(result);
         this.answerValues.set({});
         this.submitting.set(false);
       },
@@ -199,6 +227,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
     this.api.createSessionExecution(current.id).subscribe({
       next: result => {
         this.session.set(result.session);
+        this.sessionChange.emit(result.session);
         this.execution.set(result.execution);
         this.executionLoading.set(false);
       },
@@ -244,17 +273,13 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
     this.router.navigate(['/']);
   }
 
-  stepState(
-    step: number,
-    status: string,
-    liveStatus = 'not_started'
-  ): 'complete' | 'active' | 'pending' {
+  stepState(step: number, status: string): 'complete' | 'active' | 'pending' | 'error' {
     if (step === 1) return 'complete';
     if (step === 2) return status === 'needs_input' ? 'active' : 'complete';
     if (step === 3) {
       if (status === 'needs_input') return 'pending';
       if (status === 'processing') return 'active';
-      return status === 'failed' ? 'pending' : 'complete';
+      return status === 'failed' ? 'error' : 'complete';
     }
     if (step === 4) {
       if (status === 'ready_for_approval' || status === 'awaiting_approval') return 'active';
@@ -262,15 +287,10 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       return 'pending';
     }
     if (step === 5) return status === 'completed' || status === 'rejected' ? 'complete' : 'pending';
-    if (step === 6) {
-      if (liveStatus === 'succeeded') return 'complete';
-      if (status === 'completed') return 'active';
-      return 'pending';
-    }
     return 'pending';
   }
 
-  stepDescription(step: number, status: string, liveStatus = 'not_started'): string {
+  stepDescription(step: number, status: string): string {
     if (step === 2) {
       return this.isGerman
         ? (status === 'needs_input' ? 'Ihre Angaben werden benötigt' : 'Klärung abgeschlossen')
@@ -290,13 +310,9 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       return this.isGerman ? 'Nach der Verarbeitung' : 'After processing';
     }
     if (step === 5) {
-      return this.isGerman ? 'Nutzung & Kosten erfasst' : 'Usage & costs recorded';
-    }
-    if (step === 6) {
-      if (liveStatus === 'succeeded') return this.isGerman ? 'Webhook bestätigt' : 'Webhook confirmed';
-      if (liveStatus === 'running') return this.isGerman ? 'Wird übertragen …' : 'Dispatch in progress';
-      if (liveStatus === 'failed' || liveStatus === 'unknown') return this.isGerman ? 'Ergebnis prüfen' : 'Check delivery result';
-      return this.isGerman ? 'Externe Verbindung optional' : 'External connection optional';
+      return status === 'completed' || status === 'rejected'
+        ? (this.isGerman ? 'Nutzung & Kosten erfasst' : 'Usage & costs recorded')
+        : (this.isGerman ? 'Nach Workflow-Abschluss' : 'After workflow completion');
     }
     return '';
   }

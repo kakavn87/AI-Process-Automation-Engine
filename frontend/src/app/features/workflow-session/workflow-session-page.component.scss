@@ -215,10 +215,10 @@
 }
 
 
-/* Five-phase workflow progress — makes phases 2–5 visible after analysis. */
+/* Five-phase workflow progress — all phases remain visible once a workflow session exists. */
 .session-progress {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 9px;
   margin: 0 0 20px;
 }
@@ -285,6 +285,9 @@
   color: #3730a3;
 }
 .session-progress-step.is-pending { background: #f9fafb; }
+.session-progress-step.is-error { border-color: #fecaca; background: #fff5f5; }
+.session-progress-step.is-error .session-progress-number,
+.session-progress-step.is-error .session-progress-mark { background: #fee2e2; color: #991b1b; }
 .live-readiness-badge {
   flex-shrink: 0;
   border-radius: 999px;

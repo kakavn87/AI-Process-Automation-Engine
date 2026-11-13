@@ -1,7 +1,7 @@
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../../core/services/api.service';
-import { IntegrationReadiness, TabularDataResult } from '../../../../core/models/api.models';
+import { IntegrationReadiness, TabularDataResult, WorkflowSession } from '../../../../core/models/api.models';
 import { ProcessStore } from '../../process.store';
 import { ProcessService } from '../../process.service';
 import { WorkflowSessionPageComponent } from '../../../workflow-session/workflow-session-page.component';
@@ -41,6 +41,7 @@ export class ProcessPageComponent implements OnInit {
   readonly integrationReadiness = signal<IntegrationReadiness | null>(null);
   readonly integrationLoading = signal(false);
   readonly integrationError = signal<string | null>(null);
+  readonly workflowSession = signal<WorkflowSession | null>(null);
 
   selectedDataFile: File | null = null;
   processFiles: File[] = [];
@@ -83,6 +84,106 @@ export class ProcessPageComponent implements OnInit {
         this.integrationLoading.set(false);
       }
     });
+  }
+
+  integrationStatusLabel(status: string): string {
+    if (this.language() !== 'de') return status.replaceAll('_', ' ');
+    const labels: Record<string, string> = {
+      configured: 'Konfiguriert',
+      not_configured: 'Nicht konfiguriert',
+      ready: 'Bereit',
+      setup_required: 'Einrichtung erforderlich',
+      planned: 'Geplant',
+      disabled: 'Deaktiviert',
+      connected: 'Verbunden',
+      not_connected: 'Nicht verbunden',
+      unavailable: 'Nicht verfügbar',
+      enabled: 'Aktiv',
+      active: 'Aktiv',
+      missing: 'Fehlt'
+    };
+    return labels[status.toLowerCase()] ?? status.replaceAll('_', ' ');
+  }
+
+  onWorkflowSessionChange(session: WorkflowSession | null) {
+    this.workflowSession.set(session);
+  }
+
+  workflowStepState(step: number): 'complete' | 'active' | 'pending' | 'error' {
+    const status = this.workflowSession()?.status;
+
+    if (step === 1) return !this.store.loading() && this.store.analysis() ? 'complete' : 'active';
+    if (!status) return 'pending';
+
+    if (step === 2) {
+      if (status === 'needs_input') return 'active';
+      if (['processing', 'ready_for_approval', 'awaiting_approval', 'completed', 'rejected', 'failed'].includes(status)) return 'complete';
+      return 'pending';
+    }
+    if (step === 3) {
+      if (status === 'processing') return 'active';
+      if (['ready_for_approval', 'awaiting_approval', 'completed', 'rejected'].includes(status)) return 'complete';
+      return status === 'failed' ? 'error' : 'pending';
+    }
+    if (step === 4) {
+      if (status === 'ready_for_approval' || status === 'awaiting_approval') return 'active';
+      if (status === 'completed' || status === 'rejected') return 'complete';
+      return 'pending';
+    }
+    if (step === 5) {
+      if (status === 'completed' || status === 'rejected') return 'complete';
+      return 'pending';
+    }
+    return 'pending';
+  }
+
+  workflowStepAvailable(step: number): boolean {
+    return step === 1 || this.workflowSession() !== null;
+  }
+
+  workflowStepMarker(step: number): string {
+    const state = this.workflowStepState(step);
+    return state === 'complete' ? '✓' : state === 'active' ? '●' : state === 'error' ? '!' : '·';
+  }
+
+  workflowStepHint(step: number): string {
+    const status = this.workflowSession()?.status;
+    const state = this.workflowStepState(step);
+    if (step === 1) {
+      return state === 'complete'
+        ? (this.language() === 'de' ? 'Analyse gespeichert' : 'Analysis saved')
+        : (this.language() === 'de' ? 'Prozess beschreiben' : 'Describe your process');
+    }
+    if (step === 2) {
+      if (status === 'needs_input') return this.language() === 'de' ? 'Ihre Angaben werden benötigt' : 'Your input is needed';
+      return state === 'complete'
+        ? (this.language() === 'de' ? 'Klärung abgeschlossen' : 'Clarification complete')
+        : (this.language() === 'de' ? 'Nach der Analyse' : 'After analysis');
+    }
+    if (step === 3) {
+      if (status === 'processing') return this.language() === 'de' ? 'Python prüft die Angaben' : 'Python validates the answers';
+      if (state === 'complete') return this.language() === 'de' ? 'Workflow vorbereitet' : 'Workflow prepared';
+      if (state === 'error') return this.language() === 'de' ? 'Verarbeitung fehlgeschlagen' : 'Processing failed';
+      return this.language() === 'de' ? 'Nach der Klärung' : 'After clarification';
+    }
+    if (step === 4) {
+      if (status === 'ready_for_approval') return this.language() === 'de' ? 'Ihre Prüfung erforderlich' : 'Your review is required';
+      if (status === 'awaiting_approval') return this.language() === 'de' ? 'Wartet auf Entscheidung' : 'Waiting for decision';
+      if (state === 'complete') return this.language() === 'de' ? 'Entscheidung dokumentiert' : 'Decision recorded';
+      return this.language() === 'de' ? 'Nach der Verarbeitung' : 'After processing';
+    }
+    if (step === 5) {
+      return state === 'complete'
+        ? (this.language() === 'de' ? 'Nutzung & Kosten erfasst' : 'Usage & costs recorded')
+        : (this.language() === 'de' ? 'Nach Workflow-Abschluss' : 'After workflow completion');
+    }
+    return '';
+  }
+
+  navigateToWorkflowStep(step: number) {
+    if (!this.workflowStepAvailable(step) || typeof document === 'undefined') return;
+    const targetId = step === 1 ? 'builder' : `workflow-step-${step}`;
+    document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   readonly industries: Industry[] = [
@@ -426,6 +527,7 @@ export class ProcessPageComponent implements OnInit {
   }
 
   analyze() {
+    this.workflowSession.set(null);
     this.store.setDescription(this.description);
     this.service.analyze(this.description, this.analysisStrategy, this.language(), this.selectedDomain(), this.processFiles);
   }

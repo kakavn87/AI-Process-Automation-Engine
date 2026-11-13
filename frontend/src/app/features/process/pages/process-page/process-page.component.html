@@ -15,11 +15,60 @@
       <span class="nav-label">WORKSPACE</span>
       <a class="nav-link active" href="#overview"><span class="nav-icon">⌂</span>{{ i18n.navOverview }}</a>
       <a class="nav-link" href="#industries"><span class="nav-icon">▦</span>{{ i18n.navIndustries }}</a>
-      <a class="nav-link" href="#builder"><span class="nav-icon">⌁</span>{{ i18n.navBuilder }}</a>
       <a class="nav-link" href="#data"><span class="nav-icon">▤</span>{{ i18n.navData }}</a>
-      <a class="nav-link" href="#integrations"><span class="nav-icon">⌘</span>{{ language() === 'de' ? 'KI-Plattform & Integrationen' : 'AI platform & integrations' }}</a>
 
-      <span class="nav-label nav-label-spaced">GOVERNANCE</span>
+      <span class="nav-label nav-label-spaced">{{ language() === 'de' ? 'PROZESSABLAUF' : 'PROCESS FLOW' }}</span>
+      <button type="button" class="nav-link workflow-nav-link"
+        [class.is-active]="workflowStepState(1) === 'active'"
+        [class.is-complete]="workflowStepState(1) === 'complete'"
+        (click)="navigateToWorkflowStep(1)">
+        <span class="workflow-nav-number">01</span>
+        <span class="workflow-nav-copy"><strong>{{ language() === 'de' ? 'Prozessanalyse' : 'Process analysis' }}</strong><small>{{ workflowStepHint(1) }}</small></span>
+        <span class="workflow-nav-state">{{ workflowStepMarker(1) }}</span>
+      </button>
+      <button type="button" class="nav-link workflow-nav-link"
+        [class.is-active]="workflowStepState(2) === 'active'"
+        [class.is-complete]="workflowStepState(2) === 'complete'"
+        [class.is-error]="workflowStepState(2) === 'error'"
+        [disabled]="!workflowStepAvailable(2)"
+        (click)="navigateToWorkflowStep(2)">
+        <span class="workflow-nav-number">02</span>
+        <span class="workflow-nav-copy"><strong>{{ language() === 'de' ? 'Rückfragen klären' : 'Clarification' }}</strong><small>{{ workflowStepHint(2) }}</small></span>
+        <span class="workflow-nav-state">{{ workflowStepMarker(2) }}</span>
+      </button>
+      <button type="button" class="nav-link workflow-nav-link"
+        [class.is-active]="workflowStepState(3) === 'active'"
+        [class.is-complete]="workflowStepState(3) === 'complete'"
+        [class.is-error]="workflowStepState(3) === 'error'"
+        [disabled]="!workflowStepAvailable(3)"
+        (click)="navigateToWorkflowStep(3)">
+        <span class="workflow-nav-number">03</span>
+        <span class="workflow-nav-copy"><strong>{{ language() === 'de' ? 'Python-Verarbeitung' : 'Python processing' }}</strong><small>{{ workflowStepHint(3) }}</small></span>
+        <span class="workflow-nav-state">{{ workflowStepMarker(3) }}</span>
+      </button>
+      <button type="button" class="nav-link workflow-nav-link"
+        [class.is-active]="workflowStepState(4) === 'active'"
+        [class.is-complete]="workflowStepState(4) === 'complete'"
+        [class.is-error]="workflowStepState(4) === 'error'"
+        [disabled]="!workflowStepAvailable(4)"
+        (click)="navigateToWorkflowStep(4)">
+        <span class="workflow-nav-number">04</span>
+        <span class="workflow-nav-copy"><strong>{{ language() === 'de' ? 'Freigabe' : 'Human approval' }}</strong><small>{{ workflowStepHint(4) }}</small></span>
+        <span class="workflow-nav-state">{{ workflowStepMarker(4) }}</span>
+      </button>
+      <button type="button" class="nav-link workflow-nav-link"
+        [class.is-active]="workflowStepState(5) === 'active'"
+        [class.is-complete]="workflowStepState(5) === 'complete'"
+        [class.is-error]="workflowStepState(5) === 'error'"
+        [disabled]="!workflowStepAvailable(5)"
+        (click)="navigateToWorkflowStep(5)">
+        <span class="workflow-nav-number">05</span>
+        <span class="workflow-nav-copy"><strong>{{ language() === 'de' ? 'KI-Nutzungsübersicht' : 'AI monitoring' }}</strong><small>{{ workflowStepHint(5) }}</small></span>
+        <span class="workflow-nav-state">{{ workflowStepMarker(5) }}</span>
+      </button>
+
+      <span class="nav-label nav-label-spaced">{{ language() === 'de' ? 'EINSTELLUNGEN' : 'SETTINGS' }}</span>
+      <a class="nav-link" href="#integrations"><span class="nav-icon">⚙</span>{{ language() === 'de' ? 'KI-Plattform & Integrationen' : 'AI platform & integrations' }}</a>
       <a class="nav-link" href="#governance"><span class="nav-icon">◇</span>{{ i18n.navSecurity }}</a>
     </nav>
 
@@ -64,22 +113,7 @@
         </div>
       </section>
 
-      <section class="process-journey" aria-label="Process design steps">
-        <article class="journey-step journey-step-active">
-          <span class="journey-index">01</span>
-          <div><small>{{ language() === 'de' ? 'SCHRITT 1' : 'STEP 1' }}</small><strong>{{ language() === 'de' ? 'Beschreiben' : 'Describe' }}</strong><p>{{ language() === 'de' ? 'Den aktuellen Ablauf erfassen' : 'Capture the current process' }}</p></div>
-        </article>
-        <span class="journey-connector" aria-hidden="true"></span>
-        <article class="journey-step">
-          <span class="journey-index">02</span>
-          <div><small>{{ language() === 'de' ? 'SCHRITT 2' : 'STEP 2' }}</small><strong>{{ language() === 'de' ? 'Analysieren' : 'Analyze' }}</strong><p>{{ language() === 'de' ? 'Aufgaben und Regeln strukturieren' : 'Structure tasks and rules' }}</p></div>
-        </article>
-        <span class="journey-connector" aria-hidden="true"></span>
-        <article class="journey-step">
-          <span class="journey-index">03</span>
-          <div><small>{{ language() === 'de' ? 'SCHRITT 3' : 'STEP 3' }}</small><strong>{{ language() === 'de' ? 'Prüfen & freigeben' : 'Review & approve' }}</strong><p>{{ language() === 'de' ? 'Menschen behalten die Kontrolle' : 'People stay in control' }}</p></div>
-        </article>
-      </section>
+
 
       <section class="section-block industries-section" id="industries">
         <div class="industry-picker-bar">
@@ -140,7 +174,7 @@
               <span class="routing-icon">RAG</span>
               <div>
                 <strong>{{ language() === 'de' ? 'Dokumenten-Wissensbasis' : 'Document knowledge base' }}</strong>
-                <p>{{ knowledge.status }} · {{ knowledge.indexedChunks }} {{ language() === 'de' ? 'Chunks indexiert' : 'chunks indexed' }} · {{ knowledge.retrievedChunks }} {{ language() === 'de' ? 'Treffer abgerufen' : 'chunks retrieved' }}</p>
+                <p>{{ integrationStatusLabel(knowledge.status) }} · {{ knowledge.indexedChunks }} {{ language() === 'de' ? 'Chunks indexiert' : 'chunks indexed' }} · {{ knowledge.retrievedChunks }} {{ language() === 'de' ? 'Treffer abgerufen' : 'chunks retrieved' }}</p>
               </div>
             </div>
           }
@@ -236,7 +270,8 @@
           @if (analysis.processSessionId; as sessionId) {
             <app-workflow-session-page
               [sessionId]="sessionId"
-              [embedded]="true">
+              [embedded]="true"
+              (sessionChange)="onWorkflowSessionChange($event)">
             </app-workflow-session-page>
           }
         </section>
@@ -387,7 +422,7 @@
       <section class="section-block data-section" id="integrations">
         <div class="section-header">
           <div>
-            <div class="section-kicker">STEP 6 · AI ORCHESTRATION & INTEGRATIONS</div>
+            <div class="section-kicker">{{ language() === 'de' ? 'EINSTELLUNGEN · KI-STEUERUNG & INTEGRATIONEN' : 'SETTINGS · AI ORCHESTRATION & INTEGRATIONS' }}</div>
             <h2>{{ language() === 'de' ? 'KI-Plattform & Integrationen' : 'AI platform & integrations' }}</h2>
             <p>{{ language() === 'de' ? 'Zentraler Überblick über Modell-Gateway, Open WebUI, Wissensbasis und angebundene Geschäftsprozesse.' : 'Central overview of the model gateway, Open WebUI, knowledge base and business integrations.' }}</p>
           </div>
@@ -395,6 +430,9 @@
             {{ integrationLoading() ? (language() === 'de' ? 'Wird aktualisiert …' : 'Refreshing …') : (language() === 'de' ? 'Status aktualisieren' : 'Refresh status') }}
           </button>
         </div>
+        <p class="settings-config-note">{{ language() === 'de'
+          ? 'API-Schlüssel und Zugangsdaten werden ausschließlich serverseitig über Render-Umgebungsvariablen verwaltet und niemals im Browser angezeigt.'
+          : 'API keys and credentials are managed server-side through Render environment variables and are never exposed in the browser.' }}</p>
 
         @if (integrationError(); as error) {
           <div class="error-panel" role="alert">{{ error }}</div>
@@ -403,8 +441,8 @@
           <div class="result-two-column">
             <article class="result-panel">
               <div class="result-panel-heading">
-                <div><div class="section-kicker">AI GATEWAY</div><h3>{{ readiness.aiGateway.provider }}</h3></div>
-                <span class="planned-pill">{{ readiness.aiGateway.status }}</span>
+                <div><div class="section-kicker">{{ language() === 'de' ? 'KI-GATEWAY' : 'AI GATEWAY' }}</div><h3>{{ readiness.aiGateway.provider }}</h3></div>
+                <span class="planned-pill">{{ integrationStatusLabel(readiness.aiGateway.status) }}</span>
               </div>
               <div class="detected-grid">
                 <div><small>{{ language() === 'de' ? 'Prozessanalyse' : 'Process analysis' }}</small><strong>{{ readiness.aiGateway.model }}</strong></div>
@@ -415,8 +453,8 @@
             </article>
             <article class="result-panel">
               <div class="result-panel-heading">
-                <div><div class="section-kicker">OPEN WEBUI</div><h3>AI Workspace</h3></div>
-                <span class="planned-pill">{{ readiness.openWebUI.status }}</span>
+                <div><div class="section-kicker">OPEN WEBUI</div><h3>{{ language() === 'de' ? 'KI-Arbeitsbereich' : 'AI Workspace' }}</h3></div>
+                <span class="planned-pill">{{ integrationStatusLabel(readiness.openWebUI.status) }}</span>
               </div>
               <p class="plain-copy">{{ readiness.openWebUI.configured ? (language() === 'de' ? 'Open WebUI ist als optionaler AI Workspace konfiguriert.' : 'Open WebUI is configured as an optional AI workspace.') : (language() === 'de' ? 'Open WebUI ist optional und nicht konfiguriert.' : 'Open WebUI is optional and not configured.') }}</p>
               @if (readiness.openWebUI.url) {
@@ -428,7 +466,7 @@
           <article class="result-panel">
             <div class="result-panel-heading">
               <div><div class="section-kicker">RAG · VECTOR KNOWLEDGE</div><h3>{{ language() === 'de' ? 'Prozessbezogene Wissensbasis' : 'Session-scoped knowledge base' }}</h3></div>
-              <span class="planned-pill">{{ readiness.rag.status }}</span>
+              <span class="planned-pill">{{ integrationStatusLabel(readiness.rag.status) }}</span>
             </div>
             <div class="detected-grid">
               <div><small>{{ language() === 'de' ? 'Aktiviert' : 'Enabled' }}</small><strong>{{ readiness.rag.enabled ? 'Yes' : 'No' }}</strong></div>
@@ -442,18 +480,18 @@
 
           <div class="result-two-column">
             <article class="result-panel">
-              <div class="result-panel-heading"><h3>{{ language() === 'de' ? 'Business Connectors' : 'Business connectors' }}</h3><span class="panel-count">{{ readiness.businessConnectors.length }}</span></div>
+              <div class="result-panel-heading"><h3>{{ language() === 'de' ? 'Geschäftssysteme & Schnittstellen' : 'Business connectors' }}</h3><span class="panel-count">{{ readiness.businessConnectors.length }}</span></div>
               <div class="integration-list">
                 @for (connector of readiness.businessConnectors; track connector.id) {
                   <div class="integration-item">
                     <div><strong>{{ connector.name }}</strong><p>{{ connector.description }}</p></div>
-                    <span class="planned-pill">{{ connector.status }}</span>
+                    <span class="planned-pill">{{ integrationStatusLabel(connector.status) }}</span>
                   </div>
                 }
               </div>
             </article>
             <article class="result-panel">
-              <div class="result-panel-heading"><h3>{{ language() === 'de' ? 'Live-Webhook' : 'Live webhook' }}</h3><span class="planned-pill">{{ readiness.liveWebhook.status }}</span></div>
+              <div class="result-panel-heading"><h3>{{ language() === 'de' ? 'Live-Webhook' : 'Live webhook' }}</h3><span class="planned-pill">{{ integrationStatusLabel(readiness.liveWebhook.status) }}</span></div>
               <p class="plain-copy">{{ readiness.liveWebhook.message }}</p>
               <p class="muted-note">{{ language() === 'de' ? 'Externe Aktionen bleiben standardmäßig deaktiviert. Eine Freigabe startet zunächst nur die Simulation.' : 'External actions remain disabled by default. Approval starts simulation mode only.' }}</p>
             </article>
