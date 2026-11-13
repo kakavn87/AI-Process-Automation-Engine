@@ -218,7 +218,7 @@
 /* Five-phase workflow progress — makes phases 2–5 visible after analysis. */
 .session-progress {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 9px;
   margin: 0 0 20px;
 }
@@ -285,16 +285,106 @@
   color: #3730a3;
 }
 .session-progress-step.is-pending { background: #f9fafb; }
-.session-progress-step.is-available {
-  border-color: #dbeafe;
-  background: #eff6ff;
+.live-readiness-badge {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: #92400e;
+  background: #fffbeb;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
 }
-.session-progress-step.is-available .session-progress-number,
-.session-progress-step.is-available .session-progress-mark {
-  background: #dbeafe;
-  color: #1d4ed8;
+.live-readiness-badge[data-ready="true"] {
+  color: #166534;
+  background: #f0fdf4;
 }
-@media (max-width: 980px) {
+.live-setup-panel, .live-ready-panel {
+  display: grid;
+  gap: 9px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+}
+.live-setup-panel strong, .live-ready-panel strong {
+  color: #111827;
+  font-size: 14px;
+}
+.live-setup-panel p, .live-ready-panel p, .live-result p {
+  margin: 0;
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.live-setup-panel code {
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 10px;
+  border-radius: 7px;
+  color: #312e81;
+  background: #eef2ff;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.live-setup-panel small, .live-ready-panel small {
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.live-token-field {
+  display: grid;
+  gap: 7px;
+  max-width: 480px;
+  margin-top: 18px;
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 700;
+}
+.live-token-field input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 9px;
+  padding: 11px 12px;
+  color: #111827;
+  background: #fff;
+  font: inherit;
+}
+.live-token-field input:focus {
+  outline: 3px solid rgba(99, 102, 241, .15);
+  border-color: #6366f1;
+}
+.live-confirmation {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-top: 20px;
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.live-confirmation input {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  accent-color: #4f46e5;
+}
+.live-execute-button { margin-top: 16px; }
+.live-result {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 1px solid #c7d2fe;
+  border-radius: 12px;
+  background: #eef2ff;
+}
+.live-result strong { display: block; margin-bottom: 6px; color: #312e81; font-size: 14px; }
+.live-result-success { border-color: #bbf7d0; background: #f0fdf4; }
+.live-result-success strong { color: #166534; }
+.live-result-warning { border-color: #fde68a; background: #fffbeb; }
+.live-result-warning strong { color: #92400e; }
+@media (max-width: 1100px) {
   .session-progress { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 620px) {
@@ -304,4 +394,5 @@
 }
 @media (max-width: 390px) {
   .session-progress { grid-template-columns: 1fr; }
+  .live-readiness-badge { white-space: normal; }
 }

@@ -2,10 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.schemas.execution import CreateExecutionRequest, ExecutionDecisionRequest
+from app.schemas.execution import (
+    CreateExecutionRequest,
+    ExecutionDecisionRequest,
+    LiveExecutionRequest,
+)
 from app.services.execution_service import ExecutionService
 
 router = APIRouter(prefix="/executions", tags=["executions"])
+
+
+@router.get("/live-readiness")
+def get_live_execution_readiness():
+    return ExecutionService.live_execution_readiness()
 
 
 @router.get("/")
@@ -51,6 +60,24 @@ def reject_execution(
 ):
     try:
         return ExecutionService(db).reject(execution_id, request.note)
+    except KeyError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@router.post("/{execution_id}/live")
+def run_live_execution(
+    execution_id: str,
+    request: LiveExecutionRequest,
+    db: Session = Depends(get_db),
+):
+    try:
+        return ExecutionService(db).run_live(
+            execution_id,
+            request.confirm_live_execution,
+            request.confirmation_token,
+        )
     except KeyError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ValueError as error:

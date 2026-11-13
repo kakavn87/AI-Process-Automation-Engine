@@ -28,7 +28,9 @@
         <p>{{ current.analysis.summary }}</p>
       </div>
       <span class="session-status" [attr.data-status]="current.status">
-        {{ current.status.replaceAll('_', ' ') }}
+        {{ current.status === 'completed'
+          ? (isGerman ? 'Simulation abgeschlossen' : 'Simulation completed')
+          : current.status.replaceAll('_', ' ') }}
       </span>
     </section>
 
@@ -93,13 +95,25 @@
         </div>
         <span class="session-progress-mark">{{ stepState(4, current.status) === 'complete' ? '✓' : '4' }}</span>
       </article>
-      <article class="session-progress-step is-available">
+      <article class="session-progress-step"
+        [class.is-complete]="stepState(5, current.status) === 'complete'">
         <span class="session-progress-number">05</span>
         <div>
           <strong>{{ isGerman ? 'AI-Monitoring' : 'AI monitoring' }}</strong>
-          <small>{{ isGerman ? 'Nutzung & Kosten' : 'Usage & cost' }}</small>
+          <small>{{ stepDescription(5, current.status) }}</small>
         </div>
-        <span class="session-progress-mark">↗</span>
+        <span class="session-progress-mark">{{ stepState(5, current.status) === 'complete' ? '✓' : '5' }}</span>
+      </article>
+      <article class="session-progress-step"
+        [class.is-active]="stepState(6, current.status, execution()?.liveExecutionStatus) === 'active'"
+        [class.is-complete]="stepState(6, current.status, execution()?.liveExecutionStatus) === 'complete'"
+        [class.is-pending]="stepState(6, current.status, execution()?.liveExecutionStatus) === 'pending'">
+        <span class="session-progress-number">06</span>
+        <div>
+          <strong>{{ isGerman ? 'Live-Ausführung' : 'Live execution' }}</strong>
+          <small>{{ stepDescription(6, current.status, execution()?.liveExecutionStatus) }}</small>
+        </div>
+        <span class="session-progress-mark">{{ stepState(6, current.status, execution()?.liveExecutionStatus) === 'complete' ? '✓' : '6' }}</span>
       </article>
     </section>
 
@@ -323,8 +337,114 @@
     }
   </section>
 
+  @if (session()?.status === 'completed') {
+    <section class="session-card live-execution-card">
+      <div class="session-card-header">
+        <div>
+          <div class="session-eyebrow">STEP 6 · LIVE EXECUTION</div>
+          <h2>{{ isGerman ? 'Externe Prozessausführung' : 'Real process execution' }}</h2>
+          <p>{{ isGerman
+            ? 'Die Freigabe hat bisher eine sichere Simulation ausgeführt. Über einen administrativ konfigurierten Webhook kann der freigegebene Workflow anschließend an ein externes System übergeben werden.'
+            : 'Approval has so far run a safe simulation. A separately configured webhook can now hand the approved workflow to an external system.' }}</p>
+        </div>
+        <span class="live-readiness-badge" [attr.data-ready]="liveReadiness()?.ready ? 'true' : 'false'">
+          {{ liveReadiness()?.ready
+            ? (isGerman ? 'Webhook verbunden' : 'Webhook connected')
+            : (isGerman ? 'Einrichtung erforderlich' : 'Setup required') }}
+        </span>
+      </div>
+
+      @if (liveReadiness(); as readiness) {
+        @if (readiness.ready) {
+          <div class="live-ready-panel">
+            <strong>{{ isGerman ? 'Verbindung bereit' : 'Connection ready' }}</strong>
+            <p>{{ isGerman
+              ? 'Der Webhook erhält die Workflow-ID, den Namen sowie die freigegebenen Prozessschritte. Die ursprüngliche Prozessbeschreibung und die Antworten auf offene Fragen werden nicht übertragen.'
+              : 'The webhook receives the workflow ID, name and approved process steps. The original process description and answers to open questions are not transmitted.' }}</p>
+            <small>{{ isGerman
+              ? (readiness.secretConfigured ? 'Bearer-Authentifizierung ist eingerichtet.' : 'Kein Bearer-Token eingerichtet. Der Empfänger muss entsprechend abgesichert sein.')
+              : (readiness.secretConfigured ? 'Bearer authentication is configured.' : 'No bearer token is configured. Ensure the receiver is protected accordingly.') }}</small>
+          </div>
+
+          @if (execution(); as liveExecution) {
+            @if (liveExecution.liveExecutionStatus === 'succeeded') {
+              <div class="live-result live-result-success">
+                <strong>{{ isGerman ? 'Externe Übergabe bestätigt' : 'External dispatch confirmed' }}</strong>
+                <p>{{ isGerman
+                  ? 'Der Webhook hat die Anfrage erfolgreich bestätigt. Siehe Audit-Trail für den HTTP-Status.'
+                  : 'The webhook confirmed receipt successfully. See the audit trail for the HTTP status.' }}</p>
+              </div>
+            } @else if (liveExecution.liveExecutionStatus === 'running') {
+              <div class="live-result">
+                <strong>{{ isGerman ? 'Übergabe läuft' : 'Dispatch in progress' }}</strong>
+                <p>{{ isGerman ? 'Die Anfrage wurde gesendet. Status wird aktualisiert.' : 'The request was sent. Status is being updated.' }}</p>
+              </div>
+            } @else if (liveExecution.liveExecutionStatus === 'failed' || liveExecution.liveExecutionStatus === 'unknown') {
+              <div class="live-result live-result-warning">
+                <strong>{{ isGerman ? 'Ergebnis nicht erfolgreich bestätigt' : 'Delivery was not confirmed' }}</strong>
+                <p>{{ isGerman
+                  ? 'Bitte zuerst die Protokolle des Zielsystems prüfen. Aus Sicherheitsgründen blockiert die Anwendung einen automatischen erneuten Versand.'
+                  : 'Check the receiving system logs first. Automatic retries are blocked to avoid duplicate external actions.' }}</p>
+              </div>
+            } @else {
+              <label class="live-token-field">
+                <span>{{ isGerman ? 'Operator-Freigabetoken' : 'Operator confirmation token' }}</span>
+                <input
+                  type="password"
+                  autocomplete="off"
+                  [ngModel]="liveToken()"
+                  (ngModelChange)="liveToken.set($event)"
+                  [ngModelOptions]="{ standalone: true }"
+                  [placeholder]="isGerman ? 'Freigabetoken eingeben' : 'Enter operator token'">
+              </label>
+              <label class="live-confirmation">
+                <input
+                  type="checkbox"
+                  [ngModel]="liveConfirmed()"
+                  (ngModelChange)="liveConfirmed.set($event)"
+                  [ngModelOptions]="{ standalone: true }">
+                <span>{{ isGerman
+                  ? 'Ich bestätige, dass der Workflow jetzt an das konfigurierte externe System gesendet werden darf.'
+                  : 'I confirm that this workflow may now be sent to the configured external system.' }}</span>
+              </label>
+              <button
+                class="session-primary live-execute-button"
+                type="button"
+                (click)="runLiveExecution()"
+                [disabled]="!liveConfirmed() || !liveToken().trim() || liveLoading()">
+                {{ liveLoading()
+                  ? (isGerman ? 'Wird übertragen …' : 'Sending …')
+                  : (isGerman ? 'Jetzt extern ausführen' : 'Run external action now') }}
+                <span>→</span>
+              </button>
+            }
+          } @else {
+            <p class="session-muted">{{ isGerman ? 'Ausführungsstatus wird geladen …' : 'Loading execution status …' }}</p>
+          }
+        } @else {
+          <div class="live-setup-panel">
+            <strong>{{ isGerman ? 'Webhook noch nicht konfiguriert' : 'Webhook is not configured yet' }}</strong>
+            <p>{{ readiness.message }}</p>
+            <p>{{ isGerman
+              ? 'Für die Aktivierung im Backend (Render → Environment) setzen:'
+              : 'To enable it in the backend (Render → Environment), set:' }}</p>
+            <code>WEBHOOK_EXECUTION_ENABLED=true</code>
+            <code>WORKFLOW_WEBHOOK_URL=https://your-company.example/webhook</code>
+            <code>WORKFLOW_WEBHOOK_BEARER_TOKEN=…</code>
+            <code>WORKFLOW_LIVE_EXECUTION_TOKEN=…</code>
+            <small>{{ isGerman
+              ? 'Der Operator-Freigabetoken ist erforderlich und wird beim Senden abgefragt; ein Bearer-Token schützt zusätzlich den Empfänger. Die Zieladresse muss HTTPS verwenden. Die externe Ausführung bleibt deaktiviert, bis diese Werte gesetzt wurden.'
+              : 'The operator confirmation token is required and entered at dispatch time; a bearer token additionally protects the receiver. The target must use HTTPS. External execution remains disabled until these values are configured.' }}</small>
+          </div>
+        }
+      } @else {
+        <p class="session-muted">{{ isGerman ? 'Verbindungsstatus konnte nicht geladen werden.' : 'Could not load connection readiness.' }}</p>
+      }
+    </section>
+  }
+
   <footer class="session-footer">
     <span>AI Process Optimierung · KI-gestützte Prozessautomatisierung</span>
-    <span>{{ isGerman ? 'Portfolio-Prototyp · externe Integrationen deaktiviert' : 'Portfolio prototype · external integrations disabled' }}</span>
+    <span>{{ isGerman ? 'Portfolio-Prototyp · externe Ausführung nur nach Konfiguration & Bestätigung' : 'Portfolio prototype · external execution requires configuration and confirmation' }}</span>
   </footer>
 </main>

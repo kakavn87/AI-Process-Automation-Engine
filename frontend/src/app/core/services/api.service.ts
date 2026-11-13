@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import {
   AIUsageSummary,
   ApprovalExecution,
+  LiveExecutionReadiness,
   ProcessAnalysis,
   ProposedWorkflow,
   TabularDataResult,
@@ -98,6 +99,21 @@ export class ApiService {
   rejectExecution(id: string, note = '') {
     return this.request('/executions/' + encodeURIComponent(id) + '/reject', url =>
       this.http.post<ApprovalExecution>(url, { note })
+    );
+  }
+
+  getLiveExecutionReadiness() {
+    return this.request('/executions/live-readiness', url =>
+      this.http.get<LiveExecutionReadiness>(url)
+    );
+  }
+
+  runLiveExecution(id: string, confirmationToken: string) {
+    return this.request('/executions/' + encodeURIComponent(id) + '/live', url =>
+      this.http.post<ApprovalExecution>(url, {
+        confirm_live_execution: true,
+        confirmation_token: confirmationToken
+      })
     );
   }
 

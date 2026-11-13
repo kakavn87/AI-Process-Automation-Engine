@@ -9,3 +9,8 @@ class CreateExecutionRequest(BaseModel):
 
 class ExecutionDecisionRequest(BaseModel):
     note: str | None = Field(default=None, max_length=500)
+
+
+class LiveExecutionRequest(BaseModel):
+    confirm_live_execution: bool = False
+    confirmation_token: str = Field(default="", max_length=256)

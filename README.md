@@ -53,6 +53,8 @@ Save the environment changes to trigger a redeploy. The frontend never receives 
 - `GET /api/executions/{id}` — retrieve one execution record.
 - `POST /api/executions/{id}/approve` — record approval and an optional note; run the workflow in simulation mode.
 - `POST /api/executions/{id}/reject` — reject the request and record an optional note.
+- `GET /api/executions/live-readiness` — check whether the administrator-configured webhook is ready.
+- `POST /api/executions/{id}/live` — dispatch the approved workflow to that webhook after separate explicit confirmation.
 
 Execution states:
 - `awaiting_approval`
@@ -106,6 +108,26 @@ The Backend also detects `IS_PULL_REQUEST`:
 - PR previews ignore the Production `OPENAI_API_KEY`; set `PREVIEW_OPENAI_API_KEY` on a Preview instance to use a separate test key. Otherwise, deterministic fallback is used.
 
 Render service previews initially copy their base service settings, including environment variables. Do not add a persistent disk or shared Production datastore to a Preview service. These previews are temporary and are deleted when their PR is merged or closed. This application still has no authentication; do not enter real customer or confidential business data in a public Preview.
+
+## Step 6: opt-in live webhook dispatch
+
+The approved workflow still completes in simulation mode first. A separate Step 6 can hand off the approved workflow structure to one administrator-configured HTTPS webhook. This is an integration boundary, not a built-in CRM, ticketing, email, or Teams connector.
+
+Live dispatch is disabled by default. To enable it on the Backend service, configure these environment variables:
+
+- `WEBHOOK_EXECUTION_ENABLED=true`
+- `WORKFLOW_WEBHOOK_URL=https://your-company.example/webhook`
+- `WORKFLOW_WEBHOOK_BEARER_TOKEN` (recommended for protected receivers)
+- `WORKFLOW_LIVE_EXECUTION_TOKEN` (required operator confirmation secret; entered in the UI at dispatch time)
+- `WORKFLOW_WEBHOOK_TIMEOUT_SECONDS=10` (optional)
+
+The endpoint is server-side configuration only; browser users cannot supply or change the destination. HTTPS is required, URL-embedded credentials and local/internal hostnames or IP addresses are rejected, and redirects are not followed. The frontend requires the operator confirmation secret plus a separate confirmation checkbox before dispatch. The operator secret is checked server-side, is not sent to the receiving webhook, and is cleared from the UI after a successful dispatch. PR previews forcibly clear webhook configuration and can never send live requests.
+
+The webhook receives an event name, execution ID/name, workflow name/trigger, and step metadata (IDs, types, names, descriptions, connector name, and approval requirement). The original process description, clarification answers, AI credentials, and bearer token are not included. Configure the receiver to validate the bearer token, deduplicate by `execution.id`, and apply its own authorization and business rules.
+
+Each execution permits only one recorded live dispatch attempt. A timeout is marked `unknown`, because the receiving system may have processed the request even when no response arrived; the app blocks automatic retries to avoid duplicate side effects. A non-2xx response is recorded as failed and must be investigated in the receiver's logs. A 2xx response is recorded as confirmed receipt, not proof that every downstream business action completed.
+
+The live webhook endpoint is exposed as `GET /api/executions/live-readiness` and `POST /api/executions/{id}/live`. The POST body requires `{"confirm_live_execution": true, "confirmation_token": "…"}`; the confirmation token is validated against the backend environment secret and never forwarded to the receiver. The app is still a single-user MVP without full account authentication or tenant-level authorization. Keep live execution disabled in public demos unless the operator-token control and receiving-system protections are appropriate for the intended environment. For production use, implement account authentication, role-based authorization, tenant isolation, idempotency at the receiver, and a security review.
 
 ## Safety and production boundaries
 

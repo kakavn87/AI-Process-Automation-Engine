@@ -203,6 +203,17 @@ export interface ExecutionEvent {
   externalSideEffect?: boolean;
 }
 
+export interface LiveExecutionReadiness {
+  provider: string;
+  enabled: boolean;
+  ready: boolean;
+  endpointConfigured: boolean;
+  status: 'ready' | 'disabled' | 'missing_endpoint' | 'invalid_endpoint' | string;
+  message: string;
+  secretConfigured: boolean;
+  operatorTokenConfigured: boolean;
+}
+
 export interface ApprovalExecution {
   id: string;
   workflowName: string;
@@ -210,6 +221,7 @@ export interface ApprovalExecution {
   decisionNote: string | null;
   createdAt: string | null;
   updatedAt: string | null;
-  executionMode: 'simulation' | string;
+  executionMode: 'simulation' | 'live_webhook' | string;
+  liveExecutionStatus?: 'not_started' | 'running' | 'succeeded' | 'failed' | 'unknown' | string;
   events: ExecutionEvent[];
 }
