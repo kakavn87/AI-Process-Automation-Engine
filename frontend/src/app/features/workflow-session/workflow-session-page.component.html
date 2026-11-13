@@ -55,6 +55,7 @@
       </article>
     </section>
 
+    @if (!embedded) {
     <section class="session-progress" [attr.aria-label]="isGerman ? 'Workflow-Fortschritt' : 'Workflow progress'">
       <article id="workflow-step-1" class="session-progress-step"
         [class.is-active]="stepState(1, current.status) === 'active'"
@@ -98,9 +99,12 @@
         <span class="session-progress-mark">{{ stepState(5, current.status) === 'complete' ? '✓' : '5' }}</span>
       </article>
     </section>
+    }
+
+
 
     @if (current.status === 'needs_input') {
-      <section class="session-card question-card">
+      <section id="workflow-step-2" class="session-card question-card">
         <div class="session-card-header">
           <div>
             <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 2 · KLÄRUNG' : 'STEP 2 · CLARIFICATION' }}</div>
@@ -155,7 +159,7 @@
     }
 
     @if (current.status === 'processing') {
-      <section class="session-card">
+      <section id="workflow-step-3" class="session-card">
         <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 3 · VERARBEITUNG' : 'STEP 3 · PROCESSING' }}</div>
         <h2>{{ isGerman ? 'Antworten werden verarbeitet' : 'Processing answers' }}</h2>
         <p>{{ isGerman ? 'Python validiert die Eingaben und aktualisiert den Workflow-Kontext.' : 'Python is validating the answers and updating the workflow context.' }}</p>
@@ -164,7 +168,7 @@
     }
 
     @if (current.status === 'ready_for_approval' || current.status === 'awaiting_approval' || current.status === 'completed' || current.status === 'rejected') {
-      <section class="session-card workflow-card">
+      <section id="workflow-step-3" class="session-card workflow-card">
         <div class="session-card-header">
           <div>
             <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 3 · AUTOMATISCHE VERARBEITUNG' : 'STEP 3 · AUTOMATED PROCESSING' }}</div>
@@ -190,7 +194,7 @@
         </div>
 
         @if (current.questions.length > 0) {
-          <div class="confirmed-answers">
+          <div id="workflow-step-2" class="confirmed-answers">
             <h3>{{ isGerman ? 'Bestätigte Angaben' : 'Confirmed details' }}</h3>
             @for (question of current.questions; track question.id) {
               @if (current.answers[question.id] !== undefined) {
@@ -217,7 +221,7 @@
     }
 
     @if (current.status === 'ready_for_approval') {
-      <section class="session-card approval-card">
+      <section id="workflow-step-4" class="session-card approval-card">
         <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 4 · FREIGABE' : 'STEP 4 · APPROVAL' }}</div>
         <h2>{{ isGerman ? 'Menschliche Freigabe erforderlich' : 'Human approval required' }}</h2>
         <p>{{ isGerman
@@ -254,7 +258,7 @@
     }
 
     @if (current.status === 'completed' || current.status === 'rejected') {
-      <section class="session-card final-card">
+      <section id="workflow-step-4" class="session-card final-card">
         <div class="session-eyebrow">{{ isGerman ? 'WORKFLOW-ERGEBNIS' : 'WORKFLOW RESULT' }}</div>
         <h2>{{ current.status === 'completed'
           ? (isGerman ? 'Simulation abgeschlossen' : 'Simulation completed')
@@ -266,7 +270,7 @@
     }
 
     @if (current.status === 'failed') {
-      <section class="session-card failed-card">
+      <section id="workflow-step-3" class="session-card failed-card">
         <h2>{{ isGerman ? 'Verarbeitung fehlgeschlagen' : 'Processing failed' }}</h2>
         <p>{{ isGerman ? 'Die letzte Verarbeitung konnte nicht abgeschlossen werden. Prüfen Sie das Ereignisprotokoll.' : 'The last processing step could not be completed. Review the event log.' }}</p>
       </section>
@@ -287,7 +291,7 @@
   }
 
   @if (session()?.status === 'completed' || session()?.status === 'rejected') {
-    <section class="session-card usage-card">
+    <section id="workflow-step-5" class="session-card usage-card">
     <div class="session-card-header">
       <div>
         <div class="session-eyebrow">{{ isGerman ? 'SCHRITT 5 · KI-NUTZUNG & KOSTEN' : 'STEP 5 · AI MONITORING' }}</div>
