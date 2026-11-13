@@ -281,7 +281,24 @@ export class ProcessPageComponent {
   }
 
   setLanguage(language: AppLanguage) {
+    const previous = this.language();
+    if (previous === language) return;
+
+    const industry = this.selectedIndustry;
+    if (industry) {
+      const previousExample = previous === 'de' ? industry.sampleDe : industry.sampleEn;
+      if (this.description === previousExample) {
+        this.description = language === 'de' ? industry.sampleDe : industry.sampleEn;
+      }
+    }
     this.language.set(language);
+
+    if (this.store.analysis()) {
+      this.service.analyze(this.description, this.analysisStrategy, language, this.selectedDomain());
+    }
+    if (this.dataResult() && this.selectedDataFile && !this.dataProcessing()) {
+      this.uploadDataFile();
+    }
   }
 
   selectIndustry(industry: Industry) {
