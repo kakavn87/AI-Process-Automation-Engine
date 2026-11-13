@@ -80,3 +80,19 @@ def test_validator_rejects_outbound_step_without_explicit_approval_flag():
         assert False, "Expected an outbound step without explicit approval to be rejected"
     except ValueError as error:
         assert "must explicitly require human approval" in str(error)
+
+
+def test_new_industries_are_detected_by_domain_rules():
+    cases = [
+        ("The factory checks quality inspection records on the production line.", "manufacturing"),
+        ("The IT helpdesk triages incidents and access rights requests.", "it_operations"),
+        ("Marketing reviews campaign conversion rates and social media performance.", "marketing"),
+        ("Legal compliance checks contract clauses and regulatory policies.", "legal_compliance"),
+        ("Project management tracks milestones and steering committee status reports.", "project_management"),
+        ("Logistics monitors freight shipments and delivery routes.", "logistics"),
+        ("Facility management schedules building maintenance and repairs.", "operations"),
+    ]
+
+    for description, expected_domain in cases:
+        result = ProcessAnalyzer().analyze(description)
+        assert result["detectedDetails"]["businessDomain"] == expected_domain

@@ -1,3 +1,5 @@
+from app.core.localization import localize_workflow
+
 class WorkflowGenerator:
     """Build a transparent workflow proposal from detected process details."""
 
@@ -6,6 +8,7 @@ class WorkflowGenerator:
         description: str,
         signals: list[str] | None = None,
         details: dict | None = None,
+        language: str = "en",
     ) -> dict:
         text = description.lower()
         detected = set(signals or [])
@@ -123,7 +126,13 @@ class WorkflowGenerator:
             "sales": "Sales",
             "procurement": "Procurement",
             "customer_support": "Customer Support",
-            "operations": "Operations",
+            "logistics": "Logistics",
+            "manufacturing": "Manufacturing",
+            "it_operations": "IT Operations",
+            "marketing": "Marketing",
+            "legal_compliance": "Legal & Compliance",
+            "project_management": "Project Management",
+            "operations": "Facilities",
         }.get(domain)
         if domain_label and "report" in output_types and frequency == "weekly":
             workflow_name = f"Weekly {domain_label} Reporting"
@@ -132,8 +141,9 @@ class WorkflowGenerator:
         else:
             workflow_name = "Proposed Process Workflow"
 
-        return {
+        workflow = {
             "name": workflow_name,
             "trigger": trigger,
             "steps": steps,
         }
+        return localize_workflow(workflow, language)

@@ -8,17 +8,19 @@ export class ApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/api`;
 
-  analyzeProcess(description: string, analysisStrategy: 'auto' | 'rules' | 'llm' = 'auto') {
+  analyzeProcess(description: string, analysisStrategy: 'auto' | 'rules' | 'llm' = 'auto', language: 'de' | 'en' = 'de', businessDomain = 'general') {
     return this.http.post<ProcessAnalysis>(`${this.baseUrl}/processes/analyze`, {
       description,
-      analysis_strategy: analysisStrategy
+      analysis_strategy: analysisStrategy,
+      analysis_language: language,
+      business_domain: businessDomain
     });
   }
 
-  uploadDataFile(file: File) {
+  uploadDataFile(file: File, language: 'de' | 'en' = 'de') {
     const formData = new FormData();
     formData.append('file', file, file.name);
-    return this.http.post<TabularDataResult>(`${this.baseUrl}/data-processing/upload`, formData);
+    return this.http.post<TabularDataResult>(`${this.baseUrl}/data-processing/upload?language=${language}`, formData);
   }
 
   startExecution(workflow: ProposedWorkflow) {
