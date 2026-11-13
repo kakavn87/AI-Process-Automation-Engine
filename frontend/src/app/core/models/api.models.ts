@@ -112,7 +112,8 @@ export interface ProcessOptimizationMetric {
   absoluteChange: number | null;
   improvementPercent: number | null;
   rationale: string;
-  evidenceBasis: 'user_input' | 'document' | 'model_estimate' | 'not_available';
+  currentValueSource: 'user_input' | 'document' | 'not_available';
+  proposedValueSource: 'user_input' | 'document' | 'model_estimate' | 'not_available';
   confidence: 'high' | 'medium' | 'low';
   isEstimate: boolean;
 }
