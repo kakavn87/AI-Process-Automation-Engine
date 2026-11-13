@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -6,12 +7,17 @@ from sqlalchemy.orm import Session
 from app.engine.workflow.automation_engine import WorkflowAutomationEngine
 from app.models.workflow_session import WorkflowSession
 from app.services.question_service import QuestionService
+from app.services.ai_service import AIService
+from app.services.ai_usage_service import AIUsageService
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowSessionService:
-    def __init__(self, db: Session, tenant_id: str | None = None):
+    def __init__(self, db: Session, tenant_id: str | None = None, ai_service: AIService | None = None):
         self.db = db
         self.tenant_id = tenant_id
+        self.ai_service = ai_service or AIService()
         self.question_service = QuestionService()
         self.automation_engine = WorkflowAutomationEngine()
 
@@ -140,37 +146,118 @@ class WorkflowSessionService:
         self.db.refresh(session)
         return {"session": self.serialize(session), "execution": execution}
 
+    def retry_optimization(self, session_id: str) -> dict:
+        session = self._get_session(session_id)
+        if session is None:
+            raise KeyError("Workflow session was not found.")
+        if session.status != "failed":
+            raise ValueError("Only a failed optimization can be retried.")
+
+        unanswered = [
+            question for question in (session.questions or [])
+            if question.get("required", True) and question["id"] not in (session.answers or {})
+        ]
+        if unanswered:
+            raise ValueError("Complete all required clarification questions before retrying optimization.")
+
+        session.status = "processing"
+        session.events = [
+            *(session.events or []),
+            {
+                "event": "optimization_retry_requested",
+                "status": "processing",
+                "message": "Die Optimierung wird erneut mit dem KI-Modell gestartet."
+                if session.language == "de"
+                else "The optimization is being retried with the AI model.",
+                "recordedAt": datetime.now(timezone.utc).isoformat(),
+            },
+        ]
+        self.db.flush()
+        self._prepare(session)
+        session.updated_at = datetime.now(timezone.utc)
+        self.db.commit()
+        self.db.refresh(session)
+        return self.serialize(session)
+
+    def _record_optimization_usage(self, session: WorkflowSession) -> None:
+        telemetry = getattr(self.ai_service, "last_call_telemetry", None)
+        if not telemetry:
+            return
+        try:
+            AIUsageService(self.db, tenant_id=self.tenant_id).record(
+                session.id,
+                telemetry,
+                commit=False,
+            )
+        except Exception:
+            logger.exception("Could not persist process-optimization usage telemetry.")
+
     def _prepare(self, session: WorkflowSession) -> None:
         try:
+            optimization = self.ai_service.optimize_process(
+                analysis=session.analysis or {},
+                answers=session.answers or {},
+                questions=session.questions or [],
+                language=session.language,
+            )
+            telemetry = getattr(self.ai_service, "last_call_telemetry", None)
+            self._record_optimization_usage(session)
             prepared = self.automation_engine.prepare(
                 session.analysis or {},
                 session.answers or {},
+                optimization=optimization,
             )
+            if telemetry:
+                prepared["processOptimization"]["model"] = telemetry.get("model")
+                prepared["processOptimization"]["provider"] = telemetry.get("provider")
             session.analysis = prepared
             session.status = "ready_for_approval"
             session.events = [
                 *(session.events or []),
                 {
-                    "event": "deterministic_processing_started",
+                    "event": "llm_optimization_completed",
                     "status": "success",
-                    "message": "Python validated the answers and updated the workflow context; no additional LLM call was made.",
+                    "message": "Das KI-Modell hat Ihre Antworten ausgewertet und einen optimierten Prozess erstellt. Python hat Workflow-Regeln und Kennzahlen validiert."
+                    if session.language == "de"
+                    else "The AI model used your answers to design an optimized process. Python validated workflow rules and calculated the metric deltas.",
                     "recordedAt": datetime.now(timezone.utc).isoformat(),
                 },
                 {
                     "event": "workflow_prepared",
                     "status": "ready_for_approval",
-                    "message": "Workflow is ready for human review. External actions remain disabled until a connected, approved executor is configured.",
+                    "message": "Der optimierte Workflow ist bereit zur menschlichen Prüfung. Externe Aktionen bleiben bis zu einer gesonderten Freigabe deaktiviert."
+                    if session.language == "de"
+                    else "The optimized workflow is ready for human review. External actions remain disabled until separately authorized.",
                     "recordedAt": datetime.now(timezone.utc).isoformat(),
                 },
             ]
         except Exception as error:
+            self._record_optimization_usage(session)
+            logger.exception("Second-pass LLM process optimization failed.")
+            detail = (
+                "Die KI-Optimierung ist fehlgeschlagen. Prüfen Sie API-Guthaben, Modellzugriff und Backend-Protokolle. Sie können den Schritt erneut versuchen."
+                if session.language == "de"
+                else "The AI optimization failed. Check API credits, model access and backend logs. You can retry this step."
+            )
+            updated_analysis = dict(session.analysis or {})
+            updated_analysis["optimizationFailure"] = {
+                "message": detail,
+                "errorType": type(error).__name__,
+            }
+            updated_analysis["processingResult"] = {
+                "engine": "openai_llm_and_deterministic_python",
+                "status": "failed",
+                "preparedAt": datetime.now(timezone.utc).isoformat(),
+                "externalActionsExecuted": False,
+            }
+            session.analysis = updated_analysis
             session.status = "failed"
             session.events = [
                 *(session.events or []),
                 {
-                    "event": "workflow_preparation_failed",
+                    "event": "llm_optimization_failed",
                     "status": "failed",
-                    "message": f"Workflow preparation failed: {type(error).__name__}",
+                    "message": detail,
                     "recordedAt": datetime.now(timezone.utc).isoformat(),
                 },
             ]
