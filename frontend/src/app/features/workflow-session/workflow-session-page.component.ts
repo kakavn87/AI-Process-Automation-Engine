@@ -239,17 +239,13 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
     this.router.navigate(['/']);
   }
 
-  stepState(
-    step: number,
-    status: string,
-    liveStatus = 'not_started'
-  ): 'complete' | 'active' | 'pending' {
+  stepState(step: number, status: string): 'complete' | 'active' | 'pending' {
     if (step === 1) return 'complete';
     if (step === 2) return status === 'needs_input' ? 'active' : 'complete';
     if (step === 3) {
       if (status === 'needs_input') return 'pending';
       if (status === 'processing') return 'active';
-      return status === 'failed' ? 'pending' : 'complete';
+      return 'complete';
     }
     if (step === 4) {
       if (status === 'ready_for_approval' || status === 'awaiting_approval') return 'active';
@@ -257,15 +253,10 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       return 'pending';
     }
     if (step === 5) return status === 'completed' || status === 'rejected' ? 'complete' : 'pending';
-    if (step === 6) {
-      if (liveStatus === 'succeeded') return 'complete';
-      if (status === 'completed') return 'active';
-      return 'pending';
-    }
     return 'pending';
   }
 
-  stepDescription(step: number, status: string, liveStatus = 'not_started'): string {
+  stepDescription(step: number, status: string): string {
     if (step === 2) {
       return this.isGerman
         ? (status === 'needs_input' ? 'Ihre Angaben werden benötigt' : 'Klärung abgeschlossen')
@@ -285,13 +276,9 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       return this.isGerman ? 'Nach der Verarbeitung' : 'After processing';
     }
     if (step === 5) {
-      return this.isGerman ? 'Nutzung & Kosten erfasst' : 'Usage & costs recorded';
-    }
-    if (step === 6) {
-      if (liveStatus === 'succeeded') return this.isGerman ? 'Webhook bestätigt' : 'Webhook confirmed';
-      if (liveStatus === 'running') return this.isGerman ? 'Wird übertragen …' : 'Dispatch in progress';
-      if (liveStatus === 'failed' || liveStatus === 'unknown') return this.isGerman ? 'Ergebnis prüfen' : 'Check delivery result';
-      return this.isGerman ? 'Externe Verbindung optional' : 'External connection optional';
+      return status === 'completed' || status === 'rejected'
+        ? (this.isGerman ? 'Nutzung & Kosten erfasst' : 'Usage & costs recorded')
+        : (this.isGerman ? 'Nach Workflow-Abschluss' : 'After workflow completion');
     }
     return '';
   }
