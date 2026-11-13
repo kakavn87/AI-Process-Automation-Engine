@@ -80,7 +80,7 @@ channel names, business rules, or data fields when the description does not spec
 
 Create an ordered workflow that starts with a trigger and ends with a meaningful process outcome.
 Use only the allowed step types. Prefer trigger, collect, extract, transform, validate, generate, approval,
-and notify. Every outbound notification (notify, email, or teams) MUST have an approval step before it and
+and notify. Every outbound action (notify, email, teams, or http) MUST have an approval step before it and
 requires_approval=true. If the process distributes reports, messages, payments, or other consequential
 outputs, require human approval before distribution. A missing detail belongs in questions, not in fabricated
 workflow configuration. Connector should be an empty string when no connector is clearly implied.
