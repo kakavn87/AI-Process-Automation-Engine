@@ -34,3 +34,15 @@ class InvitationAcceptRequest(BaseModel):
     token: str = Field(min_length=20, max_length=200)
     password: str = Field(min_length=12, max_length=256)
     full_name: str = Field(default="", max_length=160)
+
+
+class WorkspaceCreateRequest(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, value: str) -> str:
+        name = " ".join(value.split())
+        if len(name) < 2:
+            raise ValueError("Workspace name must contain at least two characters.")
+        return name
