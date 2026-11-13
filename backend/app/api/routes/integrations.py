@@ -38,7 +38,7 @@ def _rag_readiness() -> dict:
             "collection": settings.QDRANT_COLLECTION,
             "embeddingModel": settings.RAG_EMBEDDING_MODEL,
             "scope": "process_session",
-            "message": "The configured vector store could not be initialized. Check the server-side Qdrant settings.",
+            "message": "Der konfigurierte Vektorspeicher konnte nicht initialisiert werden. Prüfen Sie die serverseitige Qdrant-Konfiguration.",
         }
 
 
@@ -48,9 +48,9 @@ def get_integration_readiness():
     base_url = settings.OPENAI_BASE_URL.strip()
     is_litellm = settings.AI_GATEWAY_PROVIDER.strip().lower() == "litellm"
     gateway_provider = (
-        "LiteLLM" if is_litellm
-        else "OpenAI-compatible gateway" if base_url
-        else "Direct OpenAI API"
+        "LiteLLM-Gateway" if is_litellm
+        else "OpenAI-kompatibles Gateway" if base_url
+        else "Direkte OpenAI-Schnittstelle"
     )
     open_webui_url = _safe_http_url(settings.OPENWEBUI_URL)
 
@@ -74,32 +74,32 @@ def get_integration_readiness():
         "businessConnectors": [
             {
                 "id": "workflow_webhook",
-                "name": "HTTPS Workflow Webhook",
+                "name": "HTTPS-Workflow-Webhook",
                 "status": "ready" if webhook["ready"] else "setup_required",
-                "description": "Admin-configured outbound workflow handoff.",
+                "description": "Serverseitig konfigurierter Übergabepunkt für freigegebene Workflows.",
             },
             {
                 "id": "microsoft_365",
                 "name": "Microsoft 365",
                 "status": "planned",
-                "description": "Outlook, Teams and SharePoint require tenant OAuth configuration.",
+                "description": "Outlook, Teams und SharePoint benötigen eine OAuth-Konfiguration pro Arbeitsbereich.",
             },
             {
                 "id": "sap",
                 "name": "SAP / ERP",
                 "status": "planned",
-                "description": "Requires an approved SAP API destination and credentials.",
+                "description": "Benötigt einen freigegebenen SAP-API-Endpunkt und passende Zugangsdaten.",
             },
             {
                 "id": "custom_rest",
-                "name": "Custom REST API",
+                "name": "Individuelle REST-API",
                 "status": "planned",
-                "description": "A per-workspace connector with credential storage is not enabled in this single-user MVP.",
+                "description": "Eine Schnittstelle mit getrennt gespeicherten Zugangsdaten pro Arbeitsbereich ist in diesem MVP noch nicht aktiviert.",
             },
         ],
         "liveWebhook": webhook,
         "securityNote": (
-            "Connector credentials are server-side only. Per-user OAuth connections and tenant isolation "
-            "must be implemented before customer-managed integrations are enabled."
+            "Zugangsdaten für Schnittstellen werden ausschließlich serverseitig gespeichert. Vor kundenseitig verwalteten Integrationen "
+            "müssen OAuth-Verbindungen pro Benutzer und die Trennung der Arbeitsbereiche vollständig umgesetzt sein."
         ),
     }
