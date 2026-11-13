@@ -61,6 +61,41 @@ Execution states:
 
 No real email or Teams message is sent after approval.
 
+## Interactive workflow lifecycle
+
+`POST /api/processes/analyze` now persists the analysis as a workflow session and returns `processSessionId`, `workflowStatus`, and `openQuestions`. The Angular app opens the session page automatically.
+
+Session lifecycle:
+- `needs_input` — the user can answer the generated open questions. Partial answers are saved.
+- `processing` — the server validates answers and updates the workflow context with deterministic Python logic.
+- `ready_for_approval` — the updated workflow is ready for a human review.
+- `awaiting_approval` — an approval request exists and execution is paused.
+- `completed` / `rejected` / `failed` — terminal results.
+
+Additional endpoints:
+- `GET /api/processes/sessions/{id}` — retrieve the persisted session, answers, questions, status, and audit events.
+- `POST /api/processes/sessions/{id}/answers` — submit answers as `{"answers": {"q-id": "value"}}`. The server validates only known question IDs and allows partial submissions.
+- `POST /api/processes/sessions/{id}/execute` — create the approval request after preparation is complete.
+- `GET /api/monitoring/usage` — retrieve aggregate AI token usage and recent provider events.
+
+When the required answers are complete, Python updates the process specification and proposed workflow context without making another LLM call. The user then explicitly creates an approval request. Approving it continues the existing simulation lifecycle; rejecting it records the decision and runs no steps.
+
+## AI usage and estimated costs
+
+Each OpenAI process-analysis attempt records provider, model, status, duration, and token usage when the provider returns usage metadata. Failed calls are marked as fallback events. If a provider response exists but structured-output parsing fails, its usage metadata is retained.
+
+Estimated USD cost is calculated only when both of these backend environment variables are configured:
+- `OPENAI_INPUT_USD_PER_1M` — input-token price per million tokens.
+- `OPENAI_OUTPUT_USD_PER_1M` — output-token price per million tokens.
+
+Both values default to unset. Until valid prices are configured, the monitoring endpoint shows token totals but leaves estimated cost unavailable. This avoids inventing a model price or presenting a token estimate as an invoice amount.
+
+## Safety and production boundaries
+
+The action dispatcher remains simulation-only. Approval records authorization for the demo workflow, but it does not send email, post to Teams, invoke HTTP endpoints, or modify an external business system. Live connectors must be implemented and separately configured before those actions can be enabled.
+
+The new session and usage endpoints are currently intended for this single-user portfolio MVP. Authentication, tenant isolation, role-based approval permissions, durable migrations, retention controls, and production-grade audit/security reviews are still required before exposing business data to multiple users.
+
 ## Run locally
 
 ### Backend
