@@ -26,6 +26,7 @@ export class WorkflowSessionPageComponent implements OnInit {
   readonly usage = signal<AIUsageSummary | null>(null);
   readonly liveReadiness = signal<LiveExecutionReadiness | null>(null);
   readonly liveConfirmed = signal(false);
+  readonly liveToken = signal('');
   readonly liveLoading = signal(false);
   readonly answerValues = signal<Record<string, string | boolean>>({});
   readonly loading = signal(false);
@@ -95,14 +96,15 @@ export class WorkflowSessionPageComponent implements OnInit {
 
   runLiveExecution(): void {
     const current = this.execution();
-    if (!current || !this.liveReadiness()?.ready || !this.liveConfirmed() || this.liveLoading()) return;
+    if (!current || !this.liveReadiness()?.ready || !this.liveConfirmed() || !this.liveToken().trim() || this.liveLoading()) return;
 
     this.liveLoading.set(true);
     this.error.set(null);
-    this.api.runLiveExecution(current.id).subscribe({
+    this.api.runLiveExecution(current.id, this.liveToken().trim()).subscribe({
       next: result => {
         this.execution.set(result);
         this.liveConfirmed.set(false);
+        this.liveToken.set('');
         this.liveLoading.set(false);
         this.loadSession();
       },
