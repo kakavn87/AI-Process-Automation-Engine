@@ -1,107 +1,150 @@
+import logging
+
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.engine.analyzer.process_analyzer import ProcessAnalyzer
 from app.engine.workflow.generator import WorkflowGenerator
 from app.engine.workflow.validator import validate
 from app.services.ai_service import AIService
 
+logger = logging.getLogger(__name__)
+OUTBOUND_STEP_TYPES = {"notify", "email", "teams"}
+
 
 class ProcessService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, ai_service: AIService | None = None):
         self.db = db
         self.analyzer = ProcessAnalyzer()
         self.workflow_generator = WorkflowGenerator()
-        self.ai_service = AIService()
+        self.ai_service = ai_service or AIService()
 
     def analyze(self, description: str) -> dict:
-        ai_analysis = self.ai_service.analyze_process(description)
-        if ai_analysis is not None:
-            result = self._from_llm(ai_analysis, description)
-            result["analysisMode"] = "openai_llm"
-            result["analysisNote"] = (
-                f"Analyzed with OpenAI {self._model_name()} using structured outputs. "
-                "Scores are estimates; integrations are proposed, not connected."
-            )
+        analysis = self.analyzer.analyze(description)
+        analysis["llmUsed"] = False
+        analysis["llmModel"] = None
+        analysis["analysisMode"] = "deterministic_rules_v1"
+
+        if self.ai_service.is_configured:
+            try:
+                ai_result = self.ai_service.analyze_process(description, analysis["signals"])
+                self._apply_ai_result(analysis, ai_result)
+                analysis["llmUsed"] = True
+                analysis["llmModel"] = self.ai_service.model
+                analysis["analysisMode"] = "openai_responses"
+                analysis["analysisNote"] = (
+                    f"Analyzed with OpenAI Responses API ({self.ai_service.model}). "
+                    "The workflow is a proposal; integrations are not connected and execution is simulated."
+                )
+                return analysis
+            except Exception:
+                logger.exception("OpenAI process analysis failed; using the deterministic fallback.")
+                analysis["analysisNote"] = (
+                    "The OpenAI request could not be completed. A deterministic rules-based fallback was used. "
+                    "Check the backend API key, model access, and API billing configuration."
+                )
         else:
-            result = self.analyzer.analyze(description)
-            result["analysisMode"] = "rules_fallback"
-            result["analysisNote"] = (
-                "OpenAI LLM is not configured or unavailable. This result was produced by transparent "
-                "local rules; configure OPENAI_API_KEY to enable model-based analysis."
+            analysis["analysisNote"] = (
+                "OpenAI is not enabled because OPENAI_API_KEY is missing on the backend. "
+                "A deterministic rules-based fallback was used."
             )
 
-        validate(result["proposedWorkflow"])
-        return result
+        workflow = self.workflow_generator.generate(description, analysis["signals"])
+        self._ensure_approval_gate(workflow)
+        validate(workflow)
+        analysis["proposedWorkflow"] = workflow
+        return analysis
 
-    def _from_llm(self, analysis, description: str) -> dict:
-        steps = []
-        for index, item in enumerate(analysis.workflow_steps, start=1):
-            config = {"requiresApproval": item.requires_approval}
-            if item.connector:
-                config["connector"] = item.connector
-            steps.append({
+    def _apply_ai_result(self, analysis: dict, ai_result: dict) -> None:
+        workflow_steps = []
+        for index, item in enumerate(ai_result["workflow_steps"], start=1):
+            config = {"requiresApproval": bool(item["requires_approval"])}
+            connector = item.get("connector", "").strip()
+            if connector:
+                config["connector"] = connector
+            workflow_steps.append({
                 "id": f"step-{index}",
-                "type": item.type,
-                "name": item.name,
-                "description": item.description,
+                "type": item["type"],
+                "name": item["name"],
+                "description": item["description"],
                 "config": config,
             })
 
-        outbound_types = {"notify", "email", "teams"}
-        outbound_indexes = [i for i, step in enumerate(steps) if step["type"] in outbound_types]
-        approval_required = analysis.approval_required or bool(outbound_indexes)
-        approval_index = next((i for i, step in enumerate(steps) if step["type"] == "approval"), -1)
+        workflow = {
+            "name": ai_result["workflow_name"],
+            "trigger": ai_result["workflow_trigger"],
+            "steps": workflow_steps,
+        }
+        self._ensure_approval_gate(workflow)
+        validate(workflow)
 
-        # Enforce a server-side approval gate for outbound side effects.
-        if approval_required and approval_index < 0:
-            insert_at = outbound_indexes[0] if outbound_indexes else len(steps)
-            steps.insert(insert_at, {
-                "id": "approval-inserted",
-                "type": "approval",
-                "name": "Human approval",
-                "description": "Pause until an authorized person reviews and approves this workflow.",
+        analysis.update({
+            "summary": ai_result["summary"],
+            "currentProcess": ai_result["current_process"],
+            "automationOpportunities": ai_result["automation_opportunities"],
+            "integrations": [
+                {**item, "status": "planned_not_connected"}
+                for item in ai_result["integrations"]
+            ],
+            "humanApproval": {
+                "required": bool(ai_result["human_approval_required"]) or any(
+                    step["type"] in OUTBOUND_STEP_TYPES for step in workflow["steps"]
+                ),
+                "reason": ai_result["human_approval_reason"],
+                "gateBefore": ai_result["human_approval_gate_before"],
+            },
+            "risks": ai_result["risks"],
+            "assumptions": ai_result["assumptions"],
+            "questions": ai_result["questions"],
+            "proposedWorkflow": workflow,
+        })
+
+    @staticmethod
+    def _ensure_approval_gate(workflow: dict) -> None:
+        steps = workflow.setdefault("steps", [])
+        if not steps or steps[0].get("type") != "trigger":
+            steps.insert(0, {
+                "id": "step-trigger",
+                "type": "trigger",
+                "name": "Start workflow",
+                "description": workflow.get("trigger", "Start the workflow manually."),
                 "config": {"requiresApproval": False},
             })
-            approval_index = insert_at
 
-        for step in steps:
-            if step["type"] in outbound_types:
-                step["config"]["requiresApproval"] = True
+        if not any(step.get("type") == "generate" for step in steps):
+            approval_index = next(
+                (i for i, step in enumerate(steps) if step.get("type") == "approval"),
+                len(steps),
+            )
+            steps.insert(approval_index, {
+                "type": "generate",
+                "name": "Prepare process output",
+                "description": "Prepare the output defined by the process owner.",
+                "config": {"requiresApproval": False},
+            })
 
-        if approval_required:
-            first_outbound = next((i for i, step in enumerate(steps) if step["type"] in outbound_types), len(steps))
-            approval_index = next((i for i, step in enumerate(steps) if step["type"] == "approval"), -1)
-            if approval_index > first_outbound:
-                approval = steps.pop(approval_index)
-                steps.insert(first_outbound, approval)
+        outbound_positions = [
+            i for i, step in enumerate(steps)
+            if step.get("type") in OUTBOUND_STEP_TYPES
+        ]
+        if not outbound_positions:
+            return
+
+        first_outbound = outbound_positions[0]
+        prior_approval = next(
+            (i for i, step in enumerate(steps[:first_outbound]) if step.get("type") == "approval"),
+            None,
+        )
+        if prior_approval is None:
+            steps.insert(first_outbound, {
+                "type": "approval",
+                "name": "Human approval",
+                "description": "Pause until an authorized person approves the output before distribution.",
+                "config": {"requiresApproval": False},
+            })
 
         for index, step in enumerate(steps, start=1):
             step["id"] = f"step-{index}"
-
-        return {
-            "automationScore": max(0, min(100, analysis.automation_score)),
-            "signals": list(dict.fromkeys(signal.lower().strip() for signal in analysis.signals if signal.strip())),
-            "description": description,
-            "summary": analysis.summary,
-            "currentProcess": analysis.current_process,
-            "automationOpportunities": [item.model_dump() for item in analysis.automation_opportunities],
-            "integrations": [item.model_dump() for item in analysis.integrations],
-            "humanApproval": {
-                "required": approval_required,
-                "reason": analysis.approval_reason,
-                "gateBefore": analysis.approval_gate_before or ("External distribution" if approval_required else "Not required"),
-            },
-            "risks": analysis.risks,
-            "assumptions": analysis.assumptions,
-            "questions": analysis.questions,
-            "proposedWorkflow": {
-                "name": analysis.workflow_name,
-                "trigger": analysis.workflow_trigger,
-                "steps": steps,
-            },
-        }
-
-    @staticmethod
-    def _model_name() -> str:
-        from app.core.config import settings
-        return settings.OPENAI_MODEL
+            step.setdefault("config", {})
+            if step.get("type") in OUTBOUND_STEP_TYPES:
+                step["config"]["requiresApproval"] = True
