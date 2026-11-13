@@ -38,3 +38,17 @@ def test_validator_rejects_notification_without_required_approval():
         assert False, "Expected a missing approval gate to be rejected"
     except ValueError as error:
         assert "approval step must come before" in str(error)
+
+
+def test_validator_rejects_outbound_step_without_explicit_approval_flag():
+    workflow = {
+        "steps": [
+            {"id": "approval-1", "type": "approval", "config": {}},
+            {"id": "notify-1", "type": "notify", "config": {"requiresApproval": False}},
+        ]
+    }
+    try:
+        validate(workflow)
+        assert False, "Expected an outbound step without explicit approval to be rejected"
+    except ValueError as error:
+        assert "must explicitly require human approval" in str(error)
