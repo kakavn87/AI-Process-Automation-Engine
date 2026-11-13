@@ -241,3 +241,5 @@ Create separate least-privilege LiteLLM virtual keys for FlowPilot and Open WebU
 
 
 The sample model map defaults to `gpt-6-luna` for process analysis, `gpt-6.1-terra` for vision, and `text-embedding-3-small` for embeddings. You can change these aliases centrally in `infrastructure/docker/litellm-config.yaml`.
+
+The LiteLLM Docker image in the example Compose file is pinned to release `v1.106.8`, rather than a moving tag. Review and update the version intentionally when upgrading.

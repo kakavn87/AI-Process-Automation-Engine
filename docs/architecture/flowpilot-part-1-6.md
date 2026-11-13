@@ -105,3 +105,8 @@ Local endpoints: Open WebUI at localhost:3000, LiteLLM at localhost:4000, Postgr
 ### Default model selection (November 2026)
 
 The included LiteLLM example maps `process-analysis` to `gpt-6-luna` for cost-efficient high-volume structured analysis, and `process-vision` to `gpt-6.1-terra` for visual reasoning over process diagrams and screenshots. `process-embeddings` uses `text-embedding-3-small`; its output dimensions must match `EMBEDDING_DIMENSIONS=1536`. These are example defaults and can be changed by editing the LiteLLM model map. GPT-4o mini is intentionally not used in the new configuration because the API deprecation notice lists January 14, 2027 as its shutdown date.
+
+
+### LiteLLM container version
+
+The example Compose file pins LiteLLM to `ghcr.io/berriai/litellm:v1.106.8` (released November 11, 2026) instead of the moving `main-stable` tag. Update the version deliberately after reviewing the release notes and re-running integration checks.
