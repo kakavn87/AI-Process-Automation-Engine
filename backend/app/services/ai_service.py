@@ -320,27 +320,31 @@ Workflow constraints:
   5 risks and 5 assumptions.
 - Do not invent API credentials, mailbox names, Teams channels, ERP endpoints or execution capabilities.
 - The workflow is a proposal. Do not execute actions or claim the workflow has been deployed.
+Return exactly one valid JSON object matching the required optimization fields. Output JSON only, without Markdown fences or commentary.
 """
         response = None
         try:
-            response = self._client.responses.parse(
+            response = self._client.responses.create(
                 model=self.model,
                 input=[
                     {"role": "system", "content": system_prompt},
                     {
                         "role": "user",
                         "content": (
-                            "Optimize the process using this complete context:\n"
+                            "Return the process optimization as one JSON object using this complete context:\\n"
                             + json.dumps(context, ensure_ascii=False, default=str)
                         ),
                     },
                 ],
-                text_format=AIProcessOptimizationOutput,
+                # JSON mode is broadly supported by OpenAI-compatible gateways.
+                # Pydantic still validates every field before the workflow is accepted.
+                text={"format": {"type": "json_object"}},
                 max_output_tokens=7500,
             )
-            parsed = response.output_parsed
-            if parsed is None:
-                raise ValueError("The model did not return a structured process optimization.")
+            output_text = getattr(response, "output_text", None)
+            if not output_text:
+                raise ValueError("The model returned no JSON process optimization.")
+            parsed = AIProcessOptimizationOutput.model_validate(json.loads(output_text))
 
             usage = getattr(response, "usage", None)
             self.last_call_telemetry = {
@@ -366,5 +370,8 @@ Workflow constraints:
                 "totalTokens": getattr(usage, "total_tokens", None) if usage else None,
                 "durationMs": round((time.perf_counter() - started) * 1000),
                 "errorType": type(error).__name__,
+                "errorStatus": getattr(error, "status_code", None),
+                "errorCode": getattr(error, "code", None),
+                "requestId": getattr(error, "request_id", None),
             }
             raise
