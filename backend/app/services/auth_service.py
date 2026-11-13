@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 import secrets
+import re
 from uuid import uuid4
 
 import jwt
@@ -120,6 +121,50 @@ class AuthService:
             }
 
         membership, tenant = memberships[0]
+        now = datetime.now(timezone.utc)
+        expires_at = now + timedelta(minutes=settings.AUTH_ACCESS_TOKEN_MINUTES)
+        token = jwt.encode(
+            {
+                "sub": user.id,
+                "tid": tenant.id,
+                "iat": now,
+                "exp": expires_at,
+                "jti": str(uuid4()),
+            },
+            settings.JWT_SECRET_KEY,
+            algorithm="HS256",
+        )
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "expires_in": int((expires_at - now).total_seconds()),
+            "user": self._user_payload(user, tenant, membership.role),
+        }
+
+    def create_workspace(self, user_id: str, name: str) -> dict:
+        user = self.db.get(User, user_id)
+        if user is None or not user.is_active:
+            raise ValueError("The signed-in account is not active.")
+
+        slug_base = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:48] or "workspace"
+        tenant = Tenant(
+            id=str(uuid4()),
+            name=name,
+            slug=f"{slug_base}-{uuid4().hex[:8]}",
+            is_active=True,
+        )
+        self.db.add(tenant)
+        self.db.flush()
+        membership = TenantMembership(
+            id=str(uuid4()),
+            tenant_id=tenant.id,
+            user_id=user.id,
+            role="owner",
+            is_active=True,
+        )
+        self.db.add(membership)
+        self.db.commit()
+
         now = datetime.now(timezone.utc)
         expires_at = now + timedelta(minutes=settings.AUTH_ACCESS_TOKEN_MINUTES)
         token = jwt.encode(
