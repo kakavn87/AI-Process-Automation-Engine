@@ -89,12 +89,14 @@ def upgrade() -> None:
                 },
             ) as batch_op:
                 batch_op.add_column(
-                    sa.Column(
-                        "tenant_id",
-                        sa.String(36),
-                        sa.ForeignKey("tenants.id", ondelete="CASCADE"),
-                        nullable=True,
-                    )
+                    sa.Column("tenant_id", sa.String(36), nullable=True)
+                )
+                batch_op.create_foreign_key(
+                    f"fk_{table_name}_tenant_id_tenants",
+                    "tenants",
+                    ["tenant_id"],
+                    ["id"],
+                    ondelete="CASCADE",
                 )
 
     # Refresh after creating the identity tables so their indexes are included.
