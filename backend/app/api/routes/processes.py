@@ -164,7 +164,7 @@ async def analyze_process_with_documents(
         AIUsageService(db, tenant_id=tenant_context.tenant_id).record(session["id"], usage_telemetry)
     if knowledge:
         for embedding_event in knowledge.telemetry_events:
-            AIUsageService(db).record(session["id"], embedding_event)
+            AIUsageService(db, tenant_id=tenant_context.tenant_id).record(session["id"], embedding_event)
 
     return {
         **analysis,
@@ -188,7 +188,7 @@ def analyze_process(
     )
     usage_telemetry = analysis.pop("_aiUsageTelemetry", None)
 
-    session = WorkflowSessionService(db).create(
+    session = WorkflowSessionService(db, tenant_id=tenant_context.tenant_id).create(
         description=request.description,
         analysis=analysis,
         strategy=request.analysis_strategy,
@@ -196,7 +196,7 @@ def analyze_process(
         business_domain=request.business_domain,
     )
     if usage_telemetry:
-        AIUsageService(db).record(session["id"], usage_telemetry)
+        AIUsageService(db, tenant_id=tenant_context.tenant_id).record(session["id"], usage_telemetry)
 
     return {
         **analysis,
