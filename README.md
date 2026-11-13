@@ -90,6 +90,23 @@ Estimated USD cost is calculated only when both of these backend environment var
 
 Both values default to unset. Until valid prices are configured, the monitoring endpoint shows token totals but leaves estimated cost unavailable. This avoids inventing a model price or presenting a token estimate as an invoice amount.
 
+## Safe Render pull request previews
+
+The Frontend and Backend services use Render's automatic pull request service previews. The Angular build generates `runtime-config.js` before each deploy:
+
+- Production builds use `API_BASE_URL` (or the configured Production backend URL).
+- PR builds detect Render's `IS_PULL_REQUEST` and `RENDER_EXTERNAL_HOSTNAME` values and derive the matching Backend Preview URL from the PR suffix.
+- If the matching Backend Preview URL cannot be identified, the Frontend fails closed and does not fall back to the Production API.
+
+The Backend also detects `IS_PULL_REQUEST`:
+
+- Preview CORS allows only the Frontend Preview for the same PR, not the Production frontend or arbitrary websites.
+- If Production currently uses SQLite, the Preview uses a different SQLite file on its own temporary service filesystem.
+- If Production is later moved to a remote database, the Preview refuses to start unless `PREVIEW_DATABASE_URL` is explicitly set to a separate test database.
+- PR previews ignore the Production `OPENAI_API_KEY`; set `PREVIEW_OPENAI_API_KEY` on a Preview instance to use a separate test key. Otherwise, deterministic fallback is used.
+
+Render service previews initially copy their base service settings, including environment variables. Do not add a persistent disk or shared Production datastore to a Preview service. These previews are temporary and are deleted when their PR is merged or closed. This application still has no authentication; do not enter real customer or confidential business data in a public Preview.
+
 ## Safety and production boundaries
 
 The action dispatcher remains simulation-only. Approval records authorization for the demo workflow, but it does not send email, post to Teams, invoke HTTP endpoints, or modify an external business system. Live connectors must be implemented and separately configured before those actions can be enabled.
