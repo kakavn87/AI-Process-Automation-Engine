@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../../core/services/api.service';
 import { TabularDataResult } from '../../../../core/models/api.models';
@@ -31,8 +31,10 @@ export class ProcessPageComponent {
   private readonly service = inject(ProcessService);
   private readonly api = inject(ApiService);
 
+
   readonly language = signal<AppLanguage>('de');
   readonly selectedDomain = signal('general');
+  readonly examplesExpanded = signal(false);
   readonly dataResult = signal<TabularDataResult | null>(null);
   readonly dataProcessing = signal(false);
   readonly dataError = signal<string | null>(null);
@@ -40,6 +42,20 @@ export class ProcessPageComponent {
   selectedDataFile: File | null = null;
   description = '';
   analysisStrategy: AnalysisStrategy = 'auto';
+
+  constructor() {
+    effect(() => {
+      const analysis = this.store.analysis();
+      if (!analysis || typeof document === 'undefined') return;
+
+      setTimeout(() => {
+        document.getElementById('results')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 0);
+    });
+  }
 
   readonly industries: Industry[] = [
     {
@@ -299,13 +315,19 @@ export class ProcessPageComponent {
     }
   }
 
+  toggleIndustryExamples() {
+    this.examplesExpanded.update(expanded => !expanded);
+  }
+
   selectIndustry(industry: Industry) {
+    this.examplesExpanded.set(false);
     this.selectedDomain.set(industry.id);
     this.description = this.language() === 'de' ? industry.sampleDe : industry.sampleEn;
     this.dataError.set(null);
   }
 
   useFreeDescription() {
+    this.examplesExpanded.set(false);
     this.selectedDomain.set('general');
     this.description = '';
   }

@@ -46,6 +46,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       this.activeSessionId = this.sessionId;
       this.session.set(null);
       this.execution.set(null);
+      this.usage.set(null);
       this.loadSession();
     }
   }
@@ -61,7 +62,6 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
         if (this.activeSessionId) this.loadSession();
       });
     }
-    this.loadUsage();
     this.loadLiveReadiness();
   }
 
@@ -80,6 +80,7 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       next: result => {
         this.session.set(result);
         this.loading.set(false);
+        this.updateUsageVisibility(result);
         if (result.relatedExecutionId) this.loadExecution(result.relatedExecutionId);
       },
       error: () => {
@@ -96,6 +97,14 @@ export class WorkflowSessionPageComponent implements OnInit, OnChanges {
       next: result => this.liveReadiness.set(result),
       error: () => this.liveReadiness.set(null)
     });
+  }
+
+  private updateUsageVisibility(current: WorkflowSession): void {
+    if (current.status === 'completed' || current.status === 'rejected') {
+      this.loadUsage();
+      return;
+    }
+    this.usage.set(null);
   }
 
   loadUsage(): void {

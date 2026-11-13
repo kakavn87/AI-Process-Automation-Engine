@@ -75,7 +75,8 @@
         </div>
         <span class="session-progress-mark">{{ stepState(2, current.status) === 'complete' ? '✓' : '2' }}</span>
       </article>
-      <article class="session-progress-step"
+            @if (current.status !== 'needs_input') {
+<article class="session-progress-step"
         [class.is-active]="stepState(3, current.status) === 'active'"
         [class.is-complete]="stepState(3, current.status) === 'complete'"
         [class.is-pending]="stepState(3, current.status) === 'pending'">
@@ -86,7 +87,10 @@
         </div>
         <span class="session-progress-mark">{{ stepState(3, current.status) === 'complete' ? '✓' : '3' }}</span>
       </article>
-      <article class="session-progress-step"
+      }
+
+            @if (current.status === 'ready_for_approval' || current.status === 'awaiting_approval' || current.status === 'completed' || current.status === 'rejected') {
+<article class="session-progress-step"
         [class.is-active]="stepState(4, current.status) === 'active'"
         [class.is-complete]="stepState(4, current.status) === 'complete'"
         [class.is-pending]="stepState(4, current.status) === 'pending'">
@@ -97,7 +101,10 @@
         </div>
         <span class="session-progress-mark">{{ stepState(4, current.status) === 'complete' ? '✓' : '4' }}</span>
       </article>
-      <article class="session-progress-step"
+      }
+
+            @if (current.status === 'completed' || current.status === 'rejected') {
+<article class="session-progress-step"
         [class.is-complete]="stepState(5, current.status) === 'complete'">
         <span class="session-progress-number">05</span>
         <div>
@@ -106,7 +113,10 @@
         </div>
         <span class="session-progress-mark">{{ stepState(5, current.status) === 'complete' ? '✓' : '5' }}</span>
       </article>
-      <article class="session-progress-step"
+      }
+
+            @if (current.status === 'completed') {
+<article class="session-progress-step"
         [class.is-active]="stepState(6, current.status, execution()?.liveExecutionStatus) === 'active'"
         [class.is-complete]="stepState(6, current.status, execution()?.liveExecutionStatus) === 'complete'"
         [class.is-pending]="stepState(6, current.status, execution()?.liveExecutionStatus) === 'pending'">
@@ -117,6 +127,8 @@
         </div>
         <span class="session-progress-mark">{{ stepState(6, current.status, execution()?.liveExecutionStatus) === 'complete' ? '✓' : '6' }}</span>
       </article>
+      }
+
     </section>
 
     @if (current.status === 'needs_input') {
@@ -306,7 +318,8 @@
     </section>
   }
 
-  <section class="session-card usage-card">
+  @if (session()?.status === 'completed' || session()?.status === 'rejected') {
+    <section class="session-card usage-card">
     <div class="session-card-header">
       <div>
         <div class="session-eyebrow">STEP 5 · AI MONITORING</div>
@@ -338,6 +351,9 @@
       <p class="session-muted">{{ isGerman ? 'Noch keine AI-Nutzungsdaten vorhanden.' : 'No AI usage data is available yet.' }}</p>
     }
   </section>
+  }
+
+  
 
   @if (session()?.status === 'completed') {
     <section class="session-card live-execution-card">
