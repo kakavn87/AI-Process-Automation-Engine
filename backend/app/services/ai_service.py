@@ -192,7 +192,7 @@ workflow configuration. Connector should be an empty string when no connector is
             # billed the request. Preserve usage whenever the response is available.
             usage = getattr(response, "usage", None) if response is not None else None
             self.last_call_telemetry = {
-                "provider": "openai",
+                "provider": self._provider_name(),
                 "model": active_model,
                 "task": "process_analysis",
                 "status": "fallback",
