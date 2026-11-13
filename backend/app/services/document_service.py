@@ -30,7 +30,7 @@ MAX_IMAGES = 8
 MAX_ARCHIVE_UNCOMPRESSED_BYTES = 80 * 1024 * 1024
 SUPPORTED_EXTENSIONS = {
     ".pdf", ".docx", ".pptx", ".xlsx", ".csv", ".txt", ".md",
-    ".png", ".jpg", ".jpeg", ".webp", ".drawio", ".bpmn", ".xml",
+    ".png", ".jpg", ".jpeg", ".webp", ".drawio", ".bpmn", ".xml", ".svg",
 }
 
 
@@ -82,7 +82,7 @@ class DocumentProcessingService:
                 extracted_text = self._extract_pptx(content, image_data_urls)
             elif suffix == ".xlsx":
                 extracted_text = self._extract_xlsx(content)
-            elif suffix in {".drawio", ".bpmn", ".xml"}:
+            elif suffix in {".drawio", ".bpmn", ".xml", ".svg"}:
                 extracted_text = self._extract_xml_diagram(filename, content, suffix)
             elif suffix in {".csv", ".txt", ".md"}:
                 extracted_text = self._decode_text(content)
