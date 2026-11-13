@@ -1873,3 +1873,16 @@ body { background: #f3f5f9; color: #111827; }
   .workspace-welcome h1 { font-size: 27px; }
   .industry-grid { grid-template-columns: 1fr; }
 }
+
+
+/* Product name fit: keep the longer German wordmark clean in the dark rail. */
+.brand-copy strong {
+  max-width: 178px;
+  font-size: 14px !important;
+  line-height: 1.25;
+  letter-spacing: -.025em;
+}
+.brand-copy small {
+  font-size: 9px !important;
+  letter-spacing: .015em;
+}
