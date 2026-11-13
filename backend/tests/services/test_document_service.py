@@ -3,6 +3,7 @@ from io import BytesIO
 import pytest
 from docx import Document
 from PIL import Image
+from pypdf import PdfWriter
 
 from app.services.document_service import DocumentProcessingService
 
@@ -55,3 +56,16 @@ def test_rejects_too_many_files():
 
     with pytest.raises(ValueError, match="no more than 8"):
         DocumentProcessingService().process(files)
+
+
+def test_renders_pdf_pages_for_diagram_vision():
+    writer = PdfWriter()
+    writer.add_blank_page(width=240, height=160)
+    output = BytesIO()
+    writer.write(output)
+
+    result = DocumentProcessingService().process([("process-diagram.pdf", output.getvalue())])
+
+    assert result["documents"][0]["pages"] == 1
+    assert len(result["image_data_urls"]) == 1
+    assert result["image_data_urls"][0].startswith("data:image/jpeg;base64,")
