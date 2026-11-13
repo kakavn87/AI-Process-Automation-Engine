@@ -1,5 +1,7 @@
 import re
 
+from app.core.localization import localize_process_analysis
+
 
 class ProcessAnalyzer:
     """Transparent rules-based process analysis baseline (no external AI calls)."""
@@ -31,10 +33,16 @@ class ProcessAnalyzer:
         ("sales", ("sales", "lead", "opportunity", "customer order", "vertrieb", "verkauf", "kundenauftrag")),
         ("procurement", ("procurement", "purchase order", "supplier", "vendor", "bestellung", "lieferant", "einkauf")),
         ("customer_support", ("customer support", "support ticket", "complaint", "service request", "kundenservice", "beschwerde")),
-        ("operations", ("inventory", "warehouse", "logistics", "stock", "lager", "bestand", "logistik")),
+        ("legal_compliance", ("legal", "compliance", "contract review", "contract clause", "regulatory", "datenschutz", "recht", "vertrag", "vertragsklausel", "richtlinie", "gesetz")),
+        ("manufacturing", ("manufacturing", "production line", "production planning", "quality inspection", "quality management", "factory", "fertigung", "produktion", "qualitätsmanagement", "qualitaetsmanagement", "prüfprotokoll", "pruefprotokoll", "ausschuss")),
+        ("it_operations", ("it operations", "it support", "helpdesk", "help desk", "service desk", "incident", "access rights", "zugriffsrechte", "it-ticket", "it ticket", "störung", "stoerung", "bereitschaftsdienst")),
+        ("marketing", ("marketing", "campaign", "advertising", "social media", "content approval", "conversion rate", "kampagne", "werbung", "anzeigen", "reichweite")),
+        ("project_management", ("project management", "project status", "milestone", "steering committee", "projektmanagement", "projektstatus", "meilenstein", "lenkungskreis", "projektbericht")),
+        ("logistics", ("logistics", "shipment", "shipping", "freight", "transportation", "delivery route", "supply chain", "versand", "fracht", "transport", "spedition", "lieferroute")),
+        ("operations", ("inventory", "warehouse", "stock", "facility", "maintenance request", "building maintenance", "lager", "bestand", "facility management", "wartung", "gebäudemanagement", "gebaeudemanagement", "haustechnik")),
     )
 
-    def analyze(self, description: str) -> dict:
+    def analyze(self, description: str, language: str = "en") -> dict:
         text = description.lower()
         signals: list[str] = []
         score = 0
@@ -90,7 +98,7 @@ class ProcessAnalyzer:
         if "teams" in signals:
             questions.append("Which Microsoft Teams channel should receive the approved report?")
 
-        return {
+        result = {
             "automationScore": min(score, 100),
             "signals": signals,
             "description": description,
@@ -113,6 +121,7 @@ class ProcessAnalyzer:
             "assumptions": assumptions,
             "questions": questions,
         }
+        return localize_process_analysis(result, language)
 
     @staticmethod
     def _contains(text: str, pattern: str) -> bool:
