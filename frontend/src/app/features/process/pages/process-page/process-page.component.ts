@@ -375,7 +375,7 @@ export class ProcessPageComponent {
 
     this.executionLoading.set(true);
     this.executionError.set(null);
-    const note = this.language() === 'de' ? 'Über FlowPilot freigegeben.' : 'Approved from FlowPilot.';
+    const note = this.language() === 'de' ? 'Über AI Engine freigegeben.' : 'Approved from AI Engine.';
     this.api.approveExecution(current.id, note).subscribe({
       next: result => {
         this.execution.set(result);
@@ -394,7 +394,7 @@ export class ProcessPageComponent {
 
     this.executionLoading.set(true);
     this.executionError.set(null);
-    const note = this.language() === 'de' ? 'Über FlowPilot abgelehnt.' : 'Rejected from FlowPilot.';
+    const note = this.language() === 'de' ? 'Über AI Engine abgelehnt.' : 'Rejected from AI Engine.';
     this.api.rejectExecution(current.id, note).subscribe({
       next: result => {
         this.execution.set(result);
